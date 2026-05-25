@@ -2,7 +2,7 @@ name: Weekly Report
 
 on:
   schedule:
-    - cron: "0 7 * * 1"   # segunda-feira às 07:00 UTC
+    - cron: "0 20 * * 5"   # sexta-feira 21h Lisboa (WET/UTC+1) · 22h em horário de verão (WEST/UTC+2)
   workflow_dispatch:
 
 jobs:
