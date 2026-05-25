@@ -96,7 +96,7 @@ def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
     # ── Risk ──────────────────────────────────────────────────────────────────
     sharpe_z  = sigmoid(cs_z(snap["sharpe_63"].fillna(0)))
     adx_ok    = (snap["adx"] > 20).astype(float).fillna(0)
-    dd_factor = (1 + snap["drawdown"].clip(lower=-1, upper=0)).fillna(0)
+    dd_factor = (1 + snap["drawdown"].clip(lower=-1, upper=0)).fillna(0.9)
     risk = 0.4 * sharpe_z + 0.3 * adx_ok + 0.3 * dd_factor
 
     # ── Final score ───────────────────────────────────────────────────────────

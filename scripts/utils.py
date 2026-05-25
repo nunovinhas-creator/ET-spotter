@@ -201,14 +201,14 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
         conv = compute_conviction(
             r["score"], r["trend_sma"], r["macd_bullish"],
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("ret_63d", 0),
-            r["delta_score"], r["drawdown"],
+            r.get("delta_score", 0), r.get("drawdown", -0.5),
             r.get("ret_5d", 0),
         )
         if conv["level"] is None:
             continue
         rationale = analyst_rationale(
-            r["trend_sma"], r["macd_bullish"], r["ret_5d"],
-            r.get("ret_63d", 0), r["delta_score"], r["drawdown"],
+            r["trend_sma"], r["macd_bullish"], r.get("ret_5d", 0),
+            r.get("ret_63d", 0), r.get("delta_score", 0), r.get("drawdown", -0.5),
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("adx", 0),
         )
         signals.append({**r, **conv, "rationale": rationale})
