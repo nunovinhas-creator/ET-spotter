@@ -105,6 +105,29 @@ def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
     return snap
 
 
+def compute_score_percentile(snap: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adiciona score_pct: percentil do score actual vs últimos 252 dias do histórico.
+    Ex: 0.85 → ETF está no top 15% dos seus próprios scores históricos.
+    """
+    if not SCORES_HIST.exists():
+        snap["score_pct"] = np.nan
+        return snap
+
+    hist = pd.read_csv(SCORES_HIST)
+    pcts = []
+    for _, row in snap.iterrows():
+        etf_hist = hist[hist["etf"] == row["etf"]]["score"].dropna()
+        # Últimos 252 registos (aprox. 1 ano de dias úteis)
+        etf_hist = etf_hist.iloc[-252:]
+        if len(etf_hist) < 5:
+            pcts.append(np.nan)
+        else:
+            pcts.append(round((etf_hist < row["score"]).mean(), 3))
+    snap["score_pct"] = pcts
+    return snap
+
+
 def persist_scores(snap: pd.DataFrame) -> None:
     """Guarda scores_latest.csv e appenda a scores_history.csv."""
     REPORTS.mkdir(parents=True, exist_ok=True)
@@ -112,7 +135,7 @@ def persist_scores(snap: pd.DataFrame) -> None:
     cols = [
         "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d",
         "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21",
-        "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score",
+        "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score", "score_pct",
     ]
     out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
     out.to_csv(REPORTS / "scores_latest.csv", index=False)
@@ -142,6 +165,7 @@ def main():
         return
 
     snap = compute_scores(snap)
+    snap = compute_score_percentile(snap)
 
     # Guarda scores nos ficheiros diários individuais
     for _, row in snap.iterrows():
@@ -149,11 +173,13 @@ def main():
         if path.exists():
             df = pd.read_csv(path, index_col=0, parse_dates=True)
             if not df.empty:
-                df.loc[df.index[-1], "score"] = row["score"]
+                df.loc[df.index[-1], "score"]     = row["score"]
+                df.loc[df.index[-1], "score_pct"] = row.get("score_pct", np.nan)
                 df.to_csv(path)
 
     persist_scores(snap)
-    print(snap[["etf", "score", "ret_21d", "ret_63d", "rsi", "adx"]].to_string(index=False))
+    cols_show = ["etf", "score", "score_pct", "ret_21d", "ret_63d", "rsi", "adx"]
+    print(snap[[c for c in cols_show if c in snap.columns]].to_string(index=False))
     print(f"\n[OK] {len(snap)} ETFs · scores guardados em data/reports/scores_latest.csv")
 
 

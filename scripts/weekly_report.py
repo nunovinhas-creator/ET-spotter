@@ -60,6 +60,8 @@ def load_rows(cfg: dict, days: int = 7) -> tuple[list[dict], pd.DataFrame]:
         rs_positive = int(last.get("rs_positive",   0) or 0)
         rs_mom_21   = float(last.get("rs_mom_21",   0) or 0)
         above_sma200 = int(last.get("above_sma200", 0) or 0)
+        score_pct_raw = last.get("score_pct", None)
+        score_pct   = float(score_pct_raw) if score_pct_raw not in (None, "") else None
 
         rows_raw.append({
             "ticker": sym, "nome": info.get("name", sym),
@@ -72,7 +74,7 @@ def load_rows(cfg: dict, days: int = 7) -> tuple[list[dict], pd.DataFrame]:
             "drawdown": drawdown, "vol_21": vol_21,
             "rsi": rsi, "adx": adx,
             "rs_positive": rs_positive, "rs_mom_21": rs_mom_21,
-            "above_sma200": above_sma200,
+            "above_sma200": above_sma200, "score_pct": score_pct,
             "close": round(float(last.get("close", 0) or 0), 2),
         })
         rows_display.append({
@@ -119,10 +121,16 @@ def buy_signals_html(signals: list[dict]) -> str:
         rsi_color = "#4caf50" if 40 <= rsi_val <= 65 else ("#ffd54f" if rsi_val > 70 else "#aaa")
         rs_icon = "✓ superando SPY" if s.get("rs_positive") else "✗ abaixo SPY"
         rs_color = "#4caf50" if s.get("rs_positive") else "#f44336"
+        score_pct = s.get("score_pct")
+        pct_str = (
+            f'&nbsp;<span style="color:#888;font-size:10px">'
+            f'P{score_pct*100:.0f}</span>'
+            if score_pct is not None and str(score_pct) != "nan" else ""
+        )
         metrics = (
             f'<span style="color:#aaa">Score:</span> '
             f'<span style="color:{_c(s["score"],0.5)};font-weight:bold">{s["score"]:.3f}</span>'
-            f'&nbsp;&nbsp;'
+            f'{pct_str}&nbsp;&nbsp;'
             f'<span style="color:#aaa">Ret. 3M:</span> '
             f'<span style="color:{_c(s.get("ret_63d", 0))}">{s.get("ret_63d", 0):.2%}</span>'
             f'&nbsp;&nbsp;'
