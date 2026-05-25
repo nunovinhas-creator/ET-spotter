@@ -92,7 +92,8 @@ def category_summary(scores_df, cfg: dict) -> list[dict]:
 
 def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
                        rsi: float, rs_positive: int, ret_63d: float,
-                       delta_score: float, drawdown: float) -> dict:
+                       delta_score: float, drawdown: float,
+                       ret_5d: float = 0.0) -> dict:
     """
     Conta confluência de 7 sinais técnicos e devolve nível de convicção.
 
@@ -101,22 +102,32 @@ def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
       2. macd_bullish == 1
       3. 40 <= rsi <= 65 (zona de entrada ideal)
       4. rs_positive == 1 (a bater SPY)
-      5. ret_63d > 0 (momentum 3M positivo)
+      5. ret_5d < 4%  — entrada não comprometida (ainda não subiu muito)
       6. delta_score > 0.01
       7. drawdown > -0.08
+
+    Caps de entrada tardia (evita "comprar o topo"):
+      - RSI > 68 → máximo POTENCIAL
+      - ret_5d > 7% → máximo POTENCIAL (já subiu demasiado na semana)
     """
+    rsi_val  = rsi or 0
+    ret5     = ret_5d or 0
+
     signals = 0
     if trend_sma == 1:                      signals += 1
     if macd_bullish == 1:                   signals += 1
-    if 40 <= (rsi or 0) <= 65:             signals += 1
+    if 40 <= rsi_val <= 65:                 signals += 1
     if rs_positive == 1:                    signals += 1
-    if (ret_63d or 0) > 0:                 signals += 1
+    if ret5 < 0.04:                         signals += 1  # janela de entrada aberta
     if delta_score > 0.01:                  signals += 1
     if drawdown > -0.08:                    signals += 1
 
-    if score >= 0.62 and signals >= 6:
+    # Caps: RSI sobrecomprado ou movimento semanal excessivo → entrada tardia
+    late_entry = rsi_val > 68 or ret5 > 0.07
+
+    if not late_entry and score >= 0.62 and signals >= 6:
         return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals}
-    if score >= 0.54 and signals >= 4:
+    if not late_entry and score >= 0.54 and signals >= 4:
         return {"level": "COMPRA",       "color": "#8bc34a", "bg": "#1e2f1a", "signals": signals}
     if score >= 0.48 and signals >= 3:
         return {"level": "POTENCIAL",    "color": "#ffd54f", "bg": "#2a2510", "signals": signals}
@@ -127,6 +138,8 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
                       ret_63d: float, delta_score: float, drawdown: float,
                       rsi: float, rs_positive: int, adx: float) -> str:
     parts = []
+    rsi_val = rsi or 0
+    ret5    = ret_5d or 0
 
     if trend_sma and macd_bullish:
         parts.append("tendência e momentum alinhados (SMA20>SMA50, MACD+)")
@@ -135,24 +148,33 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
     elif macd_bullish:
         parts.append("MACD cruzou para zona positiva")
 
-    if (ret_63d or 0) > 0.08:
-        parts.append(f"momentum 3M robusto ({ret_63d:.1%})")
-    elif (ret_63d or 0) > 0.03:
-        parts.append(f"retorno 3M positivo ({ret_63d:.1%}) com consistência")
-    elif ret_5d > 0.015:
-        parts.append(f"dinâmica semanal positiva ({ret_5d:.1%})")
+    # Qualidade da janela de entrada (crítico para evitar comprar o topo)
+    if ret5 < 0.01 and delta_score > 0.01:
+        parts.append("janela de entrada favorável — movimento ainda no início")
+    elif ret5 < 0.03:
+        parts.append(f"entrada não comprometida (ret. semanal {ret5:.1%})")
+    elif ret5 > 0.07:
+        parts.append(f"atenção: já subiu {ret5:.1%} esta semana — aguardar pullback")
+    elif ret5 > 0.04:
+        parts.append(f"movimento semanal avançado ({ret5:.1%}) — entrada com cautela")
+
+    if rsi_val > 68:
+        parts.append(f"RSI em sobrecompra ({rsi_val:.0f}) — aguardar correcção")
+    elif 40 <= rsi_val <= 58:
+        parts.append(f"RSI em zona óptima de entrada ({rsi_val:.0f})")
+    elif rsi_val < 40:
+        parts.append(f"RSI fraco ({rsi_val:.0f}) — confirmar reversão antes de entrar")
 
     if rs_positive:
-        parts.append("a superar SPY nos últimos 21 dias (força relativa positiva)")
+        parts.append("força relativa positiva vs SPY (últimos 21 dias)")
 
-    rsi_val = rsi or 0
-    if 40 <= rsi_val <= 65:
-        parts.append(f"RSI em zona de entrada favorável ({rsi_val:.0f})")
-    elif rsi_val > 70:
-        parts.append(f"RSI em sobrecompra ({rsi_val:.0f}) — monitorizar")
+    if (ret_63d or 0) > 0.08:
+        parts.append(f"momentum 3M sólido ({ret_63d:.1%})")
+    elif (ret_63d or 0) > 0.03:
+        parts.append(f"retorno 3M positivo ({ret_63d:.1%})")
 
     if (adx or 0) > 25:
-        parts.append(f"tendência forte confirmada pelo ADX ({adx:.0f})")
+        parts.append(f"tendência forte (ADX {adx:.0f})")
 
     if delta_score > 0.06:
         parts.append("score em forte aceleração")
@@ -160,7 +182,7 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
         parts.append("score com trajectória ascendente")
 
     if drawdown > -0.03:
-        parts.append("próximo de máximos históricos — força estrutural")
+        parts.append("próximo de máximos — força estrutural")
     elif drawdown > -0.08:
         parts.append(f"drawdown contido ({drawdown:.1%})")
 
@@ -180,6 +202,7 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
             r["score"], r["trend_sma"], r["macd_bullish"],
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("ret_63d", 0),
             r["delta_score"], r["drawdown"],
+            r.get("ret_5d", 0),
         )
         if conv["level"] is None:
             continue
@@ -190,7 +213,8 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
         )
         signals.append({**r, **conv, "rationale": rationale})
 
-    # Ordena: FORTE COMPRA primeiro, depois score
+    # Ordena: nível de convicção → dentro do mesmo nível prioriza ret_5d baixo
+    # (entrada mais cedo = movimento ainda não comprometido)
     order = {"FORTE COMPRA": 0, "COMPRA": 1, "POTENCIAL": 2}
-    signals.sort(key=lambda x: (order.get(x["level"], 9), -x["score"]))
+    signals.sort(key=lambda x: (order.get(x["level"], 9), x.get("ret_5d", 0), -x["score"]))
     return signals[:top_n]
