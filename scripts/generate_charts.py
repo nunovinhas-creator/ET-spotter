@@ -112,11 +112,19 @@ def plot_score_evolution(df: pd.DataFrame, symbol: str) -> Path:
     return out
 
 
-def plot_correlation_heatmap(cfg: dict) -> Path | None:
-    """Heatmap de correlações de retornos diários entre os ETFs."""
-    symbols = cfg["etfs"]
+def plot_correlation_heatmap(cfg: dict, max_symbols: int = 25) -> Path | None:
+    """Heatmap de correlações — limitado aos top max_symbols por score para legibilidade."""
+    # Ordena por score se disponível, caso contrário usa ordem do config
+    scores_path = REPORTS / "scores_latest.csv"
+    if scores_path.exists():
+        sc = pd.read_csv(scores_path)
+        ordered = sc.sort_values("score", ascending=False)["etf"].tolist()
+    else:
+        ordered = cfg["etfs"]
+
+    selected = ordered[:max_symbols]
     closes = {}
-    for sym in symbols:
+    for sym in selected:
         path = DATA_DAILY / f"{sym}.csv"
         if path.exists():
             df = pd.read_csv(path, index_col=0, parse_dates=True)
@@ -130,20 +138,20 @@ def plot_correlation_heatmap(cfg: dict) -> Path | None:
     corr = price_df.pct_change().dropna().corr()
 
     n = len(closes)
-    fig, ax = plt.subplots(figsize=(max(8, n * 0.65), max(7, n * 0.55)))
+    fig, ax = plt.subplots(figsize=(n * 0.6 + 1, n * 0.5 + 1))
     sns.heatmap(
         corr, annot=True, fmt=".2f", cmap="coolwarm",
-        center=0, ax=ax, linewidths=0.5,
-        annot_kws={"size": 10, "color": "white"},
-        cbar_kws={"shrink": 0.8},
+        center=0, ax=ax, linewidths=0.3,
+        annot_kws={"size": 7, "color": "white"},
+        cbar_kws={"shrink": 0.6},
     )
-    ax.set_title("Correlação de Retornos", color=PALETTE["fg"], pad=10)
+    ax.set_title(f"Correlação de Retornos (top {n} por score)", color=PALETTE["fg"], pad=10)
     fig.patch.set_facecolor(PALETTE["bg"])
     ax.set_facecolor(PALETTE["bg"])
-    ax.tick_params(colors=PALETTE["fg"])
+    ax.tick_params(colors=PALETTE["fg"], labelsize=8)
     plt.tight_layout()
     out = REPORTS / "correlation_heatmap.png"
-    plt.savefig(out, dpi=130, bbox_inches="tight")
+    plt.savefig(out, dpi=110, bbox_inches="tight")
     plt.close()
     return out
 

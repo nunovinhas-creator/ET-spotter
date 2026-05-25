@@ -1,26 +1,44 @@
 {
   "benchmarks": ["SPY"],
   "etfs": [
-    "QQQ", "VOO", "IWM", "EFA", "VNQ",
-    "GLD", "TLT", "XLE", "XLK", "XLF",
-    "ARKK", "SCHD", "VGT", "IEMG", "AGG"
+    "IVV",  "VOO",  "QQQ",  "VTI",  "IWM",  "MDY",  "IWB",  "SCHB", "VXF",  "ITOT",
+
+    "XLK",  "XLF",  "XLV",  "XLI",  "XLE",  "XLY",  "XLP",  "XLU",  "XLRE", "XLB",  "XLC",
+    "VGT",  "IBB",  "SOXX", "SMH",  "KRE",  "ITB",  "XBI",  "XHB",  "XRT",  "XOP",
+
+    "EFA",  "VEA",  "EWJ",  "EWG",  "EWU",  "EWC",  "EWA",  "EWL",  "EWQ",  "SPDW", "IDEV",
+    "IEMG", "VWO",  "EEM",  "FXI",  "EWZ",  "INDA", "EWY",  "MCHI", "EWT",  "EWS",  "EPI",
+
+    "TLT",  "IEF",  "SHY",  "TIP",  "VGIT", "GOVT", "SGOV", "BIL",
+    "AGG",  "BND",  "LQD",  "HYG",  "JNK",  "VCIT", "VCSH", "MUB",  "EMB",
+
+    "GLD",  "IAU",  "SLV",  "GDX",  "GDXJ", "DBC",  "PDBC", "USO",  "UNG",  "COPX",
+    "VNQ",  "XLRE", "IYR",  "REM",
+
+    "SCHD", "VIG",  "MTUM", "VLUE", "QUAL", "USMV", "DVY",  "HDV",  "DGRW", "NOBL",
+    "VBR",  "VBK",  "VTV",  "VUG",  "VIOV", "IWD",  "IWF",  "IWO",  "IWN",
+
+    "ARKK", "ARKG", "ARKW", "ARKF", "BOTZ", "HACK", "CIBR", "ICLN", "TAN",  "SKYY",
+    "ROBO", "DRIV", "FINX", "GNOM", "UFO",
+
+    "AOR",  "AOA",  "VXUS", "ACWI", "ACWX", "VT"
   ],
   "params": {
     "lookback_days": 180,
     "vol_window": 30,
     "alert_thresholds": {
-      "ret_1h_drop": -0.02,
+      "ret_1h_drop":  -0.02,
       "ret_24h_drop": -0.03,
-      "vol_spike": 0.04,
-      "score_change": 0.15
+      "vol_spike":     0.60,
+      "score_change":  0.15
     },
     "weights": {
       "momentum": 0.40,
-      "trend": 0.30,
-      "risk": 0.30
+      "trend":    0.30,
+      "risk":     0.30
     }
   },
   "email": {
-    "top_n": 5
+    "top_n": 10
   }
 }
