@@ -169,8 +169,7 @@
         {"ticker": "VBR",  "name": "Small-Cap Value (Vanguard)"},
         {"ticker": "VBK",  "name": "Small-Cap Growth (Vanguard)"},
         {"ticker": "IWO",  "name": "Russell 2000 Growth (iShares)"},
-        {"ticker": "IWN",  "name": "Russell 2000 Value (iShares)"},
-        {"ticker": "VIOV", "name": "S&P Small-Cap 600 Value (Vanguard)"}
+        {"ticker": "IWN",  "name": "Russell 2000 Value (iShares)"}
       ]
     },
     {
@@ -190,9 +189,7 @@
         {"ticker": "ICLN", "name": "Clean Energy (iShares)"},
         {"ticker": "TAN",  "name": "Solar Energy (Invesco)"},
         {"ticker": "SKYY", "name": "Cloud Computing (First Trust)"},
-        {"ticker": "FINX", "name": "FinTech (Global X)"},
-        {"ticker": "GNOM", "name": "Genomics (Global X)"},
-        {"ticker": "UFO",  "name": "Space (Procure)"}
+        {"ticker": "FINX", "name": "FinTech (Global X)"}
       ]
     },
     {
