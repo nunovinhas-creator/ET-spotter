@@ -36,7 +36,7 @@ def load_weekly_data(symbol: str, days: int = 7) -> pd.DataFrame | None:
     if not path.exists():
         return None
     df = pd.read_csv(path, index_col=0, parse_dates=True)
-    cutoff = pd.Timestamp.utcnow().tz_localize(None) - timedelta(days=days)
+    cutoff = pd.Timestamp.now("UTC").tz_localize(None) - timedelta(days=days)
     return df[df.index >= cutoff] if not df.empty else df
 
 
