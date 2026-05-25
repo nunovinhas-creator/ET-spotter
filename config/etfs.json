@@ -1,6 +1,10 @@
 {
   "benchmarks": ["SPY"],
-  "etfs": ["QQQ", "VOO", "IWM", "EFA", "VNQ"],
+  "etfs": [
+    "QQQ", "VOO", "IWM", "EFA", "VNQ",
+    "GLD", "TLT", "XLE", "XLK", "XLF",
+    "ARKK", "SCHD", "VGT", "IEMG", "AGG"
+  ],
   "params": {
     "lookback_days": 180,
     "vol_window": 30,
@@ -17,6 +21,6 @@
     }
   },
   "email": {
-    "top_n": 3
+    "top_n": 5
   }
 }
