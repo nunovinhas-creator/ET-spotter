@@ -36,7 +36,7 @@ def load_weekly_data(symbol: str, days: int = 7) -> pd.DataFrame | None:
     if not path.exists():
         return None
     df = pd.read_csv(path, index_col=0, parse_dates=True)
-    cutoff = pd.Timestamp.now("UTC").tz_localize(None) - timedelta(days=days)
+    cutoff = pd.Timestamp.now("UTC").tz_convert(None) - timedelta(days=days)
     return df[df.index >= cutoff] if not df.empty else df
 
 
@@ -106,7 +106,7 @@ def build_html(table_html: str, top_n: list[dict], week_str: str, image_names: l
   <h2 style="color:#7c83fd">Gráficos</h2>
   {images_html}
   <hr style="border-color:#2a2d3e;margin-top:32px">
-  <p style="color:#555;font-size:11px">ET-Spotter · GitHub Actions · dados via Alpha Vantage</p>
+  <p style="color:#555;font-size:11px">ET-Spotter · GitHub Actions · dados via yfinance</p>
 </body>
 </html>"""
 

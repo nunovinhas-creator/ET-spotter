@@ -1,11 +1,12 @@
 """
 Recolhe dados intradiários (60min) de todos os ETFs via yfinance.
-Sem API key, sem limites práticos. Guarda CSV em data/hourly/.
+Sem API key, sem limites práticos.
+Guarda um CSV fixo por ETF em data/hourly/SYMBOL.csv (sobrescreve),
+evitando acumulação de milhares de ficheiros no git.
 """
 
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -25,7 +26,9 @@ def fetch_intraday(symbol: str, period: str = "60d", interval: str = "1h") -> pd
     df = ticker.history(period=period, interval=interval)
     if df.empty:
         raise RuntimeError(f"Sem dados para {symbol}")
-    df.index = df.index.tz_localize(None)
+    # yfinance devolve índice tz-aware → remover timezone sem converter
+    if df.index.tz is not None:
+        df.index = df.index.tz_convert(None)
     df.columns = [c.lower() for c in df.columns]
     df = df[["open", "high", "low", "close", "volume"]]
     return df
@@ -34,13 +37,12 @@ def fetch_intraday(symbol: str, period: str = "60d", interval: str = "1h") -> pd
 def main():
     cfg = load_config()
     DATA_HOURLY.mkdir(parents=True, exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M")
 
     symbols = cfg["benchmarks"] + cfg["etfs"]
     for symbol in symbols:
         try:
             df = fetch_intraday(symbol)
-            out = DATA_HOURLY / f"{symbol}_{ts}.csv"
+            out = DATA_HOURLY / f"{symbol}.csv"
             df.to_csv(out)
             print(f"[OK] {symbol} -> {out.name} ({len(df)} registos)")
         except Exception as e:

@@ -1,0 +1,50 @@
+name: Daily Report
+
+on:
+  schedule:
+    - cron: "30 19 * * *"   # 19:30 UTC (após o hourly das 19:00)
+  workflow_dispatch:
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch latest data
+        run: python scripts/fetch_intraday.py
+
+      - name: Compute metrics
+        run: python scripts/compute_metrics.py
+
+      - name: Compute scores
+        run: python scripts/compute_score.py
+
+      - name: Generate charts
+        run: python scripts/generate_charts.py
+
+      - name: Send daily report
+        env:
+          EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
+        run: python scripts/daily_report.py
+
+      - name: Commit report artifacts
+        run: |
+          git config --global user.name "et-spotter-bot"
+          git config --global user.email "bot@et-spotter"
+          git add data/
+          git diff --cached --quiet || git commit -m "chore: daily report $(date -u '+%Y-%m-%d')"
+          git push

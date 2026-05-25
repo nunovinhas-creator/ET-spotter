@@ -129,7 +129,8 @@ def plot_correlation_heatmap(cfg: dict) -> Path | None:
     price_df = pd.DataFrame(closes).dropna(how="all")
     corr = price_df.pct_change().dropna().corr()
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    n = len(closes)
+    fig, ax = plt.subplots(figsize=(max(8, n * 0.65), max(7, n * 0.55)))
     sns.heatmap(
         corr, annot=True, fmt=".2f", cmap="coolwarm",
         center=0, ax=ax, linewidths=0.5,
