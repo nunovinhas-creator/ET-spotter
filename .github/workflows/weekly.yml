@@ -1,0 +1,41 @@
+name: Weekly Report
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"   # segunda-feira às 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate charts
+        run: python scripts/generate_charts.py
+
+      - name: Send weekly report
+        env:
+          EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
+        run: python scripts/weekly_report.py
+
+      - name: Commit report artifacts
+        run: |
+          git config --global user.name "et-spotter-bot"
+          git config --global user.email "bot@et-spotter"
+          git add data/reports/
+          git diff --cached --quiet || git commit -m "chore: weekly report $(date -u '+%Y-%m-%d')"
+          git push

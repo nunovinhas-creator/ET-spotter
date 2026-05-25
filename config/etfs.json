@@ -1,0 +1,22 @@
+{
+  "benchmarks": ["SPY"],
+  "etfs": ["QQQ", "VOO", "IWM", "EFA", "VNQ"],
+  "params": {
+    "lookback_days": 180,
+    "vol_window": 30,
+    "alert_thresholds": {
+      "ret_1h_drop": -0.02,
+      "ret_24h_drop": -0.03,
+      "vol_spike": 0.04,
+      "score_change": 0.15
+    },
+    "weights": {
+      "momentum": 0.40,
+      "trend": 0.30,
+      "risk": 0.30
+    }
+  },
+  "email": {
+    "top_n": 3
+  }
+}
