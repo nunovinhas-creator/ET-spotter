@@ -44,16 +44,22 @@ def load_rows(cfg: dict, days: int = 7) -> tuple[list[dict], pd.DataFrame]:
         first, last = week.iloc[0], week.iloc[-1]
         info        = cmap.get(sym, {})
 
-        score      = float(last.get("score",       0) or 0)
-        score_ini  = float(first.get("score",      0) or 0)
-        delta      = round(score - score_ini, 4)
-        trend_sma  = int(last.get("trend_sma",     0) or 0)
-        macd_bull  = int(last.get("macd_bullish",  0) or 0)
-        ret_5d     = float(last.get("ret_5d",      0) or 0)
-        ret_20d    = float(last.get("ret_20d",     0) or 0)
-        ret_24h    = float(last.get("ret_24h",     0) or 0)
-        drawdown   = float(last.get("drawdown",    0) or 0)
-        vol_30     = float(last.get("vol_30",      0) or 0)
+        score       = float(last.get("score",       0) or 0)
+        score_ini   = float(first.get("score",      0) or 0)
+        delta       = round(score - score_ini, 4)
+        trend_sma   = int(last.get("trend_sma",     0) or 0)
+        macd_bull   = int(last.get("macd_bullish",  0) or 0)
+        ret_1d      = float(last.get("ret_1d",      0) or 0)
+        ret_5d      = float(last.get("ret_5d",      0) or 0)
+        ret_21d     = float(last.get("ret_21d",     0) or 0)
+        ret_63d     = float(last.get("ret_63d",     0) or 0)
+        drawdown    = float(last.get("drawdown",    0) or 0)
+        vol_21      = float(last.get("vol_21",      0) or 0)
+        rsi         = float(last.get("rsi",         50) or 50)
+        adx         = float(last.get("adx",         0) or 0)
+        rs_positive = int(last.get("rs_positive",   0) or 0)
+        rs_mom_21   = float(last.get("rs_mom_21",   0) or 0)
+        above_sma200 = int(last.get("above_sma200", 0) or 0)
 
         rows_raw.append({
             "ticker": sym, "nome": info.get("name", sym),
@@ -61,27 +67,36 @@ def load_rows(cfg: dict, days: int = 7) -> tuple[list[dict], pd.DataFrame]:
             "cor": info.get("color", "#7c83fd"),
             "score": round(score, 3), "delta_score": delta,
             "trend_sma": trend_sma, "macd_bullish": macd_bull,
-            "ret_5d": ret_5d, "ret_24h": ret_24h, "ret_1h": ret_24h,
-            "drawdown": drawdown, "vol_30": vol_30,
+            "ret_5d": ret_5d, "ret_21d": ret_21d, "ret_63d": ret_63d,
+            "ret_24h": ret_1d,  # alias for category_summary compatibility
+            "drawdown": drawdown, "vol_21": vol_21,
+            "rsi": rsi, "adx": adx,
+            "rs_positive": rs_positive, "rs_mom_21": rs_mom_21,
+            "above_sma200": above_sma200,
             "close": round(float(last.get("close", 0) or 0), 2),
         })
         rows_display.append({
-            "etf": sym, "delta_score": delta, "ret_24h": ret_24h,
-            "ETF":         sym,
-            "Nome":        info.get("name", sym),
-            "Categoria":   info.get("category_name", "—"),
-            "Cor":         info.get("color", "#7c83fd"),
-            "Score":       round(score, 3),
+            "etf": sym, "delta_score": delta, "ret_24h": ret_1d,
+            "ETF":          sym,
+            "Nome":         info.get("name", sym),
+            "Categoria":    info.get("category_name", "—"),
+            "Cor":          info.get("color", "#7c83fd"),
+            "Score":        round(score, 3),
             "Δ Score Sem.": delta,
-            "Ret. Semana": ret_5d,
-            "Ret. 20d":    ret_20d,
-            "Vol 30d":     vol_30,
-            "Trend":       "↑" if trend_sma else "↓",
-            "MACD":        "+" if macd_bull else "−",
-            "Drawdown":    round(drawdown, 4),
+            "Ret. Semana":  ret_5d,
+            "Ret. 3M":      ret_63d,
+            "RSI":          round(rsi, 1),
+            "RS vs SPY":    "✓" if rs_positive else "✗",
+            "Vol 21d":      vol_21,
+            "Trend":        "↑" if trend_sma else "↓",
+            "MACD":         "+" if macd_bull else "−",
+            "Drawdown":     round(drawdown, 4),
         })
 
-    df_display = pd.DataFrame(rows_display).sort_values("Score", ascending=False)
+    if rows_display:
+        df_display = pd.DataFrame(rows_display).sort_values("Score", ascending=False)
+    else:
+        df_display = pd.DataFrame()
     return rows_raw, df_display
 
 
@@ -100,21 +115,31 @@ def buy_signals_html(signals: list[dict]) -> str:
             f'<span style="background:{s["color"]};color:#000;padding:3px 10px;'
             f'border-radius:12px;font-size:11px;font-weight:bold">{s["level"]}</span>'
         )
+        rsi_val = s.get("rsi", 50) or 50
+        rsi_color = "#4caf50" if 40 <= rsi_val <= 65 else ("#ffd54f" if rsi_val > 70 else "#aaa")
+        rs_icon = "✓ superando SPY" if s.get("rs_positive") else "✗ abaixo SPY"
+        rs_color = "#4caf50" if s.get("rs_positive") else "#f44336"
         metrics = (
+            f'<span style="color:#aaa">Score:</span> '
+            f'<span style="color:{_c(s["score"],0.5)};font-weight:bold">{s["score"]:.3f}</span>'
+            f'&nbsp;&nbsp;'
+            f'<span style="color:#aaa">Ret. 3M:</span> '
+            f'<span style="color:{_c(s.get("ret_63d", 0))}">{s.get("ret_63d", 0):.2%}</span>'
+            f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">Ret. Sem.:</span> '
             f'<span style="color:{_c(s["ret_5d"])}">{s["ret_5d"]:.2%}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Score:</span> '
-            f'<span style="color:{_c(s["score"],0.5)};font-weight:bold">{s["score"]:.3f}</span>'
+            f'<span style="color:#aaa">RSI:</span> '
+            f'<span style="color:{rsi_color}">{rsi_val:.0f}</span>'
+            f'&nbsp;&nbsp;'
+            f'<span style="color:#aaa">RS vs SPY:</span> '
+            f'<span style="color:{rs_color}">{rs_icon}</span>'
             f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">Δ Semana:</span> '
             f'<span style="color:{_c(s["delta_score"])}">{s["delta_score"]:+.3f}</span>'
             f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">Drawdown:</span> '
             f'<span style="color:{_c(s["drawdown"],-0.05)}">{s["drawdown"]:.1%}</span>'
-            f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Vol 30d:</span> '
-            f'<span style="color:#e8eaf6">{s["vol_30"]:.1%}</span>'
         )
         cards += f"""
         <div style="background:{s['bg']};border-left:4px solid {s['color']};
@@ -168,7 +193,7 @@ def sector_rotation_html(cats: list[dict]) -> str:
 
 
 def full_table_html(df: pd.DataFrame) -> str:
-    cols = ["ETF", "Nome", "Categoria", "Score", "Δ Score Sem.", "Ret. Semana", "Ret. 20d", "Vol 30d", "Trend", "MACD"]
+    cols = ["ETF", "Nome", "Categoria", "Score", "Δ Score Sem.", "Ret. Semana", "Ret. 3M", "RSI", "RS vs SPY", "Vol 21d", "Trend", "MACD"]
     th = "background:#0d1021;color:#7c83fd;padding:6px 10px;text-align:right;font-size:11px;white-space:nowrap"
     td = "padding:4px 10px;border-bottom:1px solid #0d1021;font-size:11px;text-align:right"
     headers = "".join(f'<th style="{th}">{c}</th>' for c in cols)
@@ -183,16 +208,24 @@ def full_table_html(df: pd.DataFrame) -> str:
                 rows += f'<td style="{td};color:#555;text-align:left">{r["Nome"]}</td>'
             elif c == "Categoria":
                 rows += f'<td style="{td};color:{r["Cor"]}">{r["Categoria"]}</td>'
-            elif c in ("Ret. Semana", "Ret. 20d"):
-                v = r[c]; rows += f'<td style="{td};color:{_c(v)}">{v:.2%}</td>'
+            elif c in ("Ret. Semana", "Ret. 3M"):
+                v = r.get(c, 0); rows += f'<td style="{td};color:{_c(v)}">{v:.2%}</td>'
             elif c == "Δ Score Sem.":
                 v = r[c]; rows += f'<td style="{td};color:{_c(v)}">{v:+.3f}</td>'
             elif c == "Score":
                 v = r[c]; rows += f'<td style="{td};color:{_c(v,0.5)};font-weight:bold">{v}</td>'
-            elif c == "Vol 30d":
-                rows += f'<td style="{td};color:#aaa">{r[c]:.2%}</td>'
+            elif c == "Vol 21d":
+                v = r.get(c, 0); rows += f'<td style="{td};color:#aaa">{v:.2%}</td>'
+            elif c == "RSI":
+                v = r.get(c, 50)
+                rsi_c = "#4caf50" if 40 <= v <= 65 else ("#ffd54f" if v > 70 else "#aaa")
+                rows += f'<td style="{td};color:{rsi_c}">{v:.0f}</td>'
+            elif c == "RS vs SPY":
+                v = r.get(c, "✗")
+                rs_c = "#4caf50" if v == "✓" else "#f44336"
+                rows += f'<td style="{td};color:{rs_c}">{v}</td>'
             else:
-                rows += f'<td style="{td};color:#aaa">{r[c]}</td>'
+                rows += f'<td style="{td};color:#aaa">{r.get(c, "")}</td>'
         rows += "</tr>"
     return f'<table style="border-collapse:collapse;width:100%;background:#0f1117"><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>'
 

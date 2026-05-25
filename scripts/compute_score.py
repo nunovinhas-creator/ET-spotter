@@ -1,11 +1,14 @@
 """
-Calcula o score multi-fator por ETF e gera data/reports/scores_latest.csv.
+Calcula scores multi-factor cross-sectionais por ETF.
 
-Score v0.1:
-  momentum = ret_24h + ret_5d  (normalizado)
-  trend    = trend_sma + macd_bullish  (0–1)
-  risk     = 1 / vol_30  (normalizado)
-  final    = 0.4*momentum + 0.3*trend + 0.3*risk
+Score v2:
+  - Normalização cross-sectional via z-score (todos os ETFs ao mesmo momento)
+  - Momentum: sigmoid(0.2*cs_z(ret_21d) + 0.4*cs_z(ret_63d) + 0.4*cs_z(ret_126d))
+  - Trend: (trend_sma + macd_bullish + rsi_zone + rs_positive) / 4
+  - Risk: 0.4*sigmoid(cs_z(sharpe_63)) + 0.3*(adx>20) + 0.3*(1+drawdown.clip(-1,0))
+  - Final: 0.40*momentum + 0.30*trend + 0.30*risk
+
+Gera data/reports/scores_latest.csv e appenda a data/scores_history.csv.
 """
 
 import sys
@@ -17,77 +20,141 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs
 
-DATA_DAILY = Path("data/daily")
-REPORTS    = Path("data/reports")
+DATA_DAILY    = Path("data/daily")
+REPORTS       = Path("data/reports")
+SCORES_HIST   = Path("data/scores_history.csv")
 
 
-def normalize_series(s: pd.Series) -> pd.Series:
-    rng = s.max() - s.min()
-    if rng == 0:
-        return pd.Series(0.5, index=s.index)
-    return (s - s.min()) / rng
+def cs_z(s: pd.Series) -> pd.Series:
+    """Z-score cross-sectional (todos os ETFs ao mesmo momento)."""
+    return (s - s.mean()) / (s.std() + 1e-10)
 
 
-def compute_score_for_etf(df: pd.DataFrame, weights: dict) -> pd.Series:
-    mom_raw = (
-        df.get("ret_24h", pd.Series(0, index=df.index)).fillna(0)
-        + df.get("ret_5d", pd.Series(0, index=df.index)).fillna(0)
-    )
-    score_momentum = normalize_series(mom_raw)
-
-    trend    = df.get("trend_sma",   pd.Series(0, index=df.index)).fillna(0)
-    macd_b   = df.get("macd_bullish", pd.Series(0, index=df.index)).fillna(0)
-    score_trend = (trend + macd_b) / 2.0
-
-    vol          = df.get("vol_30", pd.Series(1e-6, index=df.index)).fillna(1e-6).clip(lower=1e-6)
-    score_risk   = normalize_series(1.0 / vol)
-
-    return (
-        weights.get("momentum", 0.40) * score_momentum
-        + weights.get("trend",  0.30) * score_trend
-        + weights.get("risk",   0.30) * score_risk
-    )
+def sigmoid(z: pd.Series) -> pd.Series:
+    return 1 / (1 + np.exp(-z.clip(-6, 6)))
 
 
-def build_summary(cfg: dict) -> pd.DataFrame:
-    weights = cfg["params"]["weights"]
-    rows = []
+def build_snapshot(cfg: dict) -> pd.DataFrame:
+    """Carrega último registo de cada ETF e devolve DataFrame cross-sectional."""
+    etfs   = get_etfs(cfg)
+    rows   = []
 
-    for symbol in get_etfs(cfg):
+    for symbol in etfs:
         path = DATA_DAILY / f"{symbol}.csv"
         if not path.exists():
             continue
         df = pd.read_csv(path, index_col=0, parse_dates=True)
         if df.empty:
             continue
-
-        df["score"] = compute_score_for_etf(df, weights)
-        df.to_csv(path)
-
         last = df.iloc[-1]
+
         rows.append({
-            "etf":         symbol,
-            "close":       round(last.get("close",       np.nan), 4),
-            "ret_1h":      round(last.get("ret_1h",      np.nan), 6),
-            "ret_24h":     round(last.get("ret_24h",     np.nan), 6),
-            "ret_5d":      round(last.get("ret_5d",      np.nan), 6),
-            "vol_30":      round(last.get("vol_30",      np.nan), 6),
-            "trend_sma":   int(last.get("trend_sma",     0)),
-            "macd_bullish":int(last.get("macd_bullish",  0)),
-            "drawdown":    round(last.get("drawdown",    np.nan), 6),
-            "score":       round(last.get("score",       np.nan), 6),
+            "etf":          symbol,
+            "close":        float(last.get("close",       np.nan) or np.nan),
+            "ret_1d":       float(last.get("ret_1d",      np.nan) or np.nan),
+            "ret_5d":       float(last.get("ret_5d",      np.nan) or np.nan),
+            "ret_21d":      float(last.get("ret_21d",     np.nan) or np.nan),
+            "ret_63d":      float(last.get("ret_63d",     np.nan) or np.nan),
+            "ret_126d":     float(last.get("ret_126d",    np.nan) or np.nan),
+            "vol_21":       float(last.get("vol_21",      np.nan) or np.nan),
+            "sharpe_63":    float(last.get("sharpe_63",   np.nan) or np.nan),
+            "rsi":          float(last.get("rsi",         np.nan) or np.nan),
+            "adx":          float(last.get("adx",         np.nan) or np.nan),
+            "rs_positive":  int(last.get("rs_positive",   0) or 0),
+            "rs_mom_21":    float(last.get("rs_mom_21",   np.nan) or np.nan),
+            "trend_sma":    int(last.get("trend_sma",     0) or 0),
+            "macd_bullish": int(last.get("macd_bullish",  0) or 0),
+            "above_sma200": int(last.get("above_sma200",  0) or 0),
+            "drawdown":     float(last.get("drawdown",    np.nan) or np.nan),
         })
 
-    return pd.DataFrame(rows).sort_values("score", ascending=False)
+    if not rows:
+        return pd.DataFrame()
+
+    return pd.DataFrame(rows)
+
+
+def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
+    """Calcula scores cross-sectionais para o snapshot de ETFs."""
+    snap = snap.copy()
+
+    # ── Momentum ──────────────────────────────────────────────────────────────
+    ret21  = snap["ret_21d"].fillna(0)
+    ret63  = snap["ret_63d"].fillna(0)
+    ret126 = snap["ret_126d"].fillna(0)
+    momentum = sigmoid(0.2 * cs_z(ret21) + 0.4 * cs_z(ret63) + 0.4 * cs_z(ret126))
+
+    # ── Trend ─────────────────────────────────────────────────────────────────
+    rsi_zone = ((snap["rsi"] >= 40) & (snap["rsi"] <= 65)).astype(float).fillna(0)
+    trend = (
+        snap["trend_sma"].fillna(0).astype(float)
+        + snap["macd_bullish"].fillna(0).astype(float)
+        + rsi_zone
+        + snap["rs_positive"].fillna(0).astype(float)
+    ) / 4.0
+
+    # ── Risk ──────────────────────────────────────────────────────────────────
+    sharpe_z  = sigmoid(cs_z(snap["sharpe_63"].fillna(0)))
+    adx_ok    = (snap["adx"] > 20).astype(float).fillna(0)
+    dd_factor = (1 + snap["drawdown"].clip(lower=-1, upper=0)).fillna(0)
+    risk = 0.4 * sharpe_z + 0.3 * adx_ok + 0.3 * dd_factor
+
+    # ── Final score ───────────────────────────────────────────────────────────
+    snap["score"] = (0.40 * momentum + 0.30 * trend + 0.30 * risk).round(6)
+
+    return snap
+
+
+def persist_scores(snap: pd.DataFrame) -> None:
+    """Guarda scores_latest.csv e appenda a scores_history.csv."""
+    REPORTS.mkdir(parents=True, exist_ok=True)
+
+    cols = [
+        "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d",
+        "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21",
+        "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score",
+    ]
+    out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
+    out.to_csv(REPORTS / "scores_latest.csv", index=False)
+
+    # ── Histórico diário ──────────────────────────────────────────────────────
+    today = pd.Timestamp.now().date().isoformat()
+    hist  = snap.copy()
+    hist["date"] = today
+
+    if SCORES_HIST.exists():
+        existing = pd.read_csv(SCORES_HIST)
+        combined = pd.concat([existing, hist], ignore_index=True)
+        # De-duplica por (date, etf), mantém último
+        combined = combined.drop_duplicates(subset=["date", "etf"], keep="last")
+    else:
+        combined = hist
+
+    combined.to_csv(SCORES_HIST, index=False)
 
 
 def main():
     cfg = load_config()
-    REPORTS.mkdir(parents=True, exist_ok=True)
-    summary = build_summary(cfg)
-    summary.to_csv(REPORTS / "scores_latest.csv", index=False)
-    print(summary.to_string(index=False))
-    print(f"\n[OK] {len(summary)} ETFs · scores guardados em data/reports/scores_latest.csv")
+    snap = build_snapshot(cfg)
+
+    if snap.empty:
+        print("[SKIP] Sem dados.")
+        return
+
+    snap = compute_scores(snap)
+
+    # Guarda scores nos ficheiros diários individuais
+    for _, row in snap.iterrows():
+        path = DATA_DAILY / f"{row['etf']}.csv"
+        if path.exists():
+            df = pd.read_csv(path, index_col=0, parse_dates=True)
+            if not df.empty:
+                df.loc[df.index[-1], "score"] = row["score"]
+                df.to_csv(path)
+
+    persist_scores(snap)
+    print(snap[["etf", "score", "ret_21d", "ret_63d", "rsi", "adx"]].to_string(index=False))
+    print(f"\n[OK] {len(snap)} ETFs · scores guardados em data/reports/scores_latest.csv")
 
 
 if __name__ == "__main__":

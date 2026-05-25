@@ -22,6 +22,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Fetch daily data
+        run: python scripts/fetch_daily.py
+
+      - name: Compute metrics
+        run: python scripts/compute_metrics.py
+
+      - name: Compute scores
+        run: python scripts/compute_score.py
+
       - name: Generate charts
         run: python scripts/generate_charts.py
 
@@ -36,6 +45,7 @@ jobs:
         run: |
           git config --global user.name "et-spotter-bot"
           git config --global user.email "bot@et-spotter"
-          git add data/reports/
+          git add data/
           git diff --cached --quiet || git commit -m "chore: weekly report $(date -u '+%Y-%m-%d')"
+          git pull --rebase origin ${{ github.ref_name }}
           git push

@@ -91,29 +91,41 @@ def category_summary(scores_df, cfg: dict) -> list[dict]:
 # ─── Análise de convicção ─────────────────────────────────────────────────────
 
 def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
-                       ret_5d: float, delta_score: float, drawdown: float) -> dict:
+                       rsi: float, rs_positive: int, ret_63d: float,
+                       delta_score: float, drawdown: float) -> dict:
     """
-    Conta confluência de sinais técnicos e devolve nível de convicção.
+    Conta confluência de 7 sinais técnicos e devolve nível de convicção.
+
+    Sinais (máx 7):
+      1. trend_sma == 1
+      2. macd_bullish == 1
+      3. 40 <= rsi <= 65 (zona de entrada ideal)
+      4. rs_positive == 1 (a bater SPY)
+      5. ret_63d > 0 (momentum 3M positivo)
+      6. delta_score > 0.01
+      7. drawdown > -0.08
     """
     signals = 0
-    if trend_sma == 1:        signals += 1
-    if macd_bullish == 1:     signals += 1
-    if ret_5d > 0:            signals += 1
-    if delta_score > 0.01:    signals += 1
-    if drawdown > -0.08:      signals += 1
+    if trend_sma == 1:                      signals += 1
+    if macd_bullish == 1:                   signals += 1
+    if 40 <= (rsi or 0) <= 65:             signals += 1
+    if rs_positive == 1:                    signals += 1
+    if (ret_63d or 0) > 0:                 signals += 1
+    if delta_score > 0.01:                  signals += 1
+    if drawdown > -0.08:                    signals += 1
 
-    if score >= 0.60 and signals >= 4:
+    if score >= 0.62 and signals >= 6:
         return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals}
-    if score >= 0.52 and signals >= 3:
+    if score >= 0.54 and signals >= 4:
         return {"level": "COMPRA",       "color": "#8bc34a", "bg": "#1e2f1a", "signals": signals}
-    if score >= 0.46 and signals >= 2 and delta_score >= 0:
+    if score >= 0.48 and signals >= 3:
         return {"level": "POTENCIAL",    "color": "#ffd54f", "bg": "#2a2510", "signals": signals}
     return {"level": None, "color": None, "bg": None, "signals": signals}
 
 
 def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
-                      ret_24h: float, delta_score: float,
-                      drawdown: float, vol_30: float) -> str:
+                      ret_63d: float, delta_score: float, drawdown: float,
+                      rsi: float, rs_positive: int, adx: float) -> str:
     parts = []
 
     if trend_sma and macd_bullish:
@@ -123,12 +135,24 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
     elif macd_bullish:
         parts.append("MACD cruzou para zona positiva")
 
-    if ret_5d > 0.04:
-        parts.append(f"forte dinâmica de {ret_5d:.1%} nos últimos 5 dias")
+    if (ret_63d or 0) > 0.08:
+        parts.append(f"momentum 3M robusto ({ret_63d:.1%})")
+    elif (ret_63d or 0) > 0.03:
+        parts.append(f"retorno 3M positivo ({ret_63d:.1%}) com consistência")
     elif ret_5d > 0.015:
-        parts.append(f"retorno de {ret_5d:.1%} em 5 dias com consistência")
-    elif ret_5d > 0:
         parts.append(f"dinâmica semanal positiva ({ret_5d:.1%})")
+
+    if rs_positive:
+        parts.append("a superar SPY nos últimos 21 dias (força relativa positiva)")
+
+    rsi_val = rsi or 0
+    if 40 <= rsi_val <= 65:
+        parts.append(f"RSI em zona de entrada favorável ({rsi_val:.0f})")
+    elif rsi_val > 70:
+        parts.append(f"RSI em sobrecompra ({rsi_val:.0f}) — monitorizar")
+
+    if (adx or 0) > 25:
+        parts.append(f"tendência forte confirmada pelo ADX ({adx:.0f})")
 
     if delta_score > 0.06:
         parts.append("score em forte aceleração")
@@ -140,9 +164,6 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
     elif drawdown > -0.08:
         parts.append(f"drawdown contido ({drawdown:.1%})")
 
-    if vol_30 and 0 < vol_30 < 0.14:
-        parts.append("volatilidade baixa favorece gestão de risco")
-
     return ". ".join(parts[:3]).capitalize() + "." if parts else "Confluência de sinais técnicos favoráveis."
 
 
@@ -150,19 +171,22 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
     """
     Filtra e ordena os ETFs com sinais de compra.
     Cada row deve ter: ticker, nome, categoria, cor, score, trend_sma,
-                       macd_bullish, ret_5d, ret_24h, delta_score, drawdown, vol_30.
+                       macd_bullish, rsi, rs_positive, ret_63d, ret_5d,
+                       delta_score, drawdown, adx.
     """
     signals = []
     for r in rows:
         conv = compute_conviction(
             r["score"], r["trend_sma"], r["macd_bullish"],
-            r["ret_5d"], r["delta_score"], r["drawdown"],
+            r.get("rsi", 50), r.get("rs_positive", 0), r.get("ret_63d", 0),
+            r["delta_score"], r["drawdown"],
         )
         if conv["level"] is None:
             continue
         rationale = analyst_rationale(
-            r["trend_sma"], r["macd_bullish"], r["ret_5d"], r["ret_24h"],
-            r["delta_score"], r["drawdown"], r["vol_30"],
+            r["trend_sma"], r["macd_bullish"], r["ret_5d"],
+            r.get("ret_63d", 0), r["delta_score"], r["drawdown"],
+            r.get("rsi", 50), r.get("rs_positive", 0), r.get("adx", 0),
         )
         signals.append({**r, **conv, "rationale": rationale})
 

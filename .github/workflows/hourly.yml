@@ -25,6 +25,9 @@ jobs:
       - name: Fetch intraday data
         run: python scripts/fetch_intraday.py
 
+      - name: Fetch daily data
+        run: python scripts/fetch_daily.py
+
       - name: Compute metrics
         run: python scripts/compute_metrics.py
 
@@ -37,4 +40,5 @@ jobs:
           git config --global user.email "bot@et-spotter"
           git add data/
           git diff --cached --quiet || git commit -m "chore: hourly data update $(date -u '+%Y-%m-%d %H:%M') UTC"
+          git pull --rebase origin ${{ github.ref_name }}
           git push

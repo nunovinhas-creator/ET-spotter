@@ -19,8 +19,9 @@ import seaborn as sns
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs, get_category_map, get_categories, category_summary
 
-DATA_DAILY = Path("data/daily")
-REPORTS    = Path("data/reports")
+DATA_DAILY    = Path("data/daily")
+REPORTS       = Path("data/reports")
+SCORES_HIST   = Path("data/scores_history.csv")
 
 PALETTE = {
     "bg":       "#0f1117",
@@ -180,7 +181,41 @@ def plot_score_evolution(df: pd.DataFrame, symbol: str) -> Path | None:
     return out
 
 
-# ─── 5. Heatmap de correlações (top N por score) ──────────────────────────────
+# ─── 5. Evolução histórica de scores (top ETFs) ──────────────────────────────
+
+def plot_score_history(top_n: int = 10) -> Path | None:
+    """Linha temporal do score para os top_n ETFs desde início do histórico."""
+    if not SCORES_HIST.exists():
+        return None
+    hist = pd.read_csv(SCORES_HIST, parse_dates=["date"])
+    if hist.empty or "date" not in hist.columns or "score" not in hist.columns:
+        return None
+
+    latest = hist.groupby("etf")["score"].last()
+    top = latest.nlargest(top_n).index.tolist()
+    sub = hist[hist["etf"].isin(top)].sort_values("date")
+
+    fig, ax = plt.subplots(figsize=(13, 5))
+    cmap_colors = plt.cm.tab10.colors
+    for i, etf in enumerate(top):
+        s = sub[sub["etf"] == etf].set_index("date")["score"]
+        ax.plot(s.index, s.values, label=etf, linewidth=1.5,
+                color=cmap_colors[i % len(cmap_colors)])
+
+    ax.axhline(0.5, color="#ffffff33", linewidth=0.8, linestyle="--")
+    ax.set_ylim(0, 1)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+    ax.legend(facecolor="#1a1d2e", labelcolor=PALETTE["fg"],
+              framealpha=0.85, fontsize=8, ncol=2)
+    _dark(ax, f"Evolução do Score – top {top_n} ETFs")
+    plt.tight_layout()
+    out = REPORTS / "score_history.png"
+    plt.savefig(out, dpi=120, bbox_inches="tight")
+    plt.close()
+    return out
+
+
+# ─── 6. Heatmap de correlações (top N por score) ──────────────────────────────
 
 def plot_correlation_heatmap(cfg: dict, max_symbols: int = 25) -> Path | None:
     scores_path = REPORTS / "scores_latest.csv"
@@ -247,6 +282,10 @@ def main():
         p = plot_score_evolution(df, symbol)
         if p:
             generated.append(p)
+
+    p = plot_score_history()
+    if p:
+        generated.append(p)
 
     p = plot_correlation_heatmap(cfg)
     if p:
