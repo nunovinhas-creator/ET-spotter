@@ -1,9 +1,7 @@
 """
-Gera o relatório semanal: agrega dados da semana, calcula variações,
-produz HTML e envia por email com gráficos em anexo inline.
+Relatório semanal: variações semanais por ETF e por categoria, gráficos, email HTML.
 """
 
-import json
 import os
 import sys
 from datetime import datetime, timedelta
@@ -11,154 +9,204 @@ from pathlib import Path
 
 import pandas as pd
 
-CONFIG_PATH = Path("config/etfs.json")
-DATA_DAILY = Path("data/daily")
-REPORTS = Path("data/reports")
-
-# Importações locais
 sys.path.insert(0, str(Path(__file__).parent))
+from utils import load_config, get_etfs, get_category_map, category_summary
 from generate_charts import (
-    plot_scores_bar,
-    plot_trend,
-    plot_score_evolution,
-    plot_correlation_heatmap,
+    plot_scores_bar, plot_category_summary,
+    plot_trend, plot_score_evolution, plot_correlation_heatmap,
 )
 from send_email import send_email
 
-
-def load_config() -> dict:
-    with open(CONFIG_PATH) as f:
-        return json.load(f)
+DATA_DAILY = Path("data/daily")
+REPORTS    = Path("data/reports")
 
 
-def load_weekly_data(symbol: str, days: int = 7) -> pd.DataFrame | None:
-    path = DATA_DAILY / f"{symbol}.csv"
-    if not path.exists():
-        return None
-    df = pd.read_csv(path, index_col=0, parse_dates=True)
+def load_weekly_rows(cfg: dict, days: int = 7) -> pd.DataFrame:
+    cmap   = get_category_map(cfg)
     cutoff = pd.Timestamp.now("UTC").tz_convert(None) - timedelta(days=days)
-    return df[df.index >= cutoff] if not df.empty else df
+    rows   = []
 
-
-def build_weekly_table(cfg: dict) -> pd.DataFrame:
-    rows = []
-    for sym in cfg["etfs"]:
-        df = load_weekly_data(sym)
-        if df is None or df.empty or "score" not in df.columns:
+    for sym in get_etfs(cfg):
+        path = DATA_DAILY / f"{sym}.csv"
+        if not path.exists():
             continue
-        first = df.iloc[0]
-        last = df.iloc[-1]
+        df = pd.read_csv(path, index_col=0, parse_dates=True)
+        if df.empty or "score" not in df.columns:
+            continue
+        week = df[df.index >= cutoff]
+        if week.empty:
+            week = df
+
+        first, last = week.iloc[0], week.iloc[-1]
+        info = cmap.get(sym, {})
         rows.append({
-            "ETF": sym,
-            "Score Atual": round(last["score"], 3),
-            "Score Início Sem.": round(first["score"], 3),
-            "Δ Score": round(last["score"] - first["score"], 3),
-            "Ret. Semana": f"{last.get('ret_5d', 0):.2%}",
-            "Vol 30d": f"{last.get('vol_30', 0):.2%}",
-            "Trend": "↑" if last.get("trend_sma", 0) else "↓",
-            "MACD": "+" if last.get("macd_bullish", 0) else "−",
+            "ETF":            sym,
+            "Nome":           info.get("name", sym),
+            "Categoria":      info.get("category_name", "—"),
+            "Cor":            info.get("color", "#7c83fd"),
+            "Score Atual":    round(last.get("score", float("nan")), 3),
+            "Δ Score Sem.":   round((last.get("score", 0) or 0) - (first.get("score", 0) or 0), 3),
+            "Ret. Semana":    last.get("ret_5d",  0) or 0,
+            "Vol 30d":        last.get("vol_30",  0) or 0,
+            "Trend":          "↑" if last.get("trend_sma",    0) else "↓",
+            "MACD":           "+" if last.get("macd_bullish", 0) else "−",
+            "Drawdown":       round(last.get("drawdown", float("nan")), 4),
         })
+
     return pd.DataFrame(rows).sort_values("Score Atual", ascending=False)
 
 
-def df_to_html_table(df: pd.DataFrame) -> str:
-    style = (
-        "border-collapse:collapse;width:100%;font-family:monospace;font-size:13px"
-    )
-    th_style = "background:#1e2130;color:#7c83fd;padding:8px 12px;text-align:right"
-    td_style = "padding:6px 12px;border-bottom:1px solid #2a2d3e;color:#e8eaf6"
-
-    rows_html = ""
-    for _, row in df.iterrows():
-        delta = row["Δ Score"]
-        delta_color = "#4caf50" if delta >= 0 else "#f44336"
-        rows_html += "<tr>"
-        for col, val in row.items():
-            val_str = str(val)
-            color = delta_color if col == "Δ Score" else "#e8eaf6"
-            rows_html += f'<td style="{td_style};color:{color}">{val_str}</td>'
-        rows_html += "</tr>"
-
-    headers = "".join(f'<th style="{th_style}">{c}</th>' for c in df.columns)
-    return f'<table style="{style}"><thead><tr>{headers}</tr></thead><tbody>{rows_html}</tbody></table>'
+def _td(val, *, pct=False, delta=False, score=False) -> str:
+    s = "padding:5px 10px;border-bottom:1px solid #1e2130;text-align:right"
+    if pct:
+        color = "#4caf50" if val >= 0 else "#f44336"
+        text  = f"{val:.2%}"
+    elif delta:
+        color = "#4caf50" if val >= 0 else "#f44336"
+        text  = f"{val:+.3f}"
+    elif score:
+        color = "#4caf50" if float(val) >= 0.5 else "#f44336"
+        text  = str(val)
+    else:
+        color = "#e8eaf6"
+        text  = str(val)
+    return f'<td style="{s};color:{color}">{text}</td>'
 
 
-def build_html(table_html: str, top_n: list[dict], week_str: str, image_names: list[str]) -> str:
+def etf_table_html(df: pd.DataFrame) -> str:
+    cols = ["ETF", "Nome", "Categoria", "Score Atual", "Δ Score Sem.", "Ret. Semana", "Vol 30d", "Trend", "MACD"]
+    th = "background:#1e2130;color:#7c83fd;padding:6px 10px;text-align:right;font-size:12px"
+    headers = "".join(f'<th style="{th}">{c}</th>' for c in cols)
+    td_base = "padding:5px 10px;border-bottom:1px solid #1e2130"
+    rows = ""
+    for _, r in df.iterrows():
+        dot = f'<span style="color:{r["Cor"]};font-size:16px">●</span> '
+        rows += "<tr>"
+        for c in cols:
+            if c == "ETF":
+                rows += f'<td style="{td_base};color:#e8eaf6">{dot}{r["ETF"]}</td>'
+            elif c == "Nome":
+                rows += f'<td style="{td_base};color:#aaa;font-size:11px">{r["Nome"]}</td>'
+            elif c == "Categoria":
+                rows += f'<td style="{td_base};color:{r["Cor"]};font-size:11px;text-align:right">{r["Categoria"]}</td>'
+            elif c in ("Ret. Semana", "Vol 30d"):
+                rows += _td(r[c], pct=True)
+            elif c == "Δ Score Sem.":
+                rows += _td(r[c], delta=True)
+            elif c == "Score Atual":
+                rows += _td(r[c], score=True)
+            else:
+                rows += f'<td style="{td_base};color:#e8eaf6;text-align:right">{r[c]}</td>'
+        rows += "</tr>"
+    style = "border-collapse:collapse;width:100%;font-family:monospace;font-size:12px"
+    return f'<table style="{style}"><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>'
+
+
+def category_table_html(cats: list[dict]) -> str:
+    th = "background:#1e2130;color:#7c83fd;padding:6px 10px;text-align:right;font-size:12px"
+    cols = ["Categoria", "ETFs", "Score Médio", "Melhor", "Pior", "Ret. Média Semana"]
+    headers = "".join(f'<th style="{th}">{c}</th>' for c in cols)
+    td = "padding:5px 10px;border-bottom:1px solid #1e2130;text-align:right"
+    rows = ""
+    for c in cats:
+        sc = c["score_avg"]
+        rc = c["ret_avg"]
+        rows += (
+            f'<tr>'
+            f'<td style="{td};color:{c["color"]}">{c["name"]}</td>'
+            f'<td style="{td};color:#e8eaf6">{c["n"]}</td>'
+            f'<td style="{td};color:{"#4caf50" if sc>=0.5 else "#f44336"};font-weight:bold">{sc:.3f}</td>'
+            f'<td style="{td};color:#4caf50">{c["score_max"]:.3f}</td>'
+            f'<td style="{td};color:#f44336">{c["score_min"]:.3f}</td>'
+            f'<td style="{td};color:{"#4caf50" if rc>=0 else "#f44336"}">{rc:.2%}</td>'
+            f'</tr>'
+        )
+    style = "border-collapse:collapse;width:100%;font-family:monospace;font-size:12px"
+    return f'<table style="{style}"><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>'
+
+
+def build_html(df: pd.DataFrame, cats: list[dict], week_str: str,
+               cfg: dict, image_names: list[str]) -> str:
+    top_n    = cfg["email"]["top_n"]
+    top_rows = df.head(top_n)
+
     top_items = "".join(
-        f'<li><strong>{r["ETF"]}</strong> – Score {r["Score Atual"]:.3f}'
-        f' | Ret. {r["Ret. Semana"]} | Trend {r["Trend"]}</li>'
-        for r in top_n
+        f'<li><strong>{r["ETF"]}</strong> <span style="color:#888;font-size:11px">{r["Nome"]}</span>'
+        f' — Score {r["Score Atual"]} | Sem. {r["Ret. Semana"]:.2%} | {r["Trend"]} MACD {r["MACD"]}</li>'
+        for _, r in top_rows.iterrows()
     )
     images_html = "".join(
-        f'<p><img src="cid:{name}" style="max-width:700px;border-radius:8px"></p>'
-        for name in image_names
+        f'<p><img src="cid:{n}" style="max-width:720px;border-radius:8px;margin:8px 0"></p>'
+        for n in image_names
     )
+
     return f"""<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="background:#0f1117;color:#e8eaf6;font-family:Arial,sans-serif;padding:24px">
-  <h1 style="color:#7c83fd">ET-Spotter – Relatório Semanal</h1>
-  <p style="color:#aaa">Semana de {week_str} · gerado automaticamente</p>
-  <h2 style="color:#7c83fd">Top ETFs por Score</h2>
-  <ol style="line-height:1.8">{top_items}</ol>
-  <h2 style="color:#7c83fd">Tabela Completa</h2>
-  {table_html}
+<html><head><meta charset="utf-8"></head>
+<body style="background:#0f1117;color:#e8eaf6;font-family:Arial,sans-serif;padding:24px;max-width:800px">
+  <h1 style="color:#7c83fd;margin-bottom:4px">ET-Spotter – Relatório Semanal</h1>
+  <p style="color:#666;margin-top:0">Semana {week_str} · segunda 07h UTC</p>
+  <h2 style="color:#7c83fd">Resumo por Categoria</h2>
+  {category_table_html(cats)}
+  <h2 style="color:#7c83fd">Top {top_n} ETFs da Semana</h2>
+  <ol style="line-height:2">{top_items}</ol>
   <h2 style="color:#7c83fd">Gráficos</h2>
   {images_html}
-  <hr style="border-color:#2a2d3e;margin-top:32px">
-  <p style="color:#555;font-size:11px">ET-Spotter · GitHub Actions · dados via yfinance</p>
-</body>
-</html>"""
+  <h2 style="color:#7c83fd">Tabela Completa</h2>
+  {etf_table_html(df)}
+  <hr style="border-color:#1e2130;margin-top:32px">
+  <p style="color:#444;font-size:11px">ET-Spotter · GitHub Actions · dados via yfinance</p>
+</body></html>"""
 
 
 def main():
     cfg = load_config()
     REPORTS.mkdir(parents=True, exist_ok=True)
 
-    table_df = build_weekly_table(cfg)
-    if table_df.empty:
-        print("[SKIP] Sem dados suficientes para relatório semanal.")
+    df = load_weekly_rows(cfg)
+    if df.empty:
+        print("[SKIP] Sem dados para relatório semanal.")
         return
 
-    # Gerar gráficos
-    chart_paths: list[Path] = []
+    # Agrega por categoria usando colunas renomeadas
+    df_for_cats = df.rename(columns={"Score Atual": "score", "ETF": "etf", "Ret. Semana": "ret_24h"})
+    cats = category_summary(df_for_cats, cfg)
+
+    # Gráficos
+    chart_paths = []
     scores_path = REPORTS / "scores_latest.csv"
     if scores_path.exists():
         summary = pd.read_csv(scores_path)
-        chart_paths.append(plot_scores_bar(summary))
+        chart_paths.append(plot_scores_bar(summary, cfg))
+        p = plot_category_summary(summary, cfg)
+        if p:
+            chart_paths.append(p)
 
-    p_heatmap = plot_correlation_heatmap(cfg)
-    if p_heatmap:
-        chart_paths.append(p_heatmap)
+    p = plot_correlation_heatmap(cfg)
+    if p:
+        chart_paths.append(p)
 
-    top_etf = table_df.iloc[0]["ETF"]
-    df_top = pd.read_csv(DATA_DAILY / f"{top_etf}.csv", index_col=0, parse_dates=True)
-    chart_paths.append(plot_trend(df_top, top_etf))
-    p_evo = plot_score_evolution(df_top, top_etf)
-    if p_evo:
-        chart_paths.append(p_evo)
+    # Gráfico de tendência do top ETF
+    top_etf = df.iloc[0]["ETF"]
+    df_top  = pd.read_csv(DATA_DAILY / f"{top_etf}.csv", index_col=0, parse_dates=True)
+    chart_paths.append(plot_trend(df_top, top_etf, df.iloc[0]["Nome"]))
+    p = plot_score_evolution(df_top, top_etf)
+    if p:
+        chart_paths.append(p)
 
     chart_paths = [p for p in chart_paths if p and p.exists()]
+    week_str    = f"{(datetime.utcnow()-timedelta(days=7)).strftime('%d/%m')} – {datetime.utcnow().strftime('%d/%m/%Y')}"
+    html        = build_html(df, cats, week_str, cfg, [p.name for p in chart_paths])
 
-    week_str = f"{(datetime.utcnow() - timedelta(days=7)).strftime('%d/%m')} – {datetime.utcnow().strftime('%d/%m/%Y')}"
-    top_n = table_df.head(cfg["email"]["top_n"]).to_dict("records")
-    table_html = df_to_html_table(table_df)
-    image_names = [p.name for p in chart_paths]
-    html = build_html(table_html, top_n, week_str, image_names)
+    out = REPORTS / f"weekly_{datetime.utcnow().strftime('%Y%m%d')}.html"
+    out.write_text(html, encoding="utf-8")
+    print(f"[OK] {out.name}")
 
-    # Guardar HTML localmente
-    report_file = REPORTS / f"weekly_{datetime.utcnow().strftime('%Y%m%d')}.html"
-    report_file.write_text(html, encoding="utf-8")
-    print(f"[OK] Relatório HTML: {report_file}")
-
-    # Enviar email
-    email_to_env = os.getenv("EMAIL_TO", "")
-    if email_to_env:
-        to_list = [a.strip() for a in email_to_env.split(",")]
-        subject = f"ET-Spotter – Relatório {datetime.utcnow().strftime('%d %b %Y')}"
-        send_email(subject, html, to_list, images=chart_paths)
+    email_to = os.getenv("EMAIL_TO", "")
+    if email_to:
+        subject = f"ET-Spotter – Relatório Semanal {datetime.utcnow().strftime('%d %b %Y')}"
+        send_email(subject, html, [a.strip() for a in email_to.split(",")], images=chart_paths)
     else:
-        print("[EMAIL] EMAIL_TO não definido – email não enviado.")
+        print("[EMAIL] EMAIL_TO não definido.")
 
 
 if __name__ == "__main__":
