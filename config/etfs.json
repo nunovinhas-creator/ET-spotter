@@ -212,6 +212,7 @@
   "params": {
     "lookback_days": 180,
     "vol_window": 30,
+    "top_n": 10,
     "alert_thresholds": {
       "ret_1h_drop":  -0.02,
       "ret_24h_drop": -0.03,
