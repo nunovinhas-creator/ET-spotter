@@ -53,7 +53,7 @@ jobs:
         run: |
           git config --global user.name "et-spotter-bot"
           git config --global user.email "bot@et-spotter"
-          git add data/
+          git add data/ docs/
           git diff --cached --quiet || git commit -m "chore: hourly data update $(date -u '+%Y-%m-%d %H:%M') UTC"
           git pull --rebase origin ${{ github.ref_name }}
           git push
