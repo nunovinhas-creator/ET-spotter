@@ -31,7 +31,6 @@
         {"ticker": "XLY",  "name": "Consumer Discretionary"},
         {"ticker": "XLP",  "name": "Consumer Staples"},
         {"ticker": "XLU",  "name": "Utilities"},
-        {"ticker": "XLRE", "name": "Real Estate"},
         {"ticker": "XLB",  "name": "Materials"},
         {"ticker": "XLC",  "name": "Communication Services"}
       ]
@@ -90,37 +89,6 @@
       ]
     },
     {
-      "id": "bonds_govt",
-      "name": "Obrigações – Governo",
-      "color": "#29b6f6",
-      "etfs": [
-        {"ticker": "TLT",  "name": "20+ Year Treasury (iShares)"},
-        {"ticker": "IEF",  "name": "7-10 Year Treasury (iShares)"},
-        {"ticker": "SHY",  "name": "1-3 Year Treasury (iShares)"},
-        {"ticker": "GOVT", "name": "US Treasury Bond (iShares)"},
-        {"ticker": "VGIT", "name": "Intermediate Treasury (Vanguard)"},
-        {"ticker": "TIP",  "name": "TIPS Inflation Protected (iShares)"},
-        {"ticker": "SGOV", "name": "0-3 Month Treasury (iShares)"},
-        {"ticker": "BIL",  "name": "1-3 Month T-Bill (SPDR)"}
-      ]
-    },
-    {
-      "id": "bonds_credit",
-      "name": "Obrigações – Crédito",
-      "color": "#ffd54f",
-      "etfs": [
-        {"ticker": "AGG",  "name": "US Aggregate Bond (iShares)"},
-        {"ticker": "BND",  "name": "Total Bond Market (Vanguard)"},
-        {"ticker": "LQD",  "name": "Investment Grade Corp (iShares)"},
-        {"ticker": "VCIT", "name": "Intermediate Corp (Vanguard)"},
-        {"ticker": "VCSH", "name": "Short-Term Corp (Vanguard)"},
-        {"ticker": "HYG",  "name": "High Yield Corp (iShares)"},
-        {"ticker": "JNK",  "name": "High Yield (SPDR)"},
-        {"ticker": "MUB",  "name": "Municipal Bond (iShares)"},
-        {"ticker": "EMB",  "name": "Emerging Markets Bond (iShares)"}
-      ]
-    },
-    {
       "id": "commodities",
       "name": "Commodities",
       "color": "#ffb300",
@@ -138,26 +106,10 @@
       ]
     },
     {
-      "id": "real_estate",
-      "name": "Imobiliário (REITs)",
-      "color": "#ec407a",
-      "etfs": [
-        {"ticker": "VNQ",  "name": "Real Estate (Vanguard)"},
-        {"ticker": "IYR",  "name": "US Real Estate (iShares)"},
-        {"ticker": "REM",  "name": "Mortgage REITs (iShares)"}
-      ]
-    },
-    {
       "id": "factor",
       "name": "Factor / Smart Beta",
       "color": "#66bb6a",
       "etfs": [
-        {"ticker": "SCHD", "name": "Dividend Quality (Schwab)"},
-        {"ticker": "VIG",  "name": "Dividend Appreciation (Vanguard)"},
-        {"ticker": "DVY",  "name": "High Dividend (iShares)"},
-        {"ticker": "HDV",  "name": "Core High Dividend (iShares)"},
-        {"ticker": "DGRW", "name": "Dividend Growth (WisdomTree)"},
-        {"ticker": "NOBL", "name": "Dividend Aristocrats (ProShares)"},
         {"ticker": "MTUM", "name": "Momentum (iShares)"},
         {"ticker": "VLUE", "name": "Value (iShares)"},
         {"ticker": "QUAL", "name": "Quality (iShares)"},
@@ -200,9 +152,7 @@
         {"ticker": "VXUS", "name": "Total International (Vanguard)"},
         {"ticker": "ACWI", "name": "All Country World (iShares)"},
         {"ticker": "ACWX", "name": "All Country ex-US (iShares)"},
-        {"ticker": "VT",   "name": "Total World (Vanguard)"},
-        {"ticker": "AOR",  "name": "Growth Allocation (iShares)"},
-        {"ticker": "AOA",  "name": "Aggressive Allocation (iShares)"}
+        {"ticker": "VT",   "name": "Total World (Vanguard)"}
       ]
     }
   ],
