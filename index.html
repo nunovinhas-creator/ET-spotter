@@ -1,1 +1,116 @@
-placeholder - will be overwritten by Actions
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="300">
+  <title>ET-Spotter Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  
+<style>
+:root {
+  --bg: #0f1117; --card: #0d1021; --border: #1e2130; --text: #e8eaf6;
+  --muted: #666; --green: #4caf50; --light-green: #8bc34a; --yellow: #ffd54f;
+  --red: #f44336; --orange: #ff7043; --blue: #7c83fd; --blue-light: #29b6f6;
+}
+*  { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text);
+       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+       font-size: 13px; }
+header { background: #0a0c14; border-bottom: 1px solid var(--border);
+         padding: 14px 24px; position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 1400px; margin: 0 auto; display: flex;
+                justify-content: space-between; align-items: center; }
+.logo   { color: var(--blue); font-size: 20px; font-weight: bold; }
+.subtitle { color: var(--muted); font-size: 11px; }
+.main   { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+                gap: 12px; margin-bottom: 20px; }
+.card { background: var(--card); border-radius: 8px; padding: 16px; }
+.section { background: var(--card); border-radius: 8px; padding: 20px;
+           margin-bottom: 16px; }
+.section-title { color: var(--blue); font-size: 15px; margin-bottom: 14px; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 10px; }
+.cat-tile { padding: 12px; border-radius: 4px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tab-btn { background: #0a0c14; border: 1px solid var(--border); color: var(--muted);
+           padding: 4px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.tab-btn.active { color: var(--text); border-color: var(--blue); }
+footer { text-align: center; color: var(--muted); font-size: 10px;
+         padding: 20px 0 32px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="logo">ET-Spotter</div>
+      <div class="subtitle">Dashboard de monitorização técnica · 121 ETFs</div>
+    </div>
+    <div style="text-align:right">
+      <div style="color:var(--text);font-size:13px">SPY 745.64 &nbsp;·&nbsp; SMA200 676.25 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:bold">BULL</span></div>
+      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 26/05/2026  13:12 UTC</div>
+    </div>
+  </div>
+</header><div class="main">
+<section class="summary-grid">
+  
+        <div class="card" style="border-top:3px solid var(--green)">
+          <div style="font-size:28px;font-weight:bold;color:var(--green)">0</div>
+          <div style="color:var(--text);font-size:12px;margin-top:4px">FORTE COMPRA</div>
+          
+        </div>
+  
+        <div class="card" style="border-top:3px solid var(--light-green)">
+          <div style="font-size:28px;font-weight:bold;color:var(--light-green)">10</div>
+          <div style="color:var(--text);font-size:12px;margin-top:4px">COMPRA</div>
+          
+        </div>
+  
+        <div class="card" style="border-top:3px solid var(--yellow)">
+          <div style="font-size:28px;font-weight:bold;color:var(--yellow)">0</div>
+          <div style="color:var(--text);font-size:12px;margin-top:4px">POTENCIAL</div>
+          
+        </div>
+  
+        <div class="card" style="border-top:3px solid var(--blue)">
+          <div style="font-size:28px;font-weight:bold;color:var(--blue)">55</div>
+          <div style="color:var(--text);font-size:12px;margin-top:4px">Score > 0.50</div>
+          <div style="color:var(--muted);font-size:10px;margin-top:2px">de 120 ETFs</div>
+        </div>
+  
+        <div class="card" style="border-top:3px solid var(--blue-light)">
+          <div style="font-size:28px;font-weight:bold;color:var(--blue-light)">0.520</div>
+          <div style="color:var(--text);font-size:12px;margin-top:4px">Score médio</div>
+          
+        </div>
+</section>
+<section class="section">
+  <h2 class="section-title">Sinais de Compra</h2>
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
+    Confluência de indicadores técnicos · entrada não comprometida
+  </p>
+  
+        <div style="background:#1e2f1a;border-left:4px solid var(--light-green);padding:12px 16px;margin:6px 0;border-radius:4px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="color:var(--text);font-size:17px;font-weight:bold">USO</span>
+            <span style="color:var(--muted);font-size:11px">US Oil Fund</span>
+            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">COMPRA</span>
+            <span style="color:#ffb300;font-size:10px">● Commodities</span>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
+            <span><span style="color:var(--muted)">Score</span> <b style="color:var(--light-green)">0.797</b> </span>
+            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+74.2%</b></span>
+            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-4.9%</b></span>
+            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">52</b></span>
+            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">20</b></span>
+            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">-7.9%</b></span>
+            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
+          </div>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência ascendente confirmada (sma20>sma50). entrada não comprometida (ret. semanal -4.9%). rsi em zona óptima de entrada (52).</div>
+        </div>
+</section>
+<footer>ET-Spotter · dados via yfinance · não constitui aconselhamento financeiro</footer>
+</body>
+</html>
