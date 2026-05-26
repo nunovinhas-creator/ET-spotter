@@ -35,7 +35,7 @@ def load_history() -> pd.DataFrame:
     return hist
 
 
-def load_spy_daily() -> pd.Series:
+def load_spy_daily() -> tuple[pd.Series, pd.Series]:
     """Carrega série de preços de fecho do SPY com SMA200 para regime."""
     path = DATA_DAILY / "SPY.csv"
     if not path.exists():

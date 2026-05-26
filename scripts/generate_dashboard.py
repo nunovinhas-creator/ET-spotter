@@ -119,7 +119,7 @@ def _num(v, digits=3) -> str:
 
 # ── Sections ──────────────────────────────────────────────────────────────────
 
-def header_html(spy_close, spy_sma200, spy_regime, ts) -> str:
+def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     regime_color = "var(--green)" if spy_regime == "BULL" else ("var(--red)" if spy_regime == "BEAR" else "var(--muted)")
     spy_str = f"SPY {spy_close:.2f}" if spy_close else "SPY —"
     sma_str = f"SMA200 {spy_sma200:.2f}" if spy_sma200 else ""
@@ -132,7 +132,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts) -> str:
   <div class="header-inner">
     <div>
       <div class="logo">ET-Spotter</div>
-      <div class="subtitle">Dashboard de monitorização técnica · 121 ETFs</div>
+      <div class="subtitle">Dashboard de monitorização técnica · {n_etfs} ETFs</div>
     </div>
     <div style="text-align:right">
       <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
@@ -262,7 +262,7 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
         rs_pos   = int(r.get("rs_positive",    0) or 0)
         above200 = int(r.get("above_sma200",   0) or 0)
         pct_raw  = r.get("score_pct", None)
-        pct      = float(pct_raw) if pct_raw not in (None, "", "nan", float("nan")) and str(pct_raw) != "nan" else None
+        pct      = float(pct_raw) if pct_raw is not None and str(pct_raw) not in ("", "nan") else None
         pct_str  = f"P{pct*100:.0f}" if pct is not None else "—"
 
         rows_js.append({
@@ -582,7 +582,7 @@ def generate_dashboard(cfg: dict) -> None:
     signals = build_buy_signals(data["rows_raw"], top_n=10)
 
     sections = [
-        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts),
+        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
         '<div class="main">',
         summary_cards_html(signals, data["scores_df"]),
         buy_signals_section(signals),

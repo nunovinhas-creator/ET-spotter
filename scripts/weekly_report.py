@@ -287,7 +287,7 @@ def build_html(rows_raw, df_display, cats, week_str, cfg, image_names) -> str:
              padding:24px 28px;max-width:820px;margin:0 auto">
 
   <h1 style="color:#7c83fd;margin-bottom:2px;font-size:22px">ET-Spotter – Análise Semanal</h1>
-  <p style="color:#555;margin-top:0;font-size:13px">Semana {week_str} · 123 ETFs · sexta-feira</p>
+  <p style="color:#555;margin-top:0;font-size:13px">Semana {week_str} · {len(get_etfs(cfg))} ETFs · sexta-feira</p>
 
   <!-- SINAIS DE COMPRA -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">

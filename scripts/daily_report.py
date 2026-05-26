@@ -300,7 +300,7 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
              padding:24px 28px;max-width:820px;margin:0 auto">
 
   <h1 style="color:#7c83fd;margin-bottom:2px;font-size:22px">ET-Spotter</h1>
-  <p style="color:#555;margin-top:0;font-size:13px">{date_str} · Análise técnica diária · 123 ETFs</p>
+  <p style="color:#555;margin-top:0;font-size:13px">{date_str} · Análise técnica diária · {len(get_etfs(cfg))} ETFs</p>
 
   <!-- SINAIS DE COMPRA -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">
