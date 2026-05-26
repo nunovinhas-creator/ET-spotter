@@ -2,8 +2,12 @@ name: Daily Report
 
 on:
   schedule:
-    - cron: "30 19 * * *"   # 19:30 UTC (após o hourly das 19:00)
+    - cron: "0 22 * * *"   # 22:00 UTC — após fecho do mercado US (21:00 UTC), dados EOD fiáveis
   workflow_dispatch:
+
+concurrency:
+  group: et-spotter-data
+  cancel-in-progress: false
 
 jobs:
   daily:
@@ -36,6 +40,9 @@ jobs:
 
       - name: Generate charts
         run: python scripts/generate_charts.py
+
+      - name: Generate dashboard
+        run: python scripts/generate_dashboard.py
 
       - name: Send daily report
         env:

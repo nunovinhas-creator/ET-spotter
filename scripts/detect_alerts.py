@@ -71,6 +71,7 @@ def load_technicals(symbol: str) -> dict:
             "adx":          float(last.get("adx",         0) or 0),
             "rs_positive":  int(last.get("rs_positive",   0) or 0),
             "rs_mom_21":    float(last.get("rs_mom_21",   0) or 0),
+            "rs_mom_63":    float(last.get("rs_mom_63",   0) or 0),
             "ret_1d":       float(last.get("ret_1d",      0) or 0),
             "ret_5d":       float(last.get("ret_5d",      0) or 0),
             "ret_21d":      float(last.get("ret_21d",     0) or 0),
@@ -196,6 +197,28 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
                 )
             }
 
+    elif alert_type == "RECUPERAÇÃO SCORE":
+        return {
+            "verdict": "MONITORIZAR",
+            "color": "#4caf50",
+            "explanation": (
+                f"Score recuperou de zona de risco para {score:.3f}. "
+                f"Confirmar com 2+ sessões adicionais acima de 0.48 antes de entrar. "
+                f"RSI ({rsi:.0f}) e MACD devem confirmar direcção."
+            )
+        }
+
+    elif alert_type == "RECUPERAÇÃO SMA200":
+        return {
+            "verdict": "MONITORIZAR",
+            "color": "#4caf50",
+            "explanation": (
+                f"Preço recuperou acima da SMA200 — possível fim de tendência baixista. "
+                f"RSI ({rsi:.0f}). Aguardar 2-3 fechos acima da SMA200 para confirmar. "
+                f"Volume acima da média é sinal de convicção na recuperação."
+            )
+        }
+
     else:  # QUEDA HORÁRIA
         if score >= 0.55 and rsi < 60 and drawdown > -0.10:
             return {
@@ -231,6 +254,10 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
 # ── Detecção de alertas ───────────────────────────────────────────────────────
 
 def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
+    # Apenas durante horas de mercado US: 13:00-22:00 UTC (cobre EST e EDT)
+    utc_hour = datetime.utcnow().hour
+    if not (13 <= utc_hour <= 22):
+        return []
     path = DATA_HOURLY / f"{symbol}.csv"
     if not path.exists():
         return []
@@ -251,23 +278,27 @@ def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
     if not path.exists():
         return []
     df = pd.read_csv(path, index_col=0, parse_dates=True)
-    if df.empty or len(df) < 2:
+    if df.empty or len(df) < 3:
         return []
 
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    last  = df.iloc[-1]
+    prev  = df.iloc[-2]
+    prev2 = df.iloc[-3]
     tech = load_technicals(symbol)
 
-    close_now   = float(last.get("close",  0) or 0)
-    sma200_now  = float(last.get("sma200", 0) or 0)
-    close_prev  = float(prev.get("close",  0) or 0)
-    sma200_prev = float(prev.get("sma200", 0) or 0)
+    close_now    = float(last.get("close",  0) or 0)
+    sma200_now   = float(last.get("sma200", 0) or 0)
+    close_prev   = float(prev.get("close",  0) or 0)
+    sma200_prev  = float(prev.get("sma200", 0) or 0)
+    close_prev2  = float(prev2.get("close",  0) or 0)
+    sma200_prev2 = float(prev2.get("sma200", 0) or 0)
     score_now   = tech.get("score",      scores.get(symbol, {}).get("score", 0))
     score_prev  = tech.get("score_prev", score_now)
 
-    if (sma200_now > 0 and sma200_prev > 0
-            and close_prev >= sma200_prev
-            and close_now  <  sma200_now):
+    if (sma200_now > 0 and sma200_prev > 0 and sma200_prev2 > 0
+            and close_prev2 >= sma200_prev2          # T-2: acima
+            and close_prev  <  sma200_prev           # T-1: primeiro break
+            and close_now   <  sma200_now):          # T: confirmação (2.º fecho)
         alerts.append({
             "type": "BREAK SMA200", "symbol": symbol,
             "close": close_now, "sma200": sma200_now,
@@ -287,6 +318,26 @@ def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
             "type": "QUEDA DE SCORE", "symbol": symbol,
             "score": score_now, "score_prev": score_prev,
             "delta": score_prev - score_now,
+            "tech": tech,
+        })
+
+    # ── Recuperação: score volta acima de 0.48 após ter estado abaixo de 0.40 ──
+    if score_prev < SCORE_DANGER and score_now >= 0.48:
+        alerts.append({
+            "type": "RECUPERAÇÃO SCORE", "symbol": symbol,
+            "score": score_now, "score_prev": score_prev,
+            "delta": score_now - score_prev,
+            "tech": tech,
+        })
+
+    # ── Recuperação SMA200: preço voltou acima após break confirmado ───────────
+    if (sma200_now > 0 and sma200_prev > 0
+            and close_prev < sma200_prev
+            and close_now >= sma200_now):
+        alerts.append({
+            "type": "RECUPERAÇÃO SMA200", "symbol": symbol,
+            "close": close_now, "sma200": sma200_now,
+            "pct_above": (close_now - sma200_now) / sma200_now,
             "tech": tech,
         })
 
@@ -346,12 +397,15 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
     ts = datetime.now().strftime("%d/%m/%Y  %H:%M")
     n  = len(all_alerts)
 
-    type_order = {"BREAK SMA200": 0, "DETERIORAÇÃO": 1, "QUEDA DE SCORE": 2, "QUEDA HORÁRIA": 3}
+    type_order = {"BREAK SMA200": 0, "DETERIORAÇÃO": 1, "QUEDA DE SCORE": 2, "QUEDA HORÁRIA": 3,
+                  "RECUPERAÇÃO SCORE": 4, "RECUPERAÇÃO SMA200": 5}
     type_color = {
-        "BREAK SMA200":  ("#f44336", "#2a1010"),
-        "DETERIORAÇÃO":  ("#ff7043", "#2a1508"),
-        "QUEDA DE SCORE":("#ffd54f", "#2a2510"),
-        "QUEDA HORÁRIA": ("#ef5350", "#2a1010"),
+        "BREAK SMA200":       ("#f44336", "#2a1010"),
+        "DETERIORAÇÃO":       ("#ff7043", "#2a1508"),
+        "QUEDA DE SCORE":     ("#ffd54f", "#2a2510"),
+        "QUEDA HORÁRIA":      ("#ef5350", "#2a1010"),
+        "RECUPERAÇÃO SCORE":  ("#4caf50", "#0d1f14"),
+        "RECUPERAÇÃO SMA200": ("#29b6f6", "#0d1520"),
     }
     all_alerts.sort(key=lambda x: type_order.get(x["type"], 9))
 
@@ -396,6 +450,23 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
                 f'Score cruzou abaixo de {SCORE_DANGER}: '
                 f'<b style="color:{clr}">{a["score"]:.3f}</b> '
                 f'(era {a["score_prev"]:.3f}){pct_str}'
+            )
+        elif t == "QUEDA DE SCORE":
+            event_detail = (
+                f'Score caiu <b style="color:{clr}">−{a["delta"]:.3f}</b> '
+                f'numa sessão: {a["score_prev"]:.3f} → {a["score"]:.3f}'
+            )
+        elif t == "RECUPERAÇÃO SCORE":
+            event_detail = (
+                f'Score recuperou: {a["score_prev"]:.3f} → '
+                f'<b style="color:{clr}">{a["score"]:.3f}</b> '
+                f'(+{a["delta"]:.3f})'
+            )
+        elif t == "RECUPERAÇÃO SMA200":
+            event_detail = (
+                f'Preço <b style="color:{clr}">{a["close"]:.2f}</b> voltou acima '
+                f'da SMA200 ({a["sma200"]:.2f}) — '
+                f'<span style="color:{clr}">+{a["pct_above"]:.2%} acima</span>'
             )
         else:
             event_detail = (

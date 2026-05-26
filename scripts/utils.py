@@ -93,7 +93,7 @@ def category_summary(scores_df, cfg: dict) -> list[dict]:
 def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
                        rsi: float, rs_positive: int, ret_63d: float,
                        delta_score: float, drawdown: float,
-                       ret_5d: float = 0.0) -> dict:
+                       ret_5d: float = 0.0, vol_21: float = 0.0) -> dict:
     """
     Conta confluência de 7 sinais técnicos e devolve nível de convicção.
 
@@ -123,7 +123,14 @@ def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
     if drawdown > -0.08:                    signals += 1
 
     # Caps: RSI sobrecomprado ou movimento semanal excessivo → entrada tardia
-    late_entry = rsi_val > 68 or ret5 > 0.07
+    # Threshold adaptado à volatilidade: 2σ do movimento esperado em 5 dias
+    # Floor 4%, cap 10% para evitar thresholds absurdos em ETFs extremos
+    if vol_21 > 0:
+        expected_5d = vol_21 * (5 / 252) ** 0.5
+        vol_threshold = max(0.04, min(0.10, 2.0 * expected_5d))
+    else:
+        vol_threshold = 0.07
+    late_entry = rsi_val > 68 or ret5 > vol_threshold
 
     if not late_entry and score >= 0.62 and signals >= 6:
         return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals}
@@ -166,7 +173,7 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
         parts.append(f"RSI fraco ({rsi_val:.0f}) — confirmar reversão antes de entrar")
 
     if rs_positive:
-        parts.append("força relativa positiva vs SPY (últimos 21 dias)")
+        parts.append("força relativa positiva vs SPY (últimos 63 dias)")
 
     if (ret_63d or 0) > 0.08:
         parts.append(f"momentum 3M sólido ({ret_63d:.1%})")
@@ -202,7 +209,7 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
             r["score"], r["trend_sma"], r["macd_bullish"],
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("ret_63d", 0),
             r.get("delta_score", 0), r.get("drawdown", -0.5),
-            r.get("ret_5d", 0),
+            r.get("ret_5d", 0), r.get("vol_21", 0),
         )
         if conv["level"] is None:
             continue

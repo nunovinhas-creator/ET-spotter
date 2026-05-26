@@ -84,17 +84,95 @@ def fetch_daily(symbol: str, period: str = "2y", interval: str = "1d") -> pd.Dat
     return df
 
 
+def fetch_all_batch(symbols: list[str], period: str = "2y") -> tuple[dict, list[str]]:
+    """
+    Descarrega todos os símbolos numa única chamada yf.download().
+    Mais eficiente e menos sujeito a throttling que chamadas individuais.
+    Devolve (resultados_ok, lista_de_falhas).
+    """
+    raw = yf.download(
+        tickers=symbols,
+        period=period,
+        interval="1d",
+        auto_adjust=True,
+        group_by="ticker",
+        progress=False,
+        threads=True,
+    )
+
+    results: dict[str, pd.DataFrame] = {}
+    failed:  list[str]               = []
+
+    for symbol in symbols:
+        try:
+            # MultiIndex: raw[SYMBOL][OHLCV] quando group_by="ticker" e n>1
+            if len(symbols) == 1:
+                df = raw.copy()
+            else:
+                if symbol not in raw.columns.get_level_values(0):
+                    failed.append(symbol)
+                    continue
+                df = raw[symbol].copy()
+
+            if df.empty or df.dropna(how="all").empty:
+                failed.append(symbol)
+                continue
+
+            if df.index.tz is not None:
+                df.index = df.index.tz_convert(None)
+            df.columns = [c.lower() for c in df.columns]
+            cols = [c for c in ["open", "high", "low", "close", "volume"] if c in df.columns]
+            df = df[cols].dropna(subset=["close"])
+
+            if df.empty:
+                failed.append(symbol)
+                continue
+
+            df = validate_splits(df, symbol)
+            results[symbol] = df
+        except Exception as e:
+            failed.append(symbol)
+            print(f"[ERRO batch] {symbol}: {e}", file=sys.stderr)
+
+    return results, failed
+
+
 def main():
     cfg = load_config()
     DATA_DAILY.mkdir(parents=True, exist_ok=True)
 
-    for symbol in get_all_symbols(cfg):
-        try:
-            df = fetch_daily(symbol)
-            df.to_csv(DATA_DAILY / f"{symbol}.csv")
-            print(f"[OK] {symbol} ({len(df)} registos)")
-        except Exception as e:
-            print(f"[ERRO] {symbol}: {e}", file=sys.stderr)
+    symbols = get_all_symbols(cfg)
+    print(f"[INFO] A descarregar {len(symbols)} símbolos via batch download...")
+
+    results, failed = fetch_all_batch(symbols)
+
+    # Fallback individual para falhas do batch
+    if failed:
+        print(f"[WARN] {len(failed)} símbolo(s) falharam no batch, tentando individualmente: {', '.join(failed)}")
+        retry_failed = []
+        for symbol in failed:
+            try:
+                df = fetch_daily(symbol)
+                results[symbol] = df
+                print(f"[OK fallback] {symbol} ({len(df)} registos)")
+            except Exception as e:
+                retry_failed.append(symbol)
+                print(f"[ERRO] {symbol}: {e}", file=sys.stderr)
+        failed = retry_failed
+
+    # Persiste resultados
+    ok_count = 0
+    for symbol, df in results.items():
+        df.to_csv(DATA_DAILY / f"{symbol}.csv")
+        print(f"[OK] {symbol} ({len(df)} registos)")
+        ok_count += 1
+
+    # Log estruturado de falhas
+    if failed:
+        print(f"\n[SUMÁRIO] {ok_count}/{len(symbols)} símbolos descarregados com sucesso.")
+        print(f"[FALHAS]  {len(failed)} símbolo(s) sem dados: {', '.join(sorted(failed))}", file=sys.stderr)
+    else:
+        print(f"\n[SUMÁRIO] {ok_count}/{len(symbols)} símbolos descarregados — sem falhas.")
 
 
 if __name__ == "__main__":

@@ -34,6 +34,14 @@ def sigmoid(z: pd.Series) -> pd.Series:
     return 1 / (1 + np.exp(-z.clip(-6, 6)))
 
 
+def winsorize(s: pd.Series, n_sigma: float = 2.5) -> pd.Series:
+    """Limita outliers a ±2.5σ antes do z-score cross-seccional."""
+    mean, std = s.mean(), s.std()
+    if std < 1e-10:
+        return s
+    return s.clip(mean - n_sigma * std, mean + n_sigma * std)
+
+
 def build_snapshot(cfg: dict) -> pd.DataFrame:
     """Carrega último registo de cada ETF e devolve DataFrame cross-sectional."""
     etfs   = get_etfs(cfg)
@@ -62,6 +70,8 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
             "adx":          float(last.get("adx",         np.nan) or np.nan),
             "rs_positive":  int(last.get("rs_positive",   0) or 0),
             "rs_mom_21":    float(last.get("rs_mom_21",   np.nan) or np.nan),
+            "rs_mom_63":    float(last.get("rs_mom_63",    np.nan) or np.nan),
+            "calmar_63":    float(last.get("calmar_63",    np.nan) or np.nan),
             "trend_sma":    int(last.get("trend_sma",     0) or 0),
             "macd_bullish": int(last.get("macd_bullish",  0) or 0),
             "above_sma200": int(last.get("above_sma200",  0) or 0),
@@ -79,9 +89,9 @@ def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
     snap = snap.copy()
 
     # ── Momentum ──────────────────────────────────────────────────────────────
-    ret21  = snap["ret_21d"].fillna(0)
-    ret63  = snap["ret_63d"].fillna(0)
-    ret126 = snap["ret_126d"].fillna(0)
+    ret21  = winsorize(snap["ret_21d"].fillna(0))
+    ret63  = winsorize(snap["ret_63d"].fillna(0))
+    ret126 = winsorize(snap["ret_126d"].fillna(0))
     momentum = sigmoid(0.2 * cs_z(ret21) + 0.4 * cs_z(ret63) + 0.4 * cs_z(ret126))
 
     # ── Trend ─────────────────────────────────────────────────────────────────
@@ -94,7 +104,9 @@ def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
     ) / 4.0
 
     # ── Risk ──────────────────────────────────────────────────────────────────
-    sharpe_z  = sigmoid(cs_z(snap["sharpe_63"].fillna(0)))
+    # Usa calmar_63 se disponível, senão sharpe_63 (calmar mais estável com n=63)
+    risk_series = snap["calmar_63"] if "calmar_63" in snap.columns else snap["sharpe_63"]
+    sharpe_z  = sigmoid(cs_z(winsorize(risk_series.fillna(0))))
     adx_ok    = (snap["adx"] > 20).astype(float).fillna(0)
     dd_factor = (1 + snap["drawdown"].clip(lower=-1, upper=0)).fillna(0.9)
     risk = 0.4 * sharpe_z + 0.3 * adx_ok + 0.3 * dd_factor
@@ -134,8 +146,8 @@ def persist_scores(snap: pd.DataFrame) -> None:
 
     cols = [
         "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d",
-        "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21",
-        "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score", "score_pct",
+        "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21", "rs_mom_63",
+        "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score", "score_pct",
     ]
     out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
     out.to_csv(REPORTS / "scores_latest.csv", index=False)

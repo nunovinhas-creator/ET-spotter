@@ -5,6 +5,10 @@ on:
     - cron: "15 * * * *"   # 15 minutos depois do hourly, já com dados atualizados
   workflow_dispatch:
 
+concurrency:
+  group: et-spotter-alerts
+  cancel-in-progress: true
+
 jobs:
   alerts:
     runs-on: ubuntu-latest

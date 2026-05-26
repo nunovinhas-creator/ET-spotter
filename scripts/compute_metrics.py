@@ -10,7 +10,8 @@ Métricas calculadas:
   - Volatilidade anualizada: vol_21
   - Sharpe 63 dias
   - Drawdown
-  - Força relativa vs SPY: rs_ratio, rs_mom_21, rs_positive
+  - Força relativa vs SPY: rs_ratio, rs_mom_21, rs_mom_63, rs_positive
+  - Calmar 63d: retorno anualizado / max drawdown 63d
 """
 
 import sys
@@ -133,16 +134,26 @@ def compute_metrics(df: pd.DataFrame, spy_close: pd.Series = None) -> pd.DataFra
     # ── Drawdown ───────────────────────────────────────────────────────────────
     df["drawdown"] = (close / close.cummax()) - 1
 
+    # ── Calmar 63d: retorno anualizado / max drawdown 63d ─────────────────────
+    # Mais estável que Sharpe com amostras curtas (SE de Sharpe com n=63 é ~0.13)
+    rolling_high_63 = close.rolling(63).max()
+    dd_daily_63     = (close - rolling_high_63) / rolling_high_63  # ≤ 0
+    max_dd_63       = dd_daily_63.rolling(63).min()                 # pior drawdown
+    ann_ret_63      = close.pct_change(63) * (252 / 63)
+    df["calmar_63"] = (ann_ret_63 / (-max_dd_63 + 1e-10)).clip(-10, 10)
+
     # ── Força relativa vs SPY ─────────────────────────────────────────────────
     if spy_close is not None and not spy_close.empty:
         spy_aligned = spy_close.reindex(df.index).ffill()
         rs_ratio        = close / spy_aligned.replace(0, np.nan)
-        df["rs_ratio"]  = rs_ratio
-        df["rs_mom_21"] = rs_ratio.pct_change(21)
-        df["rs_positive"] = (df["rs_mom_21"] > 0).astype(int)
+        df["rs_ratio"]    = rs_ratio
+        df["rs_mom_21"]   = rs_ratio.pct_change(21)
+        df["rs_mom_63"]   = rs_ratio.pct_change(63)
+        df["rs_positive"] = (df["rs_mom_63"] > 0).astype(int)
     else:
         df["rs_ratio"]    = np.nan
         df["rs_mom_21"]   = np.nan
+        df["rs_mom_63"]   = np.nan
         df["rs_positive"] = 0
 
     return df
