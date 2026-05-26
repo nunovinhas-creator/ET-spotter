@@ -612,7 +612,14 @@ def generate_dashboard(cfg: dict) -> None:
     REPORTS.mkdir(parents=True, exist_ok=True)
     out = REPORTS / "dashboard.html"
     out.write_text(html, encoding="utf-8")
+
+    # Copia para docs/index.html → servido via GitHub Pages
+    docs = Path("docs")
+    docs.mkdir(parents=True, exist_ok=True)
+    (docs / "index.html").write_text(html, encoding="utf-8")
+
     print(f"[OK] Dashboard gerado: {out}  ({len(html)//1024} KB)")
+    print(f"[OK] GitHub Pages:     docs/index.html")
 
 
 def main():
