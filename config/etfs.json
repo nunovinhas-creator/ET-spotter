@@ -6,50 +6,39 @@
       "name": "EUA – Mercado Largo",
       "color": "#7c83fd",
       "etfs": [
-        {"ticker": "IVV",  "name": "S&P 500 (iShares Core)"},
-        {"ticker": "VOO",  "name": "S&P 500 (Vanguard)"},
-        {"ticker": "QQQ",  "name": "Nasdaq 100 (Invesco)"},
-        {"ticker": "VTI",  "name": "Total Stock Market (Vanguard)"},
-        {"ticker": "ITOT", "name": "Total Stock Market (iShares)"},
-        {"ticker": "IWB",  "name": "Russell 1000 Large Cap (iShares)"},
-        {"ticker": "MDY",  "name": "S&P MidCap 400 (SPDR)"},
-        {"ticker": "IWM",  "name": "Russell 2000 Small Cap (iShares)"},
-        {"ticker": "SCHB", "name": "Broad Market (Schwab)"},
-        {"ticker": "VXF",  "name": "Extended Market ex-S&P500 (Vanguard)"}
+        {"ticker": "CSPX.L", "name": "S&P 500 (iShares Core UCITS Acc)"},
+        {"ticker": "VUAA.L", "name": "S&P 500 (Vanguard UCITS Acc)"},
+        {"ticker": "CNDX.L", "name": "Nasdaq 100 (iShares UCITS Acc)"}
       ]
     },
     {
-      "id": "us_sectors_spdr",
-      "name": "EUA – Sectores SPDR",
+      "id": "global_world",
+      "name": "Global / MSCI World",
       "color": "#4caf50",
       "etfs": [
-        {"ticker": "XLK",  "name": "Technology"},
-        {"ticker": "XLF",  "name": "Financials"},
-        {"ticker": "XLV",  "name": "Health Care"},
-        {"ticker": "XLI",  "name": "Industrials"},
-        {"ticker": "XLE",  "name": "Energy"},
-        {"ticker": "XLY",  "name": "Consumer Discretionary"},
-        {"ticker": "XLP",  "name": "Consumer Staples"},
-        {"ticker": "XLU",  "name": "Utilities"},
-        {"ticker": "XLB",  "name": "Materials"},
-        {"ticker": "XLC",  "name": "Communication Services"}
+        {"ticker": "VWCE.DE", "name": "FTSE All-World EUR (Vanguard UCITS Acc)"},
+        {"ticker": "VWRP.L",  "name": "FTSE All-World USD (Vanguard UCITS Acc)"},
+        {"ticker": "IWDA.L",  "name": "MSCI World (iShares Core UCITS Acc)"},
+        {"ticker": "SWRD.L",  "name": "MSCI World (SPDR UCITS Acc)"},
+        {"ticker": "XDWD.DE", "name": "MSCI World (Xtrackers UCITS Acc)"},
+        {"ticker": "WSML.L",  "name": "MSCI World Small Cap (iShares UCITS Acc)"}
       ]
     },
     {
-      "id": "us_sectors_other",
-      "name": "EUA – Sectores Adicionais",
+      "id": "us_sectors",
+      "name": "EUA – Sectores UCITS",
       "color": "#26a69a",
       "etfs": [
-        {"ticker": "VGT",  "name": "Information Technology (Vanguard)"},
-        {"ticker": "SOXX", "name": "Semiconductors (iShares)"},
-        {"ticker": "SMH",  "name": "Semiconductors (VanEck)"},
-        {"ticker": "IBB",  "name": "Biotech (iShares Nasdaq)"},
-        {"ticker": "XBI",  "name": "Biotech (SPDR)"},
-        {"ticker": "KRE",  "name": "Regional Banks (SPDR)"},
-        {"ticker": "ITB",  "name": "Home Construction (iShares)"},
-        {"ticker": "XHB",  "name": "Homebuilders (SPDR)"},
-        {"ticker": "XRT",  "name": "Retail (SPDR)"},
-        {"ticker": "XOP",  "name": "Oil & Gas E&P (SPDR)"}
+        {"ticker": "IUIT.L", "name": "S&P 500 IT (iShares UCITS Acc)"},
+        {"ticker": "IUHC.L", "name": "S&P 500 Health Care (iShares UCITS Acc)"},
+        {"ticker": "IUFS.L", "name": "S&P 500 Financials (iShares UCITS Acc)"},
+        {"ticker": "IUES.L", "name": "S&P 500 Energy (iShares UCITS Acc)"},
+        {"ticker": "IUCD.L", "name": "S&P 500 Consumer Discretionary (iShares UCITS Acc)"},
+        {"ticker": "IUCS.L", "name": "S&P 500 Consumer Staples (iShares UCITS Acc)"},
+        {"ticker": "IUIS.L", "name": "S&P 500 Industrials (iShares UCITS Acc)"},
+        {"ticker": "IUUS.L", "name": "S&P 500 Utilities (iShares UCITS Acc)"},
+        {"ticker": "IUMS.L", "name": "S&P 500 Materials (iShares UCITS Acc)"},
+        {"ticker": "IUCM.L", "name": "S&P 500 Communication Services (iShares UCITS Acc)"}
       ]
     },
     {
@@ -57,17 +46,8 @@
       "name": "Internacional Desenvolvido",
       "color": "#ab47bc",
       "etfs": [
-        {"ticker": "EFA",  "name": "MSCI EAFE (iShares)"},
-        {"ticker": "VEA",  "name": "Developed Markets ex-US (Vanguard)"},
-        {"ticker": "IDEV", "name": "Core MSCI Intl Developed (iShares)"},
-        {"ticker": "SPDW", "name": "Developed World ex-US (SPDR)"},
-        {"ticker": "EWJ",  "name": "Japan (iShares)"},
-        {"ticker": "EWG",  "name": "Germany (iShares)"},
-        {"ticker": "EWU",  "name": "United Kingdom (iShares)"},
-        {"ticker": "EWC",  "name": "Canada (iShares)"},
-        {"ticker": "EWA",  "name": "Australia (iShares)"},
-        {"ticker": "EWL",  "name": "Switzerland (iShares)"},
-        {"ticker": "EWQ",  "name": "France (iShares)"}
+        {"ticker": "SMEA.L", "name": "MSCI Europe (iShares Core UCITS Acc)"},
+        {"ticker": "IJPA.L", "name": "MSCI Japan IMI (iShares Core UCITS Acc)"}
       ]
     },
     {
@@ -75,34 +55,8 @@
       "name": "Mercados Emergentes",
       "color": "#ff7043",
       "etfs": [
-        {"ticker": "IEMG", "name": "Core MSCI Emerging Markets (iShares)"},
-        {"ticker": "VWO",  "name": "Emerging Markets (Vanguard)"},
-        {"ticker": "EEM",  "name": "MSCI Emerging Markets (iShares)"},
-        {"ticker": "FXI",  "name": "China Large-Cap (iShares)"},
-        {"ticker": "MCHI", "name": "MSCI China (iShares)"},
-        {"ticker": "INDA", "name": "India (iShares)"},
-        {"ticker": "EPI",  "name": "India Earnings (WisdomTree)"},
-        {"ticker": "EWZ",  "name": "Brazil (iShares)"},
-        {"ticker": "EWY",  "name": "South Korea (iShares)"},
-        {"ticker": "EWT",  "name": "Taiwan (iShares)"},
-        {"ticker": "EWS",  "name": "Singapore (iShares)"}
-      ]
-    },
-    {
-      "id": "commodities",
-      "name": "Commodities",
-      "color": "#ffb300",
-      "etfs": [
-        {"ticker": "GLD",  "name": "Gold (SPDR)"},
-        {"ticker": "IAU",  "name": "Gold (iShares)"},
-        {"ticker": "SLV",  "name": "Silver (iShares)"},
-        {"ticker": "GDX",  "name": "Gold Miners (VanEck)"},
-        {"ticker": "GDXJ", "name": "Junior Gold Miners (VanEck)"},
-        {"ticker": "DBC",  "name": "Commodity Index (Invesco)"},
-        {"ticker": "PDBC", "name": "Commodity Optimum Yield (Invesco)"},
-        {"ticker": "USO",  "name": "US Oil Fund"},
-        {"ticker": "UNG",  "name": "US Natural Gas Fund"},
-        {"ticker": "COPX", "name": "Copper Miners (Global X)"}
+        {"ticker": "EIMI.L",  "name": "MSCI EM IMI (iShares Core UCITS Acc)"},
+        {"ticker": "XMEM.DE", "name": "MSCI Emerging Markets (Xtrackers UCITS Acc)"}
       ]
     },
     {
@@ -110,18 +64,10 @@
       "name": "Factor / Smart Beta",
       "color": "#66bb6a",
       "etfs": [
-        {"ticker": "MTUM", "name": "Momentum (iShares)"},
-        {"ticker": "VLUE", "name": "Value (iShares)"},
-        {"ticker": "QUAL", "name": "Quality (iShares)"},
-        {"ticker": "USMV", "name": "Min Volatility (iShares)"},
-        {"ticker": "VTV",  "name": "Large-Cap Value (Vanguard)"},
-        {"ticker": "VUG",  "name": "Large-Cap Growth (Vanguard)"},
-        {"ticker": "IWD",  "name": "Russell 1000 Value (iShares)"},
-        {"ticker": "IWF",  "name": "Russell 1000 Growth (iShares)"},
-        {"ticker": "VBR",  "name": "Small-Cap Value (Vanguard)"},
-        {"ticker": "VBK",  "name": "Small-Cap Growth (Vanguard)"},
-        {"ticker": "IWO",  "name": "Russell 2000 Growth (iShares)"},
-        {"ticker": "IWN",  "name": "Russell 2000 Value (iShares)"}
+        {"ticker": "IWMO.L", "name": "MSCI World Momentum (iShares Edge UCITS Acc)"},
+        {"ticker": "IWVL.L", "name": "MSCI World Value (iShares Edge UCITS Acc)"},
+        {"ticker": "IWQU.L", "name": "MSCI World Quality (iShares Edge UCITS Acc)"},
+        {"ticker": "MVOL.L", "name": "MSCI World Min Volatility (iShares Edge UCITS Acc)"}
       ]
     },
     {
@@ -129,30 +75,22 @@
       "name": "Temáticos / Inovação",
       "color": "#ef5350",
       "etfs": [
-        {"ticker": "ARKK", "name": "Innovation (ARK)"},
-        {"ticker": "ARKG", "name": "Genomic Revolution (ARK)"},
-        {"ticker": "ARKW", "name": "Next Gen Internet (ARK)"},
-        {"ticker": "ARKF", "name": "Fintech Innovation (ARK)"},
-        {"ticker": "BOTZ", "name": "Robotics & AI (Global X)"},
-        {"ticker": "ROBO", "name": "Robotics & Automation (ROBO Global)"},
-        {"ticker": "DRIV", "name": "Electric Vehicles & Tech (Global X)"},
-        {"ticker": "HACK", "name": "Cybersecurity (ETFMG)"},
-        {"ticker": "CIBR", "name": "Cybersecurity (First Trust)"},
-        {"ticker": "ICLN", "name": "Clean Energy (iShares)"},
-        {"ticker": "TAN",  "name": "Solar Energy (Invesco)"},
-        {"ticker": "SKYY", "name": "Cloud Computing (First Trust)"},
-        {"ticker": "FINX", "name": "FinTech (Global X)"}
+        {"ticker": "XDWT.DE", "name": "MSCI World IT (Xtrackers UCITS Acc)"},
+        {"ticker": "RBOT.L",  "name": "Automação & Robótica (iShares UCITS Acc)"},
+        {"ticker": "WTAI.L",  "name": "Inteligência Artificial (WisdomTree UCITS Acc)"},
+        {"ticker": "DGTL.L",  "name": "Digitalização (iShares UCITS Acc)"},
+        {"ticker": "ECAR.L",  "name": "Veículos Elétricos & Condução (iShares UCITS Acc)"},
+        {"ticker": "BTEC.L",  "name": "Nasdaq Biotecnologia (iShares UCITS Acc)"}
       ]
     },
     {
-      "id": "multi_asset",
-      "name": "Multi-Activo / Global",
-      "color": "#78909c",
+      "id": "commodities",
+      "name": "Commodities",
+      "color": "#ffb300",
       "etfs": [
-        {"ticker": "VXUS", "name": "Total International (Vanguard)"},
-        {"ticker": "ACWI", "name": "All Country World (iShares)"},
-        {"ticker": "ACWX", "name": "All Country ex-US (iShares)"},
-        {"ticker": "VT",   "name": "Total World (Vanguard)"}
+        {"ticker": "IGLN.L", "name": "Ouro Físico (iShares ETC)"},
+        {"ticker": "PHAU.L", "name": "Ouro Físico (WisdomTree ETC)"},
+        {"ticker": "PHAG.L", "name": "Prata Física (WisdomTree ETC)"}
       ]
     }
   ],
