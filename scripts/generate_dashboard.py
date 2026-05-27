@@ -167,6 +167,68 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
 </section>"""
 
 
+def _nome_curto(s: dict) -> str:
+    """Extrai o nome curto do ETF removendo o provider entre parênteses."""
+    nome = s.get("nome", s.get("ticker", "Este ETF"))
+    curto = nome.split("(")[0].strip()
+    return curto if curto else s.get("ticker", "Este ETF")
+
+
+def narrativa_simples(s: dict) -> str:
+    """Gera um parágrafo humanizado em PT-PT explicando o sinal de compra."""
+    nome    = _nome_curto(s)
+    ret_63d = float(s.get("ret_63d", 0) or 0)
+    ret_5d  = float(s.get("ret_5d",  0) or 0)
+    rsi     = float(s.get("rsi",    50) or 50)
+    rs_pos  = bool(s.get("rs_positive", 0))
+
+    # ── Parte 1: desempenho a médio prazo (3 meses) ───────────────────────────
+    if abs(ret_63d) < 0.01:
+        p1 = f"O {nome} está a consolidar sem movimento expressivo nos últimos 3 meses"
+    elif ret_63d >= 0.10:
+        p1 = f"O {nome} está com uma força notável a médio prazo ({ret_63d:+.1%} nos últimos 3 meses)"
+    elif ret_63d >= 0.03:
+        p1 = f"O {nome} tem vindo a ganhar terreno nos últimos 3 meses ({ret_63d:+.1%})"
+    elif ret_63d >= 0:
+        p1 = f"O {nome} regista uma valorização modesta nos últimos 3 meses ({ret_63d:+.1%})"
+    else:
+        p1 = f"O {nome} está em fase de recuperação após um período mais fraco ({ret_63d:+.1%} nos últimos 3 meses)"
+
+    # ── Parte 2: comportamento semanal (5d) ────────────────────────────────────
+    if ret_5d <= -0.05:
+        p2 = f"No entanto, recuou {ret_5d:+.1%} esta semana — uma queda que criou um desconto técnico relevante face aos máximos recentes"
+    elif ret_5d <= -0.02:
+        p2 = f"No entanto, deu um passo atrás de {ret_5d:+.1%} esta semana — um respiro saudável que abre janela de entrada"
+    elif ret_5d < 0:
+        p2 = f"A ligeira correção de {ret_5d:+.1%} esta semana afastou o preço de zonas mais caras"
+    elif ret_5d <= 0.01:
+        p2 = f"Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda"
+    elif ret_5d <= 0.04:
+        p2 = f"Subiu {ret_5d:+.1%} esta semana, com o momentum a ganhar tração"
+    else:
+        p2 = f"Acelerou {ret_5d:+.1%} esta semana — atenção porque entradas após subidas rápidas exigem mais cautela"
+
+    # ── Parte 3: RSI (tradução para linguagem comum) ──────────────────────────
+    if rsi < 35:
+        p3 = f"O indicador de força RSI ({rsi:.0f}) está em zona de sobre-venda, o que pode sinalizar uma inversão próxima"
+    elif rsi <= 50:
+        p3 = f"O indicador de força RSI ({rsi:.0f}) mostra que o preço saiu de zonas caras e está num ponto de entrada tecnicamente ideal — como se estivesse 'em promoção'"
+    elif rsi <= 62:
+        p3 = f"O RSI ({rsi:.0f}) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva"
+    elif rsi <= 68:
+        p3 = f"O RSI ({rsi:.0f}) está a aquecer, mas ainda dentro de margens aceitáveis"
+    else:
+        p3 = f"O RSI ({rsi:.0f}) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada"
+
+    # ── Encerramento: força relativa vs mercado ───────────────────────────────
+    if rs_pos:
+        fecho = ", estando inclusivamente a superar o mercado americano em geral no mesmo período."
+    else:
+        fecho = "."
+
+    return f"{p1}. {p2}. {p3}{fecho}"
+
+
 def buy_signals_section(signals: list[dict]) -> str:
     if not signals:
         return '<section class="section"><p style="color:var(--muted)">Sem confluência de sinais suficiente.</p></section>'
@@ -205,6 +267,7 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{s.get('rationale','')}</div>
+          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
         </div>"""
 
     return f"""
