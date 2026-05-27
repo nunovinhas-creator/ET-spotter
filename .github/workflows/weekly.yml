@@ -66,4 +66,12 @@ jobs:
           git add data/ docs/
           git diff --cached --quiet || git commit -m "chore: weekly report $(date -u '+%Y-%m-%d')"
           git pull --rebase origin ${{ github.ref_name }}
-          git push
+          attempts=0
+          until git push; do
+            attempts=$((attempts + 1))
+            if [ $attempts -ge 5 ]; then
+              echo "Push falhou após $attempts tentativas" && exit 1
+            fi
+            echo "Push falhou (tentativa $attempts/5), aguardando $((2 ** attempts))s..."
+            sleep $((2 ** attempts))
+          done
