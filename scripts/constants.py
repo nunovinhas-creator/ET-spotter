@@ -1,27 +1,38 @@
 """
-Constantes centralizadas do ET-Spotter.
+Constantes globais e configurações centralizadas.
+Evita magic numbers espalhados pelo código.
 """
 
-# Horas de mercado US (UTC)
-US_MARKET_OPEN = 13
-US_MARKET_CLOSE = 22
+# Horas de mercado US em UTC
+US_MARKET_OPEN_UTC = 13    # 13:00 UTC = 08:00 EST / 09:00 EDT
+US_MARKET_CLOSE_UTC = 22   # 22:00 UTC = 17:00 EST / 18:00 EDT
+US_MARKET_HOURS = (US_MARKET_OPEN_UTC, US_MARKET_CLOSE_UTC)
 
-# Limiares de score
-SCORE_DANGER = 0.40
-SCORE_DROP_FAST = 0.07
-SCORE_RECOVERY = 0.55
+# Limiares de alertas estruturais
+SCORE_DANGER = 0.40           # Score crítico para deterioração
+SCORE_DROP_FAST = 0.07        # Queda rápida de score numa sessão
+SCORE_RECOVERY_THRESHOLD = 0.48  # Score para considerar recuperação
 
-# Retry API
+# Limiares técnicos
+RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 70
+RSI_ENTRY_ZONE_MIN = 40
+RSI_ENTRY_ZONE_MAX = 65
+ADX_TREND_THRESHOLD = 20      # ADX > 20 indica tendência forte
+
+# Defaults para thresholds de drops
+DEFAULT_HOURLY_DROP_THRESHOLD = -0.02  # -2%
+DEFAULT_DRAWDOWN_THRESHOLD = -0.08     # -8%
+
+# Configurações de retry
 MAX_API_RETRIES = 3
-RETRY_BASE_DELAY = 2.0
-
-# Alertas
-RET_1H_DROP_THRESHOLD = -0.02
-RET_1H_SURGE_THRESHOLD = 0.015
-VOL_SPIKE_MULTIPLIER = 2.0
+RETRY_BASE_WAIT_TIME = 1      # segundos (aplicar exponencial backoff)
 
 # Períodos de dados
-INTRADAY_PERIOD = "5d"
+INTRADAY_FETCH_PERIOD = "60d"
 INTRADAY_INTERVAL = "1h"
-DAILY_PERIOD = "2y"
-DAILY_INTERVAL = "1d"
+SCORE_HISTORY_WINDOW = 252    # ~1 ano de dias úteis
+
+# Configurações de email/notificações
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 465
