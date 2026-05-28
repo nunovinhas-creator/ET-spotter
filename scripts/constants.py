@@ -1,0 +1,27 @@
+"""
+Constantes centralizadas do ET-Spotter.
+"""
+
+# Horas de mercado US (UTC)
+US_MARKET_OPEN = 13
+US_MARKET_CLOSE = 22
+
+# Limiares de score
+SCORE_DANGER = 0.40
+SCORE_DROP_FAST = 0.07
+SCORE_RECOVERY = 0.55
+
+# Retry API
+MAX_API_RETRIES = 3
+RETRY_BASE_DELAY = 2.0
+
+# Alertas
+RET_1H_DROP_THRESHOLD = -0.02
+RET_1H_SURGE_THRESHOLD = 0.015
+VOL_SPIKE_MULTIPLIER = 2.0
+
+# Períodos de dados
+INTRADAY_PERIOD = "5d"
+INTRADAY_INTERVAL = "1h"
+DAILY_PERIOD = "2y"
+DAILY_INTERVAL = "1d"
