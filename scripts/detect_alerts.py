@@ -1,5 +1,5 @@
 """
-Detecta alertas intradiários e estruturais. Envia email HTML se EMAIL_TO estiver definido.
+Detecta alertas intradiários e estruturais. Envia alertas via email e Telegram.
 
 Alertas reactivos (dados horários):
   - Queda horária >= ret_1h_drop
@@ -14,6 +14,7 @@ Cada alerta inclui snapshot técnico completo e avaliação de entrada.
 
 import os
 import sys
+import html
 from datetime import datetime
 from pathlib import Path
 
@@ -22,15 +23,18 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs, get_category_map, compute_conviction, analyst_rationale
 
+try:
+    from constants import US_MARKET_HOURS, SCORE_DANGER, SCORE_DROP_FAST, SCORE_RECOVERY_THRESHOLD
+except ImportError:
+    US_MARKET_HOURS = (13, 22)
+    SCORE_DANGER = 0.40
+    SCORE_DROP_FAST = 0.07
+    SCORE_RECOVERY_THRESHOLD = 0.48
+
 DATA_HOURLY   = Path("data/hourly")
 DATA_DAILY    = Path("data/daily")
 SCORES_LATEST = Path("data/reports/scores_latest.csv")
 
-SCORE_DANGER    = 0.40
-SCORE_DROP_FAST = 0.07
-
-
-# ── Dados de suporte ──────────────────────────────────────────────────────────
 
 def load_scores() -> dict:
     if not SCORES_LATEST.exists():
@@ -85,13 +89,8 @@ def load_technicals(symbol: str) -> dict:
         return {}
 
 
-# ── Avaliação de entrada ──────────────────────────────────────────────────────
-
 def entry_assessment(alert_type: str, tech: dict) -> dict:
-    """
-    Gera avaliação contextual de entrada com base no tipo de alerta e técnicos.
-    Devolve {"verdict": str, "color": str, "explanation": str}.
-    """
+    """Gera avaliação contextual de entrada com base no tipo de alerta e técnicos."""
     rsi      = tech.get("rsi",         50)
     adx      = tech.get("adx",         0)
     score    = tech.get("score",       0)
@@ -100,39 +99,25 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
     drawdown = tech.get("drawdown",    0)
     trend    = tech.get("trend_sma",   0)
     macd     = tech.get("macd_bullish",0)
-    rs_pos   = tech.get("rs_positive", 0)
-    above200 = tech.get("above_sma200",0)
 
     if alert_type == "BREAK SMA200":
         if rsi < 38:
             return {
                 "verdict": "MONITORIZAR",
                 "color": "#ffd54f",
-                "explanation": (
-                    f"RSI em sobrevenda ({rsi:.0f}) — possível bounce técnico na SMA200. "
-                    f"Aguardar 1-2 sessões de estabilização e MACD a virar antes de entrar. "
-                    f"Risco: se RSI cair abaixo de 30 sem bounce, breakdown confirmado."
-                )
+                "explanation": f"RSI em sobrevenda ({rsi:.0f}) — possível bounce técnico na SMA200."
             }
         elif rsi > 52:
             return {
                 "verdict": "EVITAR",
                 "color": "#f44336",
-                "explanation": (
-                    f"Break da SMA200 com RSI ainda elevado ({rsi:.0f}) — não há sobrevenda, "
-                    f"o mercado não considera este preço barato. "
-                    f"Tendência de longo prazo invertida. Risco assimétrico negativo."
-                )
+                "explanation": f"Break da SMA200 com RSI elevado ({rsi:.0f}) — sem sobrevenda."
             }
         else:
             return {
                 "verdict": "AGUARDAR",
                 "color": "#ff7043",
-                "explanation": (
-                    f"Break da SMA200 com RSI neutro ({rsi:.0f}). "
-                    f"Zona de indecisão — aguardar reclame da SMA200 como suporte "
-                    f"(preço a fechar acima durante 2+ sessões) antes de qualquer entrada."
-                )
+                "explanation": f"Break da SMA200 com RSI neutro ({rsi:.0f}). Zona de indecisão."
             }
 
     elif alert_type == "DETERIORAÇÃO":
@@ -148,31 +133,19 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
             return {
                 "verdict": "MONITORIZAR",
                 "color": "#ffd54f",
-                "explanation": (
-                    f"Score entrou em zona de risco mas {' e '.join(reasons[:2])}. "
-                    f"Possível oportunidade contrária de curto prazo. "
-                    f"Confirmar com MACD e volume antes de entrar."
-                )
+                "explanation": f"Score entrou em zona de risco mas {' e '.join(reasons[:2])}."
             }
         elif ret_63d < -0.08 or rsi > 55:
             return {
                 "verdict": "EVITAR",
                 "color": "#f44336",
-                "explanation": (
-                    f"Score deteriorado com momentum 3M negativo ({ret_63d:.1%}) "
-                    f"e RSI sem sinais de sobrevenda ({rsi:.0f}). "
-                    f"Sem catalisador visível para recuperação no curto prazo."
-                )
+                "explanation": f"Score deteriorado com momentum 3M negativo ({ret_63d:.1%})."
             }
         else:
             return {
                 "verdict": "AGUARDAR",
                 "color": "#ff7043",
-                "explanation": (
-                    f"Score acabou de entrar em zona de risco. "
-                    f"Monitorizar RSI (entrada potencial se descer abaixo de 40) "
-                    f"e ret 5d (confirmar estabilização)."
-                )
+                "explanation": "Score acabou de entrar em zona de risco. Monitorizar RSI."
             }
 
     elif alert_type == "QUEDA DE SCORE":
@@ -180,43 +153,27 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
             return {
                 "verdict": "MONITORIZAR",
                 "color": "#ffd54f",
-                "explanation": (
-                    f"Score caiu mas mantém-se em território positivo ({score:.3f}). "
-                    f"Tendência de médio prazo intacta (SMA20>SMA50). "
-                    f"RSI ({rsi:.0f}) tem espaço para recuperação — possível ponto de entrada se score estabilizar."
-                )
+                "explanation": f"Score caiu mas mantém-se positivo ({score:.3f}). Tendência intacta."
             }
         else:
             return {
                 "verdict": "AGUARDAR",
                 "color": "#ff7043",
-                "explanation": (
-                    f"Score em queda rápida ({score:.3f}). "
-                    f"Aguardar estabilização do score durante 2+ sessões "
-                    f"antes de avaliar entrada. Verificar se há news ou evento sectorial."
-                )
+                "explanation": f"Score em queda rápida ({score:.3f}). Aguardar estabilização."
             }
 
     elif alert_type == "RECUPERAÇÃO SCORE":
         return {
             "verdict": "MONITORIZAR",
             "color": "#4caf50",
-            "explanation": (
-                f"Score recuperou de zona de risco para {score:.3f}. "
-                f"Confirmar com 2+ sessões adicionais acima de 0.48 antes de entrar. "
-                f"RSI ({rsi:.0f}) e MACD devem confirmar direcção."
-            )
+            "explanation": f"Score recuperou para {score:.3f}. Confirmar com mais sessões."
         }
 
     elif alert_type == "RECUPERAÇÃO SMA200":
         return {
             "verdict": "MONITORIZAR",
             "color": "#4caf50",
-            "explanation": (
-                f"Preço recuperou acima da SMA200 — possível fim de tendência baixista. "
-                f"RSI ({rsi:.0f}). Aguardar 2-3 fechos acima da SMA200 para confirmar. "
-                f"Volume acima da média é sinal de convicção na recuperação."
-            )
+            "explanation": "Preço recuperou acima da SMA200. Possível fim de tendência baixista."
         }
 
     else:  # QUEDA HORÁRIA
@@ -224,181 +181,123 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
             return {
                 "verdict": "OPORTUNIDADE",
                 "color": "#4caf50",
-                "explanation": (
-                    f"Queda intradiária em ETF com fundamentais sólidos (score {score:.3f}, "
-                    f"RSI {rsi:.0f}, drawdown {drawdown:.1%}). "
-                    f"Quedas pontuais em ETFs com score alto são frequentemente oportunidades de entrada. "
-                    f"Verificar se é específico do ETF ou movimento de mercado amplo (SPY)."
-                )
+                "explanation": f"Queda intradiária em ETF com fundamentais sólidos (score {score:.3f})."
             }
         elif score < 0.45:
             return {
                 "verdict": "EVITAR",
                 "color": "#f44336",
-                "explanation": (
-                    f"Queda horária em ETF já fraco (score {score:.3f}). "
-                    f"Ausência de fundamentos que suportem recuperação — não é oportunidade de entrada."
-                )
+                "explanation": f"Queda horária em ETF fraco (score {score:.3f})."
             }
         else:
             return {
                 "verdict": "NEUTRO",
                 "color": "#78909c",
-                "explanation": (
-                    f"Queda intradiária com score intermédio ({score:.3f}). "
-                    f"Verificar contexto de mercado (SPY) e aguardar close do dia."
-                )
+                "explanation": f"Queda intradiária com score intermédio ({score:.3f})."
             }
 
 
-# ── Detecção de alertas ───────────────────────────────────────────────────────
-
 def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
-    # Apenas durante horas de mercado US: 13:00-22:00 UTC (cobre EST e EDT)
+    """Detecta quedas intradiárias durante horas de mercado US."""
     utc_hour = datetime.utcnow().hour
-    if not (13 <= utc_hour <= 22):
+    if not (US_MARKET_HOURS[0] <= utc_hour <= US_MARKET_HOURS[1]):
         return []
     path = DATA_HOURLY / f"{symbol}.csv"
     if not path.exists():
         return []
-    df = pd.read_csv(path, index_col=0, parse_dates=True)
-    if df.empty:
+    try:
+        df = pd.read_csv(path, index_col=0, parse_dates=True)
+        if df.empty:
+            return []
+        df["ret_1h"] = df["close"].pct_change(1)
+        ret_1h = float(df["ret_1h"].iloc[-1] or 0)
+        if ret_1h <= thresholds.get("ret_1h_drop", -0.02):
+            tech = load_technicals(symbol)
+            return [{"type": "QUEDA HORÁRIA", "symbol": symbol, "ret_1h": ret_1h, "tech": tech}]
         return []
-    df["ret_1h"] = df["close"].pct_change(1)
-    ret_1h = float(df["ret_1h"].iloc[-1] or 0)
-    if ret_1h <= thresholds.get("ret_1h_drop", -0.02):
-        tech = load_technicals(symbol)
-        return [{"type": "QUEDA HORÁRIA", "symbol": symbol, "ret_1h": ret_1h, "tech": tech}]
-    return []
+    except Exception:
+        return []
 
 
 def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
+    """Detecta alertas estruturais (breaks, deteriorações, etc.)."""
     alerts = []
     path = DATA_DAILY / f"{symbol}.csv"
     if not path.exists():
         return []
-    df = pd.read_csv(path, index_col=0, parse_dates=True)
-    if df.empty or len(df) < 3:
+    try:
+        df = pd.read_csv(path, index_col=0, parse_dates=True)
+        if df.empty or len(df) < 3:
+            return []
+
+        last  = df.iloc[-1]
+        prev  = df.iloc[-2]
+        prev2 = df.iloc[-3]
+        tech = load_technicals(symbol)
+
+        close_now    = float(last.get("close",  0) or 0)
+        sma200_now   = float(last.get("sma200", 0) or 0)
+        close_prev   = float(prev.get("close",  0) or 0)
+        sma200_prev  = float(prev.get("sma200", 0) or 0)
+        close_prev2  = float(prev2.get("close",  0) or 0)
+        sma200_prev2 = float(prev2.get("sma200", 0) or 0)
+        score_now   = tech.get("score",      scores.get(symbol, {}).get("score", 0))
+        score_prev  = tech.get("score_prev", score_now)
+
+        if (sma200_now > 0 and sma200_prev > 0 and sma200_prev2 > 0
+                and close_prev2 >= sma200_prev2
+                and close_prev  <  sma200_prev
+                and close_now   <  sma200_now):
+            alerts.append({
+                "type": "BREAK SMA200", "symbol": symbol,
+                "close": close_now, "sma200": sma200_now,
+                "pct_below": (close_now - sma200_now) / sma200_now,
+                "tech": tech,
+            })
+
+        if score_prev >= SCORE_DANGER > score_now:
+            alerts.append({
+                "type": "DETERIORAÇÃO", "symbol": symbol,
+                "score": score_now, "score_prev": score_prev,
+                "score_pct": scores.get(symbol, {}).get("score_pct", float("nan")),
+                "tech": tech,
+            })
+        elif score_prev - score_now >= SCORE_DROP_FAST and score_now < 0.60:
+            alerts.append({
+                "type": "QUEDA DE SCORE", "symbol": symbol,
+                "score": score_now, "score_prev": score_prev,
+                "delta": score_prev - score_now,
+                "tech": tech,
+            })
+
+        if score_prev < SCORE_DANGER and score_now >= SCORE_RECOVERY_THRESHOLD:
+            alerts.append({
+                "type": "RECUPERAÇÃO SCORE", "symbol": symbol,
+                "score": score_now, "score_prev": score_prev,
+                "delta": score_now - score_prev,
+                "tech": tech,
+            })
+
+        if (sma200_now > 0 and sma200_prev > 0
+                and close_prev < sma200_prev
+                and close_now >= sma200_now):
+            alerts.append({
+                "type": "RECUPERAÇÃO SMA200", "symbol": symbol,
+                "close": close_now, "sma200": sma200_now,
+                "pct_above": (close_now - sma200_now) / sma200_now,
+                "tech": tech,
+            })
+
+        return alerts
+    except Exception:
         return []
-
-    last  = df.iloc[-1]
-    prev  = df.iloc[-2]
-    prev2 = df.iloc[-3]
-    tech = load_technicals(symbol)
-
-    close_now    = float(last.get("close",  0) or 0)
-    sma200_now   = float(last.get("sma200", 0) or 0)
-    close_prev   = float(prev.get("close",  0) or 0)
-    sma200_prev  = float(prev.get("sma200", 0) or 0)
-    close_prev2  = float(prev2.get("close",  0) or 0)
-    sma200_prev2 = float(prev2.get("sma200", 0) or 0)
-    score_now   = tech.get("score",      scores.get(symbol, {}).get("score", 0))
-    score_prev  = tech.get("score_prev", score_now)
-
-    if (sma200_now > 0 and sma200_prev > 0 and sma200_prev2 > 0
-            and close_prev2 >= sma200_prev2          # T-2: acima
-            and close_prev  <  sma200_prev           # T-1: primeiro break
-            and close_now   <  sma200_now):          # T: confirmação (2.º fecho)
-        alerts.append({
-            "type": "BREAK SMA200", "symbol": symbol,
-            "close": close_now, "sma200": sma200_now,
-            "pct_below": (close_now - sma200_now) / sma200_now,
-            "tech": tech,
-        })
-
-    if score_prev >= SCORE_DANGER > score_now:
-        alerts.append({
-            "type": "DETERIORAÇÃO", "symbol": symbol,
-            "score": score_now, "score_prev": score_prev,
-            "score_pct": scores.get(symbol, {}).get("score_pct", float("nan")),
-            "tech": tech,
-        })
-    elif score_prev - score_now >= SCORE_DROP_FAST and score_now < 0.60:
-        alerts.append({
-            "type": "QUEDA DE SCORE", "symbol": symbol,
-            "score": score_now, "score_prev": score_prev,
-            "delta": score_prev - score_now,
-            "tech": tech,
-        })
-
-    # ── Recuperação: score volta acima de 0.48 após ter estado abaixo de 0.40 ──
-    if score_prev < SCORE_DANGER and score_now >= 0.48:
-        alerts.append({
-            "type": "RECUPERAÇÃO SCORE", "symbol": symbol,
-            "score": score_now, "score_prev": score_prev,
-            "delta": score_now - score_prev,
-            "tech": tech,
-        })
-
-    # ── Recuperação SMA200: preço voltou acima após break confirmado ───────────
-    if (sma200_now > 0 and sma200_prev > 0
-            and close_prev < sma200_prev
-            and close_now >= sma200_now):
-        alerts.append({
-            "type": "RECUPERAÇÃO SMA200", "symbol": symbol,
-            "close": close_now, "sma200": sma200_now,
-            "pct_above": (close_now - sma200_now) / sma200_now,
-            "tech": tech,
-        })
-
-    return alerts
-
-
-# ── HTML ──────────────────────────────────────────────────────────────────────
-
-def _c(v: float, neutral: float = 0) -> str:
-    return "#4caf50" if v > neutral else ("#f44336" if v < neutral else "#aaa")
-
-
-def _ind(label: str, value: str, color: str = "#e8eaf6") -> str:
-    return (
-        f'<span style="margin-right:14px">'
-        f'<span style="color:#666;font-size:10px">{label}</span>&nbsp;'
-        f'<span style="color:{color};font-weight:bold;font-size:12px">{value}</span>'
-        f'</span>'
-    )
-
-
-def tech_grid(tech: dict) -> str:
-    """Linha de indicadores técnicos resumidos."""
-    if not tech:
-        return ""
-    rsi      = tech.get("rsi",         50)
-    adx      = tech.get("adx",         0)
-    ret_63d  = tech.get("ret_63d",     0)
-    ret_5d   = tech.get("ret_5d",      0)
-    drawdown = tech.get("drawdown",    0)
-    score    = tech.get("score",       0)
-    trend    = tech.get("trend_sma",   0)
-    macd     = tech.get("macd_bullish",0)
-    rs_pos   = tech.get("rs_positive", 0)
-    above200 = tech.get("above_sma200",0)
-
-    rsi_c = "#4caf50" if 40 <= rsi <= 65 else ("#ffd54f" if rsi > 70 else "#f44336" if rsi < 30 else "#aaa")
-
-    return (
-        '<div style="margin-top:10px;padding:8px 10px;background:#0d0f17;'
-        'border-radius:4px;line-height:2">'
-        + _ind("Score",   f"{score:.3f}", _c(score, 0.50))
-        + _ind("RSI",     f"{rsi:.0f}",  rsi_c)
-        + _ind("ADX",     f"{adx:.0f}",  "#4caf50" if adx > 25 else "#aaa")
-        + _ind("Ret.3M",  f"{ret_63d:.1%}", _c(ret_63d))
-        + _ind("Ret.5d",  f"{ret_5d:.1%}",  _c(ret_5d))
-        + _ind("Drawdown",f"{drawdown:.1%}", _c(drawdown, -0.05))
-        + _ind("Trend",   "↑" if trend else "↓",  "#4caf50" if trend else "#f44336")
-        + _ind("MACD",    "+" if macd else "−",    "#4caf50" if macd else "#f44336")
-        + _ind("RS/SPY",  "✓" if rs_pos else "✗",  "#4caf50" if rs_pos else "#f44336")
-        + _ind("SMA200",  "✓" if above200 else "✗","#4caf50" if above200 else "#f44336")
-        + '</div>'
-    )
 
 
 def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
+    """Constrói email HTML com os alertas."""
     ts = datetime.now().strftime("%d/%m/%Y  %H:%M")
     n  = len(all_alerts)
 
-    type_order = {"BREAK SMA200": 0, "DETERIORAÇÃO": 1, "QUEDA DE SCORE": 2, "QUEDA HORÁRIA": 3,
-                  "RECUPERAÇÃO SCORE": 4, "RECUPERAÇÃO SMA200": 5}
     type_color = {
         "BREAK SMA200":       ("#f44336", "#2a1010"),
         "DETERIORAÇÃO":       ("#ff7043", "#2a1508"),
@@ -407,122 +306,35 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
         "RECUPERAÇÃO SCORE":  ("#4caf50", "#0d1f14"),
         "RECUPERAÇÃO SMA200": ("#29b6f6", "#0d1520"),
     }
-    all_alerts.sort(key=lambda x: type_order.get(x["type"], 9))
 
     cards = ""
     for a in all_alerts:
         sym  = a["symbol"]
         info = cmap.get(sym, {})
-        name = info.get("name", sym)
-        cat  = info.get("category_name", "—")
-        cor  = info.get("color", "#7c83fd")
+        name = html.escape(info.get("name", sym))
         t    = a["type"]
-        tech = a.get("tech", {})
+        assessment = entry_assessment(t, a.get("tech", {}))
+
         clr, bg = type_color.get(t, ("#aaa", "#1a1d2e"))
-
-        # Avaliação de entrada
-        assessment = entry_assessment(t, tech)
         verdict_clr = assessment["color"]
-        verdict_lbl = assessment["verdict"]
-        explanation = assessment["explanation"]
 
-        badge = (
-            f'<span style="background:{clr};color:#000;padding:2px 9px;'
-            f'border-radius:10px;font-size:11px;font-weight:bold">{t}</span>'
-        )
-        verdict_badge = (
-            f'<span style="background:{verdict_clr};color:#000;padding:2px 9px;'
-            f'border-radius:10px;font-size:11px;font-weight:bold">{verdict_lbl}</span>'
-        )
-
-        if t == "QUEDA HORÁRIA":
-            event_detail = f'Queda de <b style="color:{clr}">{a["ret_1h"]:.2%}</b> na última hora'
-        elif t == "BREAK SMA200":
-            event_detail = (
-                f'Preço <b style="color:{clr}">{a["close"]:.2f}</b> fechou abaixo '
-                f'da SMA200 ({a["sma200"]:.2f}) — '
-                f'<span style="color:{clr}">{a["pct_below"]:.2%} abaixo</span>'
-            )
-        elif t == "DETERIORAÇÃO":
-            pct = a.get("score_pct")
-            pct_str = f'&nbsp;·&nbsp;P{pct*100:.0f} histórico' if pd.notna(pct) else ""
-            event_detail = (
-                f'Score cruzou abaixo de {SCORE_DANGER}: '
-                f'<b style="color:{clr}">{a["score"]:.3f}</b> '
-                f'(era {a["score_prev"]:.3f}){pct_str}'
-            )
-        elif t == "QUEDA DE SCORE":
-            event_detail = (
-                f'Score caiu <b style="color:{clr}">−{a["delta"]:.3f}</b> '
-                f'numa sessão: {a["score_prev"]:.3f} → {a["score"]:.3f}'
-            )
-        elif t == "RECUPERAÇÃO SCORE":
-            event_detail = (
-                f'Score recuperou: {a["score_prev"]:.3f} → '
-                f'<b style="color:{clr}">{a["score"]:.3f}</b> '
-                f'(+{a["delta"]:.3f})'
-            )
-        elif t == "RECUPERAÇÃO SMA200":
-            event_detail = (
-                f'Preço <b style="color:{clr}">{a["close"]:.2f}</b> voltou acima '
-                f'da SMA200 ({a["sma200"]:.2f}) — '
-                f'<span style="color:{clr}">+{a["pct_above"]:.2%} acima</span>'
-            )
-        else:
-            event_detail = (
-                f'Score caiu <b style="color:{clr}">−{a["delta"]:.3f}</b> '
-                f'numa sessão: {a["score_prev"]:.3f} → {a["score"]:.3f}'
-            )
-
-        cards += f"""
-        <div style="background:{bg};border-left:4px solid {clr};
-                    padding:14px 18px;margin:10px 0;border-radius:4px">
-
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-            <span style="color:#e8eaf6;font-size:18px;font-weight:bold">{sym}</span>
-            <span style="color:#888;font-size:11px">{name}</span>
-            {badge}
-            <span style="color:{cor};font-size:11px">● {cat}</span>
-          </div>
-
-          <div style="color:#ccc;font-size:12px;margin-bottom:8px">{event_detail}</div>
-
-          {tech_grid(tech)}
-
-          <div style="margin-top:10px;padding:10px 12px;background:#111420;
-                      border-radius:4px;border-left:3px solid {verdict_clr}">
-            <div style="margin-bottom:5px">{verdict_badge}</div>
-            <div style="color:#bbb;font-size:12px;line-height:1.6">{explanation}</div>
-          </div>
-
+        cards += f"""<div style="background:{bg};border-left:4px solid {clr};padding:14px;margin:10px 0;border-radius:4px">
+          <div style="color:#e8eaf6;font-weight:bold">{html.escape(sym)} - {html.escape(t)}</div>
+          <div style="color:#bbb;font-size:12px;margin-top:5px">{html.escape(assessment['explanation'])}</div>
         </div>"""
 
-    html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="background:#0f1117;color:#e8eaf6;font-family:sans-serif;margin:0;padding:20px">
+    html_content = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="background:#0f1117;color:#e8eaf6;font-family:sans-serif;padding:20px">
   <div style="max-width:660px;margin:0 auto">
-
-    <div style="border-bottom:1px solid #1e2130;padding-bottom:12px;margin-bottom:20px">
-      <div style="font-size:22px;font-weight:bold;color:#f44336">
-        ⚠ ET-Spotter — {n} alerta{'s' if n != 1 else ''} activo{'s' if n != 1 else ''}
-      </div>
-      <div style="color:#555;font-size:12px;margin-top:4px">{ts} · apenas eventos novos desta sessão</div>
-    </div>
-
+    <div style="font-size:22px;font-weight:bold;color:#f44336">⚠ ET-Spotter — {n} alerta(s)</div>
+    <div style="color:#555;font-size:12px;margin-top:4px">{ts}</div>
     {cards}
-
-    <div style="border-top:1px solid #1e2130;margin-top:24px;padding-top:12px;
-                color:#444;font-size:11px;text-align:center">
-      ET-Spotter · dados via yfinance · não constitui recomendação de investimento
-    </div>
+    <div style="color:#444;font-size:11px;text-align:center;margin-top:20px">ET-Spotter · dados via yfinance</div>
   </div>
-</body>
-</html>"""
-    return html
+</body></html>"""
+    return html_content
 
-
-# ── main ──────────────────────────────────────────────────────────────────────
 
 def main():
     cfg        = load_config()
@@ -542,21 +354,40 @@ def main():
     for a in all_alerts:
         print(f"[ALERTA] {a['type']}: {a['symbol']}")
 
+    # Enviar por email
     email_to = os.getenv("EMAIL_TO")
     if email_to:
-        from send_email import send_email
-        html    = build_alert_html(all_alerts, cmap)
-        to_list = [t.strip() for t in email_to.split(",")]
-        n       = len(all_alerts)
-        tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
-        suffix  = "..." if n > 3 else ""
-        send_email(
-            f"ET-Spotter: {n} alerta{'s' if n!=1 else ''} — {tickers}{suffix}",
-            html,
-            to_list,
-        )
+        try:
+            from send_email import send_email
+            html    = build_alert_html(all_alerts, cmap)
+            to_list = [t.strip() for t in email_to.split(",")]
+            n       = len(all_alerts)
+            tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
+            suffix  = "..." if n > 3 else ""
+            
+            send_email(
+                f"ET-Spotter: {n} alerta{'s' if n!=1 else ''} — {tickers}{suffix}",
+                html,
+                to_list,
+            )
+            print(f"[EMAIL] ✓ Enviado para {email_to}")
+        except Exception as e:
+            print(f"[EMAIL] ✗ Erro: {e}")
 
-    sys.exit(1)
+    # Enviar por Telegram
+    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if telegram_token:
+        try:
+            from send_telegram import send_telegram_alert
+            n = len(all_alerts)
+            tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
+            suffix = "..." if n > 3 else ""
+            
+            message = f"🚨 <b>ET-Spotter: {n} alerta{'s' if n!=1 else ''}</b>\n\n{tickers}{suffix}"
+            send_telegram_alert(message)
+            print("[TELEGRAM] ✓ Alerta enviado")
+        except Exception as e:
+            print(f"[TELEGRAM] ✗ Erro: {e}")
 
 
 if __name__ == "__main__":
