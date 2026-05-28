@@ -1,72 +1,113 @@
 """
-Integração com Telegram para envio de alertas.
+Envio de notificações via Telegram.
+Credenciais via variáveis de ambiente:
+  TELEGRAM_BOT_TOKEN  – token do bot (@BotFather)
+  TELEGRAM_CHAT_ID    – ID do chat/grupo para enviar mensagens
 """
 
 import os
+import sys
 import requests
-
-try:
-    from logger_config import setup_logger
-    logger = setup_logger(__name__)
-except ImportError:
-    import logging
-    logger = logging.getLogger(__name__)
+from typing import Optional
 
 
-def send_telegram_alert(message: str, parse_mode: str = "HTML") -> bool:
+TELEGRAM_API_BASE = "https://api.telegram.org"
+
+
+def send_telegram_alert(
+    message: str,
+    parse_mode: str = "HTML",
+    bot_token: Optional[str] = None,
+    chat_id: Optional[str] = None,
+    timeout: int = 10
+) -> bool:
     """
-    Envia mensagem de texto via Telegram.
-    Returns True se enviado com sucesso.
+    Envia mensagem via Telegram.
+    
+    Args:
+        message: Conteúdo da mensagem (suporta HTML se parse_mode="HTML")
+        parse_mode: "HTML", "Markdown", ou "MarkdownV2"
+        bot_token: Token do bot (default: TELEGRAM_BOT_TOKEN env var)
+        chat_id: ID do chat (default: TELEGRAM_CHAT_ID env var)
+        timeout: Timeout em segundos
+    
+    Returns:
+        True se enviado com sucesso, False caso contrário
     """
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
+    bot_token = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
+    
     if not bot_token or not chat_id:
-        logger.warning("[TELEGRAM] Credenciais não definidas — a ignorar envio.")
+        print(
+            "[TELEGRAM] Credenciais não definidas. "
+            "Define TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID.",
+            file=sys.stderr
+        )
         return False
-
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    
+    url = f"{TELEGRAM_API_BASE}/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": message,
         "parse_mode": parse_mode,
-        "disable_web_page_preview": True
     }
-
+    
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=timeout)
         response.raise_for_status()
-        logger.info(f"[TELEGRAM] Mensagem enviada com sucesso.")
+        print(f"[TELEGRAM] ✓ Mensagem enviada para {chat_id}")
         return True
-    except requests.exceptions.RequestException as e:
-        logger.error(f"[TELEGRAM] Erro ao enviar mensagem: {e}")
+    except requests.RequestException as e:
+        print(f"[TELEGRAM] ✗ Erro ao enviar: {e}", file=sys.stderr)
         return False
 
 
-def send_telegram_photo(photo_url: str, caption: str = "") -> bool:
+def send_telegram_photo(
+    photo_url: str,
+    caption: Optional[str] = None,
+    bot_token: Optional[str] = None,
+    chat_id: Optional[str] = None,
+    timeout: int = 10
+) -> bool:
     """
-    Envia imagem via Telegram com legenda opcional.
+    Envia foto via Telegram.
+    
+    Args:
+        photo_url: URL da foto
+        caption: Legenda (opcional, suporta HTML)
+        bot_token: Token do bot
+        chat_id: ID do chat
+        timeout: Timeout em segundos
+    
+    Returns:
+        True se enviado com sucesso, False caso contrário
     """
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
+    bot_token = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
+    
     if not bot_token or not chat_id:
-        logger.warning("[TELEGRAM] Credenciais não definidas — a ignorar envio.")
+        print(
+            "[TELEGRAM] Credenciais não definidas.",
+            file=sys.stderr
+        )
         return False
-
-    url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+    
+    url = f"{TELEGRAM_API_BASE}/bot{bot_token}/sendPhoto"
     payload = {
         "chat_id": chat_id,
         "photo": photo_url,
-        "caption": caption,
-        "parse_mode": "HTML"
     }
-
+    
+    if caption:
+        payload["caption"] = caption
+        payload["parse_mode"] = "HTML"
+    
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=timeout)
         response.raise_for_status()
-        logger.info(f"[TELEGRAM] Foto enviada com sucesso.")
+        print(f"[TELEGRAM] ✓ Foto enviada para {chat_id}")
         return True
-    except requests.exceptions.RequestException as e:
-        logger.error(f"[TELEGRAM] Erro ao enviar foto: {e}")
+    except requests.RequestException as e:
+        print(f"[TELEGRAM] ✗ Erro ao enviar foto: {e}", file=sys.stderr)
         return False
+
