@@ -26,8 +26,9 @@ jobs:
 
       - name: Detect and send alerts
         env:
-          EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
-        # exit 1 do script quando há alertas é esperado – não falha o workflow
-        run: python scripts/detect_alerts.py || true
+          EMAIL_FROM:           ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD:       ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:             ${{ secrets.EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:     ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/detect_alerts.py

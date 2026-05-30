@@ -2,9 +2,13 @@
 Recolhe dados intradiários (60min) de todos os ETFs via yfinance.
 Sem API key, sem limites práticos.
 Guarda um CSV fixo por ETF em data/hourly/SYMBOL.csv (sobrescreve).
+
+Inclui retry logic com exponencial backoff.
 """
 
 import sys
+import time
+import random
 from pathlib import Path
 
 import pandas as pd
@@ -13,10 +17,20 @@ import yfinance as yf
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_all_symbols
 
+try:
+    from constants import INTRADAY_FETCH_PERIOD, INTRADAY_INTERVAL, MAX_API_RETRIES, RETRY_BASE_WAIT_TIME
+except ImportError:
+    # Fallback se constants.py não existir ainda
+    INTRADAY_FETCH_PERIOD = "60d"
+    INTRADAY_INTERVAL = "1h"
+    MAX_API_RETRIES = 3
+    RETRY_BASE_WAIT_TIME = 1
+
 DATA_HOURLY = Path("data/hourly")
 
 
-def fetch_intraday(symbol: str, period: str = "60d", interval: str = "1h") -> pd.DataFrame:
+def fetch_intraday(symbol: str, period: str = INTRADAY_FETCH_PERIOD, interval: str = INTRADAY_INTERVAL) -> pd.DataFrame:
+    """Recolhe dados intradiários via yfinance."""
     ticker = yf.Ticker(symbol)
     df = ticker.history(period=period, interval=interval)
     if df.empty:
@@ -27,17 +41,53 @@ def fetch_intraday(symbol: str, period: str = "60d", interval: str = "1h") -> pd
     return df[["open", "high", "low", "close", "volume"]]
 
 
+def fetch_with_retry(symbol: str, max_retries: int = MAX_API_RETRIES) -> pd.DataFrame:
+    """Recolhe dados com retry automático em caso de falha."""
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            return fetch_intraday(symbol)
+        except Exception as e:
+            last_error = e
+            if attempt == max_retries - 1:
+                raise RuntimeError(f"Falhou após {max_retries} tentativas: {e}")
+            
+            wait_time = (RETRY_BASE_WAIT_TIME ** attempt) + random.uniform(0, 1)
+            print(
+                f"[RETRY] {symbol}: tentativa {attempt + 1}/{max_retries} falhou, "
+                f"aguardando {wait_time:.1f}s... ({e})",
+                file=sys.stderr
+            )
+            time.sleep(wait_time)
+    
+    raise last_error
+
+
 def main():
     cfg = load_config()
     DATA_HOURLY.mkdir(parents=True, exist_ok=True)
-
-    for symbol in get_all_symbols(cfg):
+    
+    symbols = get_all_symbols(cfg)
+    success_count = 0
+    error_count = 0
+    
+    print(f"[INFO] Recolhendo dados intradiários para {len(symbols)} ativos...")
+    
+    for symbol in symbols:
         try:
-            df = fetch_intraday(symbol)
+            df = fetch_with_retry(symbol)
             df.to_csv(DATA_HOURLY / f"{symbol}.csv")
-            print(f"[OK] {symbol} ({len(df)} registos)")
+            print(f"[OK] {symbol}: {len(df)} candles")
+            success_count += 1
         except Exception as e:
             print(f"[ERRO] {symbol}: {e}", file=sys.stderr)
+            error_count += 1
+    
+    print(f"[RESUMO] Recolha concluída: {success_count} OK, {error_count} erros")
+    
+    if error_count > 0:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
