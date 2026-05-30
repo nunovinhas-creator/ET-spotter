@@ -225,3 +225,57 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
     order = {"FORTE COMPRA": 0, "COMPRA": 1, "POTENCIAL": 2}
     signals.sort(key=lambda x: (order.get(x["level"], 9), x.get("ret_5d", 0), -x["score"]))
     return signals[:top_n]
+
+
+def compute_upside_score(
+    ret_63d: float, ret_5d: float, rsi: float, adx: float,
+    macd_bullish: int, delta_score: float, rs_positive: int,
+    trend_sma: int, above_sma200: int, vol_21: float, drawdown: float,
+) -> int | None:
+    """
+    Pontuação 0-100 para ETFs com potencial de subir >5% no mês seguinte.
+    Devolve None se qualquer condição disqualificadora estiver activa.
+    """
+    # Disqualificadores duros
+    if not trend_sma:        return None   # sem tendência ascendente
+    if not above_sma200:     return None   # abaixo da média de longo prazo
+    if rsi > 72:             return None   # sobrecomprado
+    if ret_5d > 0.08:        return None   # já subiu demasiado esta semana
+    if vol_21 < 0.10:        return None   # volatilidade demasiado baixa (sem impulso)
+    if drawdown < -0.30:     return None   # em queda livre
+
+    pts = 0
+
+    # Momentum 3 meses (0-30 pts) — motor principal de continuação
+    if ret_63d >= 0.20:    pts += 30
+    elif ret_63d >= 0.12:  pts += 22
+    elif ret_63d >= 0.06:  pts += 15
+    elif ret_63d >= 0.02:  pts += 8
+
+    # RSI — ponto de entrada (0-14 pts): ideal ligeiramente abaixo de 50
+    if 38 <= rsi <= 52:    pts += 14
+    elif 52 < rsi <= 62:   pts += 9
+    elif 30 <= rsi < 38:   pts += 5
+
+    # Correção semanal = janela de entrada (0-11 pts)
+    if ret_5d <= -0.04:    pts += 11
+    elif ret_5d <= -0.015: pts += 8
+    elif ret_5d <= 0.01:   pts += 4
+
+    # Força de tendência ADX (0-12 pts)
+    if adx >= 35:          pts += 12
+    elif adx >= 25:        pts += 8
+    elif adx >= 18:        pts += 4
+
+    # MACD bullish (0-8 pts)
+    if macd_bullish:       pts += 8
+
+    # Aceleração do score (0-15 pts)
+    if delta_score >= 0.05:    pts += 15
+    elif delta_score >= 0.02:  pts += 10
+    elif delta_score >= 0.00:  pts += 5
+
+    # Força relativa vs SPY (0-10 pts)
+    if rs_positive:        pts += 10
+
+    return min(pts, 100)

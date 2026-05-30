@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_config, get_category_map, build_buy_signals, category_summary
+from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_upside_score
 
 REPORTS     = Path("data/reports")
 DATA_DAILY  = Path("data/daily")
@@ -227,6 +227,135 @@ def narrativa_simples(s: dict) -> str:
         fecho = "."
 
     return f"{p1}. {p2}. {p3}{fecho}"
+
+
+def _build_upside_candidates(rows_raw: list[dict], top_n: int = 3) -> list[dict]:
+    candidates = []
+    for r in rows_raw:
+        pts = compute_upside_score(
+            ret_63d=r.get("ret_63d", 0),
+            ret_5d=r.get("ret_5d", 0),
+            rsi=r.get("rsi", 50),
+            adx=r.get("adx", 0),
+            macd_bullish=r.get("macd_bullish", 0),
+            delta_score=r.get("delta_score", 0),
+            rs_positive=r.get("rs_positive", 0),
+            trend_sma=r.get("trend_sma", 0),
+            above_sma200=r.get("above_sma200", 0),
+            vol_21=r.get("vol_21", 0),
+            drawdown=r.get("drawdown", -1),
+        )
+        if pts is not None:
+            candidates.append({**r, "upside_pts": pts})
+    candidates.sort(key=lambda x: -x["upside_pts"])
+    return candidates[:top_n]
+
+
+def narrativa_upside(r: dict) -> str:
+    nome    = _nome_curto(r)
+    ret_63d = float(r.get("ret_63d", 0) or 0)
+    ret_5d  = float(r.get("ret_5d",  0) or 0)
+    rsi     = float(r.get("rsi",    50) or 50)
+    adx     = float(r.get("adx",     0) or 0)
+    rs_pos  = bool(r.get("rs_positive", 0))
+    pts     = int(r.get("upside_pts", 0))
+
+    # Frase de abertura — desempenho recente
+    if ret_63d >= 0.15:
+        abertura = f"O {nome} tem estado a crescer de forma consistente nos últimos 3 meses ({ret_63d:+.1%})"
+    elif ret_63d >= 0.05:
+        abertura = f"O {nome} ganhou terreno nos últimos 3 meses ({ret_63d:+.1%})"
+    elif ret_63d >= 0:
+        abertura = f"O {nome} tem uma evolução positiva moderada nos últimos 3 meses ({ret_63d:+.1%})"
+    else:
+        abertura = f"O {nome} está a recuperar após um período de baixa ({ret_63d:+.1%} nos últimos 3 meses)"
+
+    # Janela de entrada
+    if ret_5d <= -0.03:
+        entrada = (f"Esta semana recuou {ret_5d:+.1%} — como se estivesse 'em saldo', "
+                   f"permitindo comprar a um preço mais baixo do que há alguns dias")
+    elif ret_5d <= -0.01:
+        entrada = (f"A pequena correção de {ret_5d:+.1%} esta semana cria um momento de entrada "
+                   f"mais favorável, sem ter de pagar pelo preço máximo recente")
+    elif ret_5d <= 0.02:
+        entrada = "Esta semana está estável, sem grandes movimentos em nenhum sentido — um sinal de acumulação silenciosa"
+    else:
+        entrada = f"Subiu {ret_5d:+.1%} esta semana, o que mostra que os investidores estão confiantes"
+
+    # Força da tendência
+    if adx >= 35:
+        tendencia = "A tendência de subida é forte e bem definida"
+    elif adx >= 25:
+        tendencia = "A tendência de subida está estabelecida com boa consistência"
+    else:
+        tendencia = "Os indicadores de tendência apontam para continuação da subida"
+
+    # Força relativa e pontuação
+    if rs_pos:
+        comparacao = f", e está a superar o mercado americano (S&P 500) neste período — um sinal de saúde relativa"
+    else:
+        comparacao = ""
+
+    nivel = "alto" if pts >= 70 else ("médio-alto" if pts >= 55 else "médio")
+    conclusao = (f"A nossa pontuação interna de potencial é {pts}/100 (nível {nivel}), "
+                 f"o que coloca este ETF entre os mais prometedores para o próximo mês{comparacao}.")
+
+    return f"{abertura}. {entrada}. {tendencia}. {conclusao}"
+
+
+def upside_candidates_section(rows_raw: list[dict]) -> str:
+    candidates = _build_upside_candidates(rows_raw, top_n=3)
+    if not candidates:
+        return ""
+
+    medals = ["🥇", "🥈", "🥉"]
+    cards = ""
+    for i, r in enumerate(candidates):
+        pts   = int(r.get("upside_pts", 0))
+        medal = medals[i] if i < 3 else f"#{i+1}"
+        rsi   = float(r.get("rsi", 50) or 50)
+        # barra de progresso
+        bar_w = pts
+        bar_color = "#4caf50" if pts >= 70 else ("#ffd54f" if pts >= 55 else "#7c83fd")
+
+        cards += f"""
+        <div style="background:#0d1021;border-left:4px solid {bar_color};padding:14px 16px;
+                    margin:8px 0;border-radius:4px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+            <span style="font-size:20px">{medal}</span>
+            <span style="color:var(--text);font-size:16px;font-weight:bold">{r['ticker']}</span>
+            <span style="color:var(--muted);font-size:11px">{r['nome']}</span>
+            <span style="color:{r['cor']};font-size:10px">● {r['categoria']}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="color:var(--muted);font-size:11px">Potencial</span>
+            <div style="flex:1;background:#1e2130;border-radius:4px;height:8px;max-width:200px">
+              <div style="width:{bar_w}%;background:{bar_color};border-radius:4px;height:8px"></div>
+            </div>
+            <span style="color:{bar_color};font-weight:bold;font-size:13px">{pts}/100</span>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
+            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:{'var(--green)' if r.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_63d',0))}</b></span>
+            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:{'var(--green)' if r.get('ret_5d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_5d',0))}</b></span>
+            <span><span style="color:var(--muted)">RSI</span> <b style="color:{'var(--green)' if 40<=rsi<=65 else 'var(--yellow)'}">{rsi:.0f}</b></span>
+            <span><span style="color:var(--muted)">ADX</span> <b style="color:{'var(--green)' if r.get('adx',0)>=25 else 'var(--muted)'}">{r.get('adx',0):.0f}</b></span>
+            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if r.get('rs_positive') else 'var(--red)'}">{'✓' if r.get('rs_positive') else '✗'}</b></span>
+          </div>
+          <p style="color:#b0bec5;font-size:11px;line-height:1.7;font-style:italic">{narrativa_upside(r)}</p>
+        </div>"""
+
+    return f"""
+<section class="section">
+  <h2 class="section-title">Conselheiro +5% — Top 3 com Maior Potencial no Próximo Mês</h2>
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:14px">
+    ETFs com melhor combinação de tendência, momentum e janela de entrada para crescer mais de 5% em 30 dias.
+    Explicação simples para cada um.
+  </p>
+  {cards}
+  <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
+    ⚠ Pontuação baseada em análise técnica histórica. Não constitui garantia de retorno nem aconselhamento financeiro.
+  </p>
+</section>"""
 
 
 def buy_signals_section(signals: list[dict]) -> str:
@@ -649,6 +778,7 @@ def generate_dashboard(cfg: dict) -> None:
         '<div class="main">',
         summary_cards_html(signals, data["scores_df"]),
         buy_signals_section(signals),
+        upside_candidates_section(data["rows_raw"]),
         category_heatmap_section(data["cats"]),
         history_chart_section(data["hist_df"], data["scores_df"]),
         backtest_section(data["bt_df"]),
