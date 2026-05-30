@@ -12,7 +12,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import (load_config, get_etfs, get_category_map,
-                   category_summary, build_buy_signals)
+                   category_summary, build_buy_signals, build_advisor_candidates)
 from generate_charts import plot_scores_bar, plot_category_summary
 from send_email import send_email
 
@@ -51,6 +51,11 @@ def load_rows(cfg: dict) -> tuple[list[dict], pd.DataFrame]:
         ret_5d      = float(last.get("ret_5d",       0) or 0)
         ret_21d     = float(last.get("ret_21d",      0) or 0)
         ret_63d     = float(last.get("ret_63d",      0) or 0)
+        ret_126d    = float(last.get("ret_126d",     0) or 0)
+        ret_252d    = float(last.get("ret_252d",     0) or 0)
+        sharpe_63   = float(last.get("sharpe_63",    0) or 0)
+        calmar_63   = float(last.get("calmar_63",    0) or 0)
+        rs_mom_63   = float(last.get("rs_mom_63",    0) or 0)
         drawdown    = float(last.get("drawdown",     0) or 0)
         vol_21      = float(last.get("vol_21",       0) or 0)
         rsi         = float(last.get("rsi",          50) or 50)
@@ -68,11 +73,13 @@ def load_rows(cfg: dict) -> tuple[list[dict], pd.DataFrame]:
             "score": round(score, 3), "delta_score": delta_score,
             "trend_sma": trend_sma, "macd_bullish": macd_bull,
             "ret_5d": ret_5d, "ret_21d": ret_21d, "ret_63d": ret_63d,
-            "ret_24h": ret_1d,  # alias for category_summary compatibility
+            "ret_126d": ret_126d, "ret_252d": ret_252d,
+            "ret_24h": ret_1d,
             "drawdown": drawdown, "vol_21": vol_21,
             "rsi": rsi, "adx": adx,
-            "rs_positive": rs_positive, "rs_mom_21": rs_mom_21,
+            "rs_positive": rs_positive, "rs_mom_21": rs_mom_21, "rs_mom_63": rs_mom_63,
             "above_sma200": above_sma200, "score_pct": score_pct,
+            "sharpe_63": sharpe_63, "calmar_63": calmar_63,
             "close": round(float(last.get("close", 0) or 0), 2),
         })
         rows_display.append({
@@ -104,6 +111,52 @@ def load_rows(cfg: dict) -> tuple[list[dict], pd.DataFrame]:
 
 def _c(val: float, neutral: float = 0) -> str:
     return "#4caf50" if val >= neutral else "#f44336"
+
+
+def advisor_email_html(rows_raw: list[dict]) -> str:
+    candidates = build_advisor_candidates(rows_raw, top_n=3)
+    if not candidates:
+        return '<p style="color:#555;font-size:12px">Sem candidatos que cumpram os critérios técnicos hoje.</p>'
+
+    def _c(v, n=0): return "#4caf50" if v >= n else "#f44336"
+    def _pct(v): return f"{v:+.1%}" if v is not None else "—"
+
+    medals = ["🥇", "🥈", "🥉"]
+    cards = ""
+    for i, r in enumerate(candidates):
+        pts       = int(r.get("advisor_pts", 0))
+        medal     = medals[i] if i < len(medals) else f"#{i+1}"
+        bar_color = "#4caf50" if pts >= 70 else ("#ffd54f" if pts >= 50 else "#7c83fd")
+        rsi       = float(r.get("rsi", 50) or 50)
+        ret_252d  = float(r.get("ret_252d", 0) or 0)
+        ret_126d  = float(r.get("ret_126d", 0) or 0)
+        ret_21d   = float(r.get("ret_21d",  0) or 0)
+        momentum  = (ret_252d - ret_21d) if ret_252d != 0 else (ret_126d - ret_21d)
+        mom_label = "Mom.12-1M" if ret_252d != 0 else "Mom.6-1M"
+        cards += f"""
+        <div style="background:#13162a;border-left:4px solid {bar_color};
+                    padding:12px 16px;margin:6px 0;border-radius:4px">
+          <div style="margin-bottom:6px">
+            <span style="font-size:16px">{medal}</span>
+            <span style="color:#e8eaf6;font-size:16px;font-weight:bold;margin-left:6px">{r['ticker']}</span>
+            <span style="color:#666;font-size:11px;margin-left:8px">{r['nome']}</span>
+            <span style="background:{bar_color};color:#000;padding:1px 8px;border-radius:8px;
+                         font-size:10px;font-weight:bold;margin-left:8px">{pts}/100</span>
+          </div>
+          <div style="font-size:11px;color:#aaa;line-height:1.8">
+            <span style="color:#666">{mom_label}:</span> <b style="color:{_c(momentum)}">{_pct(momentum)}</b>
+            &nbsp;·&nbsp;
+            <span style="color:#666">Ret.3M:</span> <b style="color:{_c(r.get('ret_63d',0))}">{_pct(r.get('ret_63d',0))}</b>
+            &nbsp;·&nbsp;
+            <span style="color:#666">RSI:</span> <b style="color:{'#4caf50' if 35<=rsi<=65 else '#ffd54f'}">{rsi:.0f}</b>
+            &nbsp;·&nbsp;
+            <span style="color:#666">Sharpe:</span> <b style="color:{'#4caf50' if r.get('sharpe_63',0)>=1 else '#aaa'}">{r.get('sharpe_63',0):.1f}</b>
+            &nbsp;·&nbsp;
+            <span style="color:#666">RS/SPY:</span> <b style="color:{'#4caf50' if r.get('rs_positive') else '#f44336'}">{'✓' if r.get('rs_positive') else '✗'}</b>
+          </div>
+        </div>"""
+
+    return cards
 
 
 def buy_signals_html(signals: list[dict]) -> str:
@@ -277,6 +330,7 @@ def category_table_html(cats: list[dict]) -> str:
 def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
     signals     = build_buy_signals(rows_raw, top_n=8)
     sig_html    = buy_signals_html(signals)
+    adv_html    = advisor_email_html(rows_raw)
     rot_html    = sector_rotation_html(cats)
     table_html  = full_table_html(df_display)
     cat_html    = category_table_html(cats)
@@ -302,10 +356,22 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
   <h1 style="color:#7c83fd;margin-bottom:2px;font-size:22px">ET-Spotter</h1>
   <p style="color:#555;margin-top:0;font-size:13px">{date_str} · Análise técnica diária · {len(get_etfs(cfg))} ETFs</p>
 
+  <!-- MELHOR POSICIONADOS -->
+  <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0;
+              border-top:2px solid #7c83fd">
+    <h2 style="color:#7c83fd;margin-top:0;font-size:16px">
+      Melhor Posicionados Hoje
+    </h2>
+    <p style="color:#555;font-size:11px;margin-top:-8px;margin-bottom:12px">
+      Top 3 por score técnico composto: momentum multi-período · tendência · força relativa · qualidade de entrada
+    </p>
+    {adv_html}
+  </div>
+
   <!-- SINAIS DE COMPRA -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">
     <h2 style="color:#7c83fd;margin-top:0;font-size:16px">
-      Sinais de Compra – Próximas Semanas
+      Sinais de Compra – Análise de Confluência
     </h2>
     <p style="color:#666;font-size:12px;margin-top:-8px">
       ETFs com confluência de indicadores técnicos favoráveis · {summary_line}
@@ -348,7 +414,7 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
   <hr style="border-color:#1e2130;margin-top:32px">
   <p style="color:#333;font-size:10px">
     ET-Spotter · GitHub Actions · dados via yfinance ·
-    Este relatório é informativo e não constitui aconselhamento financeiro.
+    Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro.
   </p>
 </body></html>"""
 

@@ -227,55 +227,126 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
     return signals[:top_n]
 
 
-def compute_upside_score(
-    ret_63d: float, ret_5d: float, rsi: float, adx: float,
-    macd_bullish: int, delta_score: float, rs_positive: int,
-    trend_sma: int, above_sma200: int, vol_21: float, drawdown: float,
+def compute_advisor_score(
+    ret_252d: float, ret_126d: float, ret_21d: float, ret_5d: float,
+    rsi: float, adx: float, macd_bullish: int,
+    rs_positive: int, rs_mom_63: float,
+    trend_sma: int, above_sma200: int,
+    sharpe_63: float, calmar_63: float,
+    vol_21: float, drawdown: float,
 ) -> int | None:
     """
-    Pontuação 0-100 para ETFs com potencial de subir >5% no mês seguinte.
-    Devolve None se qualquer condição disqualificadora estiver activa.
+    Score técnico composto 0-100 baseado em evidência académica e prática profissional:
+
+    Fontes:
+      - Momentum cross-seccional (Jegadeesh & Titman 1993; AQR): ret 12-1M
+      - Trend following / regime filter (Meb Faber 2007): preço > SMA200
+      - Dual momentum absoluto + relativo (Gary Antonacci 2012)
+      - Risk-adjusted return: Sharpe + Calmar como proxy de qualidade
+      - Entry timing: RSI + pullback em uptrend (não prever, posicionar bem)
+
+    Devolve None se o ETF não cumpre os critérios de regime mínimos.
     """
-    # Disqualificadores duros
-    if not trend_sma:        return None   # sem tendência ascendente
-    if not above_sma200:     return None   # abaixo da média de longo prazo
-    if rsi > 72:             return None   # sobrecomprado
-    if ret_5d > 0.08:        return None   # já subiu demasiado esta semana
-    if vol_21 < 0.10:        return None   # volatilidade demasiado baixa (sem impulso)
-    if drawdown < -0.30:     return None   # em queda livre
+    import math
+
+    def _f(v, default=0.0):
+        try:
+            x = float(v)
+            return default if math.isnan(x) or math.isinf(x) else x
+        except (TypeError, ValueError):
+            return default
+
+    ret_252d  = _f(ret_252d)
+    ret_126d  = _f(ret_126d)
+    ret_21d   = _f(ret_21d)
+    ret_5d    = _f(ret_5d)
+    rsi       = _f(rsi, 50.0)
+    adx       = _f(adx)
+    rs_mom_63 = _f(rs_mom_63)
+    sharpe_63 = _f(sharpe_63)
+    calmar_63 = _f(calmar_63)
+    vol_21    = _f(vol_21)
+    drawdown  = _f(drawdown, -0.01)
+
+    # ── Filtros de regime (Faber: só estar comprado quando acima de SMA200) ─────
+    if not above_sma200:   return None
+    if rsi > 75:           return None   # extremamente sobrecomprado
+    if ret_5d > 0.12:      return None   # spike extremo — não perseguir
+    if drawdown < -0.20:   return None   # queda estrutural activa
+
+    # ── Momentum composto: 12-1M ou 6-1M (Antonacci) ─────────────────────────
+    # A exclusão do último mês evita o efeito de reversão de curto prazo
+    if ret_252d != 0.0:
+        momentum = ret_252d - ret_21d   # 12-1M (preferido)
+    else:
+        momentum = ret_126d - ret_21d   # 6-1M (fallback para ETFs mais recentes)
+
+    # Momentum absoluto negativo = não estar comprado (Antonacci)
+    if momentum < 0:
+        return None
 
     pts = 0
 
-    # Momentum 3 meses (0-30 pts) — motor principal de continuação
-    if ret_63d >= 0.20:    pts += 30
-    elif ret_63d >= 0.12:  pts += 22
-    elif ret_63d >= 0.06:  pts += 15
-    elif ret_63d >= 0.02:  pts += 8
+    # 1. Momentum cross-seccional (45 pts) — factor com maior evidência
+    if momentum >= 0.30:    pts += 45
+    elif momentum >= 0.20:  pts += 35
+    elif momentum >= 0.12:  pts += 25
+    elif momentum >= 0.06:  pts += 15
+    else:                   pts += 5
 
-    # RSI — ponto de entrada (0-14 pts): ideal ligeiramente abaixo de 50
-    if 38 <= rsi <= 52:    pts += 14
-    elif 52 < rsi <= 62:   pts += 9
-    elif 30 <= rsi < 38:   pts += 5
+    # 2. Regime de tendência (10 pts) — Faber SMA200 + SMA20>SMA50
+    if trend_sma and above_sma200:  pts += 10
+    elif above_sma200:              pts += 5
 
-    # Correção semanal = janela de entrada (0-11 pts)
-    if ret_5d <= -0.04:    pts += 11
-    elif ret_5d <= -0.015: pts += 8
-    elif ret_5d <= 0.01:   pts += 4
+    # 3. Força relativa vs benchmark (15 pts) — Antonacci dual momentum relativo
+    if rs_positive and rs_mom_63 >= 0.05:  pts += 15
+    elif rs_positive:                       pts += 10
+    elif rs_mom_63 > 0:                    pts += 5
 
-    # Força de tendência ADX (0-12 pts)
-    if adx >= 35:          pts += 12
-    elif adx >= 25:        pts += 8
-    elif adx >= 18:        pts += 4
+    # 4. Qualidade risk-adjusted (15 pts) — Sharpe + Calmar premiam consistência
+    s_pts = 8 if sharpe_63 >= 2.0 else (5 if sharpe_63 >= 1.0 else (2 if sharpe_63 >= 0.5 else 0))
+    c_pts = 7 if calmar_63 >= 2.0 else (4 if calmar_63 >= 1.0 else (2 if calmar_63 >= 0.5 else 0))
+    pts += s_pts + c_pts
 
-    # MACD bullish (0-8 pts)
-    if macd_bullish:       pts += 8
+    # 5. Timing de entrada (10 pts) — RSI não sobrecomprado + pullback em uptrend
+    if 35 <= rsi <= 55:              pts += 7
+    elif 55 < rsi <= 65:             pts += 4
+    elif rsi < 35 and trend_sma:     pts += 3   # oversold em uptrend = oportunidade
+    if ret_5d <= -0.02:              pts += 3   # pullback = desconto técnico
+    elif ret_5d <= 0.01:             pts += 1
 
-    # Aceleração do score (0-15 pts)
-    if delta_score >= 0.05:    pts += 15
-    elif delta_score >= 0.02:  pts += 10
-    elif delta_score >= 0.00:  pts += 5
-
-    # Força relativa vs SPY (0-10 pts)
-    if rs_positive:        pts += 10
+    # 6. Força da tendência ADX (5 pts)
+    if adx >= 30:   pts += 5
+    elif adx >= 20: pts += 3
 
     return min(pts, 100)
+
+
+def build_advisor_candidates(rows: list[dict], top_n: int = 3) -> list[dict]:
+    """
+    Filtra e ordena os ETFs pelo score técnico composto (compute_advisor_score).
+    Cada row deve ter os campos correspondentes aos parâmetros de compute_advisor_score.
+    """
+    candidates = []
+    for r in rows:
+        pts = compute_advisor_score(
+            ret_252d=r.get("ret_252d",  0),
+            ret_126d=r.get("ret_126d",  0),
+            ret_21d=r.get("ret_21d",    0),
+            ret_5d=r.get("ret_5d",      0),
+            rsi=r.get("rsi",            50),
+            adx=r.get("adx",            0),
+            macd_bullish=r.get("macd_bullish", 0),
+            rs_positive=r.get("rs_positive",   0),
+            rs_mom_63=r.get("rs_mom_63",       0),
+            trend_sma=r.get("trend_sma",       0),
+            above_sma200=r.get("above_sma200", 0),
+            sharpe_63=r.get("sharpe_63",       0),
+            calmar_63=r.get("calmar_63",       0),
+            vol_21=r.get("vol_21",             0),
+            drawdown=r.get("drawdown",        -0.5),
+        )
+        if pts is not None:
+            candidates.append({**r, "advisor_pts": pts})
+    candidates.sort(key=lambda x: -x["advisor_pts"])
+    return candidates[:top_n]

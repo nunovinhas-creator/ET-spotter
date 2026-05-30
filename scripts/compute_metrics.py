@@ -95,6 +95,7 @@ def compute_metrics(df: pd.DataFrame, spy_close: pd.Series = None) -> pd.DataFra
     df["ret_21d"]  = close.pct_change(21)
     df["ret_63d"]  = close.pct_change(63)
     df["ret_126d"] = close.pct_change(126)
+    df["ret_252d"] = close.pct_change(252)
 
     # ── Tendência ──────────────────────────────────────────────────────────────
     df["sma20"]       = close.rolling(20).mean()
@@ -149,6 +150,7 @@ def compute_metrics(df: pd.DataFrame, spy_close: pd.Series = None) -> pd.DataFra
         df["rs_ratio"]    = rs_ratio
         df["rs_mom_21"]   = rs_ratio.pct_change(21)
         df["rs_mom_63"]   = rs_ratio.pct_change(63)
+        df["rs_mom_126d"] = rs_ratio.pct_change(126)
         df["rs_positive"] = (df["rs_mom_63"] > 0).astype(int)
     else:
         df["rs_ratio"]    = np.nan
