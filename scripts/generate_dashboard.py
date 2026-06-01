@@ -114,13 +114,13 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     sma_str = f"SMA200 {spy_sma200:.2f}" if spy_sma200 else ""
     regime_badge = (
         f'<span style="background:{regime_color};color:#000;padding:2px 8px;'
-        f'border-radius:8px;font-size:11px;font-weight:bold">{spy_regime}</span>'
+        f'border-radius:2px;font-size:11px;font-weight:bold">{spy_regime}</span>'
     )
     return f"""
 <header>
   <div class="header-inner">
     <div>
-      <div class="logo">ET-Spotter</div>
+      <div class="logo">ET-SPOTTER</div>
       <div class="subtitle">Dashboard de monitorização técnica · {n_etfs} ETFs</div>
     </div>
     <div style="text-align:right">
@@ -140,9 +140,9 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
 
     def card(label, value, color, sub=""):
         return f"""
-        <div class="card" style="border-top:3px solid {color}">
-          <div style="font-size:28px;font-weight:bold;color:{color}">{value}</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">{label}</div>
+        <div class="card" style="border-top:1px solid {color}">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:{color}">{value}</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">{label}</div>
           {f'<div style="color:var(--muted);font-size:10px;margin-top:2px">{sub}</div>' if sub else ""}
         </div>"""
 
@@ -288,7 +288,8 @@ def advisor_section(rows_raw: list[dict]) -> str:
         pts       = int(r.get("advisor_pts", 0))
         medal     = medals[i] if i < 3 else f"#{i+1}"
         rsi       = float(r.get("rsi", 50) or 50)
-        bar_color = "#4caf50" if pts >= 70 else ("#ffd54f" if pts >= 50 else "#7c83fd")
+        bar_color      = "var(--green)"  if pts >= 70 else ("var(--yellow)" if pts >= 50 else "var(--muted)")
+        bar_border_clr = "oklch(48% 0.09 188)" if pts >= 70 else ("oklch(48% 0.12 80)" if pts >= 50 else "var(--border)")
 
         ret_252d = float(r.get("ret_252d", 0) or 0)
         ret_126d = float(r.get("ret_126d", 0) or 0)
@@ -296,8 +297,8 @@ def advisor_section(rows_raw: list[dict]) -> str:
         mom_label = "Mom.12-1M" if ret_252d != 0 else "Mom.6-1M"
 
         cards += f"""
-        <div style="background:#0d1021;border-left:4px solid {bar_color};padding:14px 16px;
-                    margin:8px 0;border-radius:4px">
+        <div style="background:var(--bg);border:1px solid {bar_border_clr};padding:14px 16px;
+                    margin:8px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">{medal}</span>
             <span style="color:var(--text);font-size:16px;font-weight:bold">{html_mod.escape(r['ticker'])}</span>
@@ -306,7 +307,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
-            <div style="flex:1;background:#1e2130;border-radius:4px;height:7px;max-width:200px">
+            <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:{pts}%;background:{bar_color};border-radius:4px;height:7px"></div>
             </div>
             <span style="color:{bar_color};font-weight:bold;font-size:13px">{pts}/100</span>
@@ -320,7 +321,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:{'var(--green)' if r.get('sharpe_63',0)>=1 else 'var(--muted)'}">{r.get('sharpe_63',0):.1f}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if r.get('rs_positive') else 'var(--red)'}">{'✓' if r.get('rs_positive') else '✗'}</b></span>
           </div>
-          <p style="color:#b0bec5;font-size:11px;line-height:1.7;font-style:italic">{narrativa_advisor(r)}</p>
+          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">{narrativa_advisor(r)}</p>
         </div>"""
 
     return f"""
@@ -344,11 +345,11 @@ def buy_signals_section(signals: list[dict]) -> str:
     cards = ""
     for s in signals:
         level_colors = {
-            "FORTE COMPRA": ("var(--green)",       "#1b3a2a"),
-            "COMPRA":       ("var(--light-green)", "#1e2f1a"),
-            "POTENCIAL":    ("var(--yellow)",       "#2a2510"),
+            "FORTE COMPRA": ("var(--green)",       "oklch(13% 0.045 188)", "oklch(48% 0.09 188)"),
+            "COMPRA":       ("var(--light-green)", "oklch(12% 0.025 188)", "oklch(38% 0.08 188)"),
+            "POTENCIAL":    ("var(--yellow)",       "oklch(13% 0.04 80)",   "oklch(48% 0.12 80)"),
         }
-        clr, bg = level_colors.get(s["level"], ("var(--blue)", "#0d1021"))
+        clr, bg, border_clr = level_colors.get(s["level"], ("var(--muted)", "var(--bg)", "var(--border)"))
         pct = s.get("score_pct")
         pct_html = (
             f'<span style="color:var(--muted);font-size:10px">P{pct*100:.0f}</span>'
@@ -358,11 +359,11 @@ def buy_signals_section(signals: list[dict]) -> str:
         rsi_c = "var(--green)" if 40 <= rsi <= 65 else ("var(--yellow)" if rsi > 70 else "var(--red)" if rsi < 35 else "var(--muted)")
 
         cards += f"""
-        <div style="background:{bg};border-left:4px solid {clr};padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:{bg};border:1px solid {border_clr};padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">{html_mod.escape(s['ticker'])}</span>
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
-            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">{s['level']}</span>
+            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">{s['level']}</span>
             <span style="color:{s['cor']};font-size:10px">● {html_mod.escape(s['categoria'])}</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -375,7 +376,7 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
         </div>"""
 
     return f"""
@@ -390,18 +391,18 @@ def buy_signals_section(signals: list[dict]) -> str:
 
 def category_heatmap_section(cats: list[dict]) -> str:
     def score_to_bg(score):
-        if score >= 0.65: return "#1b3a2a"
-        if score >= 0.55: return "#1e2f1a"
-        if score >= 0.45: return "#2a2510"
-        if score >= 0.35: return "#2a1508"
-        return "#2a1010"
+        if score >= 0.65: return "oklch(13% 0.045 188)"
+        if score >= 0.55: return "oklch(12% 0.025 188)"
+        if score >= 0.45: return "oklch(13% 0.04 80)"
+        if score >= 0.35: return "oklch(12% 0.04 35)"
+        return "oklch(11% 0.025 35)"
 
     items = ""
     for c in cats:
         mom_color = {"▲": "var(--green)", "→": "var(--muted)", "▼": "var(--red)"}.get(c["momentum"], "var(--muted)")
         bg = score_to_bg(c["score_avg"])
         items += f"""
-        <div class="cat-tile" style="background:{bg};border-left:3px solid {c['color']}">
+        <div class="cat-tile" style="background:{bg};border:1px solid {c['color']}">
           <div style="color:{c['color']};font-size:10px;font-weight:bold;margin-bottom:4px">{c['name']}</div>
           <div style="font-size:20px;font-weight:bold;color:{'var(--green)' if c['score_avg']>=0.5 else 'var(--red)'}">{c['score_avg']:.3f}</div>
           <div style="font-size:10px;color:{mom_color};margin-top:2px">{c['momentum']} {c['n']} ETFs · top {c['score_max']:.3f}</div>
@@ -463,10 +464,8 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
   <h2 class="section-title">Todos os ETFs</h2>
   <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
-      style="background:#0d1021;border:1px solid var(--border);color:var(--text);
-             padding:6px 12px;border-radius:4px;font-size:12px;width:220px">
-    <select id="tbl-filter" style="background:#0d1021;border:1px solid var(--border);
-             color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px">
+      style="width:220px">
+    <select id="tbl-filter">
       <option value="">Todos</option>
       <option value="FORTE COMPRA">FORTE COMPRA</option>
       <option value="COMPRA">COMPRA</option>
@@ -475,9 +474,9 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
     </select>
   </div>
   <div style="overflow-x:auto">
-    <table id="etf-table" style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px">
+    <table id="etf-table" style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px;background:var(--bg)">
       <thead>
-        <tr id="tbl-head" style="background:#0d1021;color:var(--blue)">
+        <tr id="tbl-head" style="background:var(--deep);color:var(--champagne)">
           <th class="sortable" data-col="ticker"  style="padding:7px 10px;text-align:left;cursor:pointer;white-space:nowrap">ETF ↕</th>
           <th class="sortable" data-col="nome"    style="padding:7px 10px;text-align:left;cursor:pointer">Nome ↕</th>
           <th class="sortable" data-col="cat"     style="padding:7px 10px;text-align:left;cursor:pointer">Categ. ↕</th>
@@ -526,13 +525,13 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
 
     function renderTable(rows) {{
       const tbody = document.getElementById("etf-tbody");
-      const td = "padding:5px 10px;border-bottom:1px solid #0d1021";
+      const td = "padding:5px 10px;border-bottom:1px solid var(--border)";
       tbody.innerHTML = rows.map(r => {{
         const lvl = convictionLevel(r);
         const lvlBadge = lvl ? `<span style="background:${{
           lvl==='FORTE COMPRA'?'var(--green)':lvl==='COMPRA'?'var(--light-green)':'var(--yellow)'
-        }};color:#000;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:bold">${{lvl}}</span>` : "";
-        return `<tr style="background:#0f1117">
+        }};color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${{lvl}}</span>` : "";
+        return `<tr style="background:var(--bg)">
           <td style="${{td}};color:var(--text);font-weight:bold">
             <span style="color:${{r.cat_color}}">●</span> ${{r.ticker}} ${{lvlBadge}}
           </td>
@@ -597,7 +596,13 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
     date_labels = [str(d)[:10] for d in dates_all]
 
     datasets = []
-    palette  = ["#7c83fd","#4caf50","#ffd54f","#f44336","#29b6f6"]
+    palette = [
+        "oklch(84% 0.19 80.46)",
+        "oklch(68% 0.11 188)",
+        "oklch(58% 0.15 35)",
+        "oklch(78% 0.10 188)",
+        "oklch(68% 0.16 80)",
+    ]
     for i, etf in enumerate(top5):
         sub = hist_df[hist_df["etf"] == etf].set_index("date")["score"]
         data_points = []
@@ -631,14 +636,14 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
           responsive: true,
           maintainAspectRatio: false,
           scales: {{
-            x: {{ ticks: {{ color:"#666", maxTicksLimit:8, font:{{size:10}} }},
-                   grid: {{ color:"#1e2130" }} }},
-            y: {{ min:0, max:1, ticks: {{ color:"#666", font:{{size:10}} }},
-                   grid: {{ color:"#1e2130" }} }}
+            x: {{ ticks: {{ color:"oklch(63% 0.024 82)", maxTicksLimit:8, font:{{size:10}} }},
+                   grid: {{ color:"oklch(15% 0.008 95)" }} }},
+            y: {{ min:0, max:1, ticks: {{ color:"oklch(63% 0.024 82)", font:{{size:10}} }},
+                   grid: {{ color:"oklch(15% 0.008 95)" }} }}
           }},
           plugins: {{
-            legend: {{ labels: {{ color:"#e8eaf6", font:{{size:11}} }} }},
-            tooltip: {{ backgroundColor:"#0d1021" }}
+            legend: {{ labels: {{ color:"oklch(81% 0.03 82)", font:{{size:11}} }} }},
+            tooltip: {{ backgroundColor:"oklch(4% 0.004 95)",titleColor:"oklch(84% 0.19 80.46)",bodyColor:"oklch(81% 0.03 82)" }}
           }}
         }}
       }});
@@ -671,8 +676,8 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
             clr = level_colors.get(lvl, "var(--muted)")
             exc_html = f'&nbsp;·&nbsp;<span style="color:var(--muted)">Excesso SPY</span> <b style="color:{_c(exc_avg)}">{_pct(exc_avg)}</b>' if pd.notna(exc_avg) else ""
             rows_html += f"""
-            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #0d1021;flex-wrap:wrap">
-              <span style="background:{clr};color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">{lvl}</span>
+            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+              <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">{lvl}</span>
               <span style="color:var(--muted);font-size:11px">n={len(sub)}</span>
               <span style="font-size:12px"><span style="color:var(--muted)">Ret. médio 21d</span> <b style="color:{_c(avg)}">{_pct(avg)}</b>{exc_html}</span>
               <span style="font-size:12px"><span style="color:var(--muted)">Win rate</span> <b style="color:{_c(win-0.5)}">{win:.0%}</b></span>
@@ -712,36 +717,159 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
 
 CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap');
+
 :root {
-  --bg: #0f1117; --card: #0d1021; --border: #1e2130; --text: #e8eaf6;
-  --muted: #666; --green: #4caf50; --light-green: #8bc34a; --yellow: #ffd54f;
-  --red: #f44336; --orange: #ff7043; --blue: #7c83fd; --blue-light: #29b6f6;
+  /* Impeccable — Neo Kinpaku */
+  --bg:        oklch(7% 0.006 95);
+  --deep:      oklch(4% 0.004 95);
+  --surface:   oklch(11% 0.006 95);
+  --border:    oklch(19% 0.008 95);
+  --gold:      oklch(84% 0.19 80.46);
+  --patina:    oklch(70% 0.12 188);
+  --champagne: oklch(84% 0.035 82);
+  --text:      oklch(81% 0.03 82);
+  --muted:     oklch(63% 0.024 82);
+  --vermilion: oklch(58% 0.15 35);
+
+  /* semantic aliases — used in JS template strings */
+  --green:       oklch(68% 0.11 188);
+  --light-green: oklch(58% 0.10 188);
+  --yellow:      oklch(84% 0.19 80.46);
+  --red:         oklch(58% 0.15 35);
+  --orange:      oklch(62% 0.13 50);
+  --blue:        oklch(84% 0.19 80.46);
+  --blue-light:  oklch(70% 0.12 188);
 }
-*  { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text);
-       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-       font-size: 13px; }
-header { background: #0a0c14; border-bottom: 1px solid var(--border);
-         padding: 14px 24px; position: sticky; top: 0; z-index: 100; }
-.header-inner { max-width: 1400px; margin: 0 auto; display: flex;
-                justify-content: space-between; align-items: center; }
-.logo   { color: var(--blue); font-size: 20px; font-weight: bold; }
-.subtitle { color: var(--muted); font-size: 11px; }
-.main   { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-                gap: 12px; margin-bottom: 20px; }
-.card { background: var(--card); border-radius: 8px; padding: 16px; }
-.section { background: var(--card); border-radius: 8px; padding: 20px;
-           margin-bottom: 16px; }
-.section-title { color: var(--blue); font-size: 15px; margin-bottom: 14px; }
-.cat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 10px; }
-.cat-tile { padding: 12px; border-radius: 4px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-.tab-btn { background: #0a0c14; border: 1px solid var(--border); color: var(--muted);
-           padding: 4px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-.tab-btn.active { color: var(--text); border-color: var(--blue); }
-footer { text-align: center; color: var(--muted); font-size: 10px;
-         padding: 20px 0 32px; border-top: 1px solid var(--border); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Albert Sans', 'Avenir Next', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+header {
+  background: var(--deep);
+  border-bottom: 1px solid oklch(15% 0.008 95);
+  padding: 14px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.logo {
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.subtitle {
+  color: var(--muted);
+  font-family: 'SFMono-Regular', 'Roboto Mono', Consolas, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  margin-bottom: 16px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.card { background: var(--surface); padding: 20px 16px; }
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-bottom: 14px;
+}
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cat-tile { padding: 14px 12px; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tab-btn:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
+.tab-btn.active { color: var(--gold); border-color: var(--gold); }
+
+#tbl-search, #tbl-filter {
+  background: var(--deep);
+  border: 1px solid oklch(28% 0.010 95);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 2px;
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.8rem;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#tbl-search:focus, #tbl-filter:focus { outline: none; border-color: var(--patina); }
+#tbl-search::placeholder { color: var(--muted); }
+.sortable { transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sortable:hover { color: var(--gold) !important; }
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 24px 0 40px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
 </style>"""
 
 
@@ -777,6 +905,8 @@ def generate_dashboard(cfg: dict) -> None:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
   <title>ET-Spotter Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   {CSS}
 </head>
