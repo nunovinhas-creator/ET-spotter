@@ -5,39 +5,164 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
   <title>ET-Spotter Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap');
+
 :root {
-  --bg: #0f1117; --card: #0d1021; --border: #1e2130; --text: #e8eaf6;
-  --muted: #666; --green: #4caf50; --light-green: #8bc34a; --yellow: #ffd54f;
-  --red: #f44336; --orange: #ff7043; --blue: #7c83fd; --blue-light: #29b6f6;
+  /* Impeccable — Neo Kinpaku */
+  --bg:        oklch(7% 0.006 95);
+  --deep:      oklch(4% 0.004 95);
+  --surface:   oklch(11% 0.006 95);
+  --border:    oklch(19% 0.008 95);
+  --gold:      oklch(84% 0.19 80.46);
+  --patina:    oklch(70% 0.12 188);
+  --champagne: oklch(84% 0.035 82);
+  --text:      oklch(81% 0.03 82);
+  --muted:     oklch(63% 0.024 82);
+  --vermilion: oklch(58% 0.15 35);
+
+  /* semantic aliases — used in JS template strings */
+  --green:       oklch(68% 0.11 188);
+  --light-green: oklch(58% 0.10 188);
+  --yellow:      oklch(84% 0.19 80.46);
+  --red:         oklch(58% 0.15 35);
+  --orange:      oklch(62% 0.13 50);
+  --blue:        oklch(84% 0.19 80.46);
+  --blue-light:  oklch(70% 0.12 188);
 }
-*  { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text);
-       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-       font-size: 13px; }
-header { background: #0a0c14; border-bottom: 1px solid var(--border);
-         padding: 14px 24px; position: sticky; top: 0; z-index: 100; }
-.header-inner { max-width: 1400px; margin: 0 auto; display: flex;
-                justify-content: space-between; align-items: center; }
-.logo   { color: var(--blue); font-size: 20px; font-weight: bold; }
-.subtitle { color: var(--muted); font-size: 11px; }
-.main   { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-                gap: 12px; margin-bottom: 20px; }
-.card { background: var(--card); border-radius: 8px; padding: 16px; }
-.section { background: var(--card); border-radius: 8px; padding: 20px;
-           margin-bottom: 16px; }
-.section-title { color: var(--blue); font-size: 15px; margin-bottom: 14px; }
-.cat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 10px; }
-.cat-tile { padding: 12px; border-radius: 4px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-.tab-btn { background: #0a0c14; border: 1px solid var(--border); color: var(--muted);
-           padding: 4px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-.tab-btn.active { color: var(--text); border-color: var(--blue); }
-footer { text-align: center; color: var(--muted); font-size: 10px;
-         padding: 20px 0 32px; border-top: 1px solid var(--border); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Albert Sans', 'Avenir Next', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+header {
+  background: var(--deep);
+  border-bottom: 1px solid oklch(15% 0.008 95);
+  padding: 14px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.logo {
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.subtitle {
+  color: var(--muted);
+  font-family: 'SFMono-Regular', 'Roboto Mono', Consolas, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  margin-bottom: 16px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.card { background: var(--surface); padding: 20px 16px; }
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-bottom: 14px;
+}
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cat-tile { padding: 14px 12px; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tab-btn:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
+.tab-btn.active { color: var(--gold); border-color: var(--gold); }
+
+#tbl-search, #tbl-filter {
+  background: var(--deep);
+  border: 1px solid oklch(28% 0.010 95);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 2px;
+  font-family: 'Albert Sans', sans-serif;
+  font-size: 0.8rem;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#tbl-search:focus, #tbl-filter:focus { outline: none; border-color: var(--patina); }
+#tbl-search::placeholder { color: var(--muted); }
+.sortable { transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sortable:hover { color: var(--gold) !important; }
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 24px 0 40px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
 </style>
 </head>
 <body>
@@ -45,44 +170,44 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
 <header>
   <div class="header-inner">
     <div>
-      <div class="logo">ET-Spotter</div>
+      <div class="logo">ET-SPOTTER</div>
       <div class="subtitle">Dashboard de monitorização técnica · 36 ETFs</div>
     </div>
     <div style="text-align:right">
-      <div style="color:var(--text);font-size:13px">SPY 756.48 &nbsp;·&nbsp; SMA200 678.68 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:bold">BULL</span></div>
-      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 01/06/2026  06:06 UTC</div>
+      <div style="color:var(--text);font-size:13px">SPY 756.48 &nbsp;·&nbsp; SMA200 678.68 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold">BULL</span></div>
+      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 01/06/2026  12:34 UTC</div>
     </div>
   </div>
 </header><div class="main">
 <section class="summary-grid">
   
-        <div class="card" style="border-top:3px solid var(--green)">
-          <div style="font-size:28px;font-weight:bold;color:var(--green)">0</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">FORTE COMPRA</div>
+        <div class="card" style="border-top:1px solid var(--green)">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--green)">0</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">FORTE COMPRA</div>
           
         </div>
   
-        <div class="card" style="border-top:3px solid var(--light-green)">
-          <div style="font-size:28px;font-weight:bold;color:var(--light-green)">2</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">COMPRA</div>
+        <div class="card" style="border-top:1px solid var(--light-green)">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--light-green)">2</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">COMPRA</div>
           
         </div>
   
-        <div class="card" style="border-top:3px solid var(--yellow)">
-          <div style="font-size:28px;font-weight:bold;color:var(--yellow)">8</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">POTENCIAL</div>
+        <div class="card" style="border-top:1px solid var(--yellow)">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--yellow)">8</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">POTENCIAL</div>
           
         </div>
   
-        <div class="card" style="border-top:3px solid var(--blue)">
-          <div style="font-size:28px;font-weight:bold;color:var(--blue)">23</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">Score > 0.50</div>
+        <div class="card" style="border-top:1px solid var(--blue)">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--blue)">23</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">Score > 0.50</div>
           <div style="color:var(--muted);font-size:10px;margin-top:2px">de 36 ETFs</div>
         </div>
   
-        <div class="card" style="border-top:3px solid var(--blue-light)">
-          <div style="font-size:28px;font-weight:bold;color:var(--blue-light)">0.572</div>
-          <div style="color:var(--text);font-size:12px;margin-top:4px">Score médio</div>
+        <div class="card" style="border-top:1px solid var(--blue-light)">
+          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--blue-light)">0.572</div>
+          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">Score médio</div>
           
         </div>
 </section>
@@ -92,11 +217,11 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
   
-        <div style="background:#1e2f1a;border-left:4px solid var(--light-green);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IWMO.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World Momentum (iShares Edge UCITS Acc)</span>
-            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">COMPRA</span>
+            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">COMPRA</span>
             <span style="color:#66bb6a;font-size:10px">● Factor / Smart Beta</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -108,14 +233,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-0.6%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência ascendente confirmada (sma20>sma50). força relativa positiva vs spy (últimos 63 dias). momentum 3m sólido (13.6%).</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+13.6% nos últimos 3 meses). Subiu +3.0% esta semana, com o momentum a ganhar tração. O RSI (65) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência ascendente confirmada (sma20&gt;sma50). força relativa positiva vs spy (últimos 63 dias). momentum 3m sólido (13.6%).</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+13.6% nos últimos 3 meses). Subiu +3.0% esta semana, com o momentum a ganhar tração. O RSI (65) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
-        <div style="background:#1e2f1a;border-left:4px solid var(--light-green);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">XMEM.DE</span>
             <span style="color:var(--muted);font-size:11px">MSCI Emerging Markets (Xtrackers UCITS Acc)</span>
-            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">COMPRA</span>
+            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">COMPRA</span>
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -127,14 +252,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). força relativa positiva vs spy (últimos 63 dias). momentum 3m sólido (9.9%).</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Emerging Markets tem vindo a ganhar terreno nos últimos 3 meses (+9.9%). Subiu +3.3% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). força relativa positiva vs spy (últimos 63 dias). momentum 3m sólido (9.9%).</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Emerging Markets tem vindo a ganhar terreno nos últimos 3 meses (+9.9%). Subiu +3.3% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">XDWD.DE</span>
             <span style="color:var(--muted);font-size:11px">MSCI World (Xtrackers UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -146,14 +271,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-0.1%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 0.5%). rsi em sobrecompra (72) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+8.0%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (72) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 0.5%). rsi em sobrecompra (72) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+8.0%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (72) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">VWCE.DE</span>
             <span style="color:var(--muted);font-size:11px">FTSE All-World EUR (Vanguard UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -165,14 +290,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 1.0%). rsi em sobrecompra (72) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O FTSE All-World EUR tem vindo a ganhar terreno nos últimos 3 meses (+8.2%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (72) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.0%). rsi em sobrecompra (72) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O FTSE All-World EUR tem vindo a ganhar terreno nos últimos 3 meses (+8.2%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (72) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">SMEA.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI Europe (iShares Core UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#ab47bc;font-size:10px">● Internacional Desenvolvido</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -184,14 +309,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-3.8%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 1.3%). drawdown contido (-3.8%).</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Europe está a consolidar sem movimento expressivo nos últimos 3 meses. Subiu +1.3% esta semana, com o momentum a ganhar tração. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.3%). drawdown contido (-3.8%).</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Europe está a consolidar sem movimento expressivo nos últimos 3 meses. Subiu +1.3% esta semana, com o momentum a ganhar tração. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">CSPX.L</span>
-            <span style="color:var(--muted);font-size:11px">S&P 500 (iShares Core UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="color:var(--muted);font-size:11px">S&amp;P 500 (iShares Core UCITS Acc)</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#7c83fd;font-size:10px">● EUA – Mercado Largo</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -203,14 +328,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 1.4%). rsi em sobrecompra (73) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O S&P 500 tem vindo a ganhar terreno nos últimos 3 meses (+9.9%). Subiu +1.4% esta semana, com o momentum a ganhar tração. O RSI (73) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.4%). rsi em sobrecompra (73) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O S&P 500 tem vindo a ganhar terreno nos últimos 3 meses (+9.9%). Subiu +1.4% esta semana, com o momentum a ganhar tração. O RSI (73) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IWQU.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World Quality (iShares Edge UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#66bb6a;font-size:10px">● Factor / Smart Beta</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -222,14 +347,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 1.5%). retorno 3m positivo (3.4%).</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World Quality tem vindo a ganhar terreno nos últimos 3 meses (+3.4%). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (66) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.5%). retorno 3m positivo (3.4%).</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World Quality tem vindo a ganhar terreno nos últimos 3 meses (+3.4%). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (66) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">VWRP.L</span>
             <span style="color:var(--muted);font-size:11px">FTSE All-World USD (Vanguard UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -241,14 +366,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 2.3%). rsi em sobrecompra (75) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O FTSE All-World USD tem vindo a ganhar terreno nos últimos 3 meses (+8.4%). Subiu +2.3% esta semana, com o momentum a ganhar tração. O RSI (75) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 2.3%). rsi em sobrecompra (75) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O FTSE All-World USD tem vindo a ganhar terreno nos últimos 3 meses (+8.4%). Subiu +2.3% esta semana, com o momentum a ganhar tração. O RSI (75) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IWDA.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World (iShares Core UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -260,14 +385,14 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 2.3%). rsi em sobrecompra (69) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+6.8%). Subiu +2.3% esta semana, com o momentum a ganhar tração. O RSI (69) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 2.3%). rsi em sobrecompra (69) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+6.8%). Subiu +2.3% esta semana, com o momentum a ganhar tração. O RSI (69) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
         </div>
-        <div style="background:#2a2510;border-left:4px solid var(--yellow);padding:12px 16px;margin:6px 0;border-radius:4px">
+        <div style="background:oklch(13% 0.04 80);border:1px solid oklch(48% 0.12 80);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">SWRD.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World (SPDR UCITS Acc)</span>
-            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">POTENCIAL</span>
+            <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">POTENCIAL</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
@@ -279,8 +404,8 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--red)">—</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20>sma50, macd+). entrada não comprometida (ret. semanal 2.4%). rsi em sobrecompra (70) — aguardar correcção.</div>
-          <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+6.9%). Subiu +2.4% esta semana, com o momentum a ganhar tração. O RSI (70) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 2.4%). rsi em sobrecompra (70) — aguardar correcção.</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World tem vindo a ganhar terreno nos últimos 3 meses (+6.9%). Subiu +2.4% esta semana, com o momentum a ganhar tração. O RSI (70) já em zona quente — os restantes indicadores suportam a tese, mas uma pequena espera pode melhorar o ponto de entrada.</p>
         </div>
 </section>
 <section class="section">
@@ -290,83 +415,83 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
     Baseado em critérios académicos e de prática profissional (Faber, Antonacci, AQR).
   </p>
   
-        <div style="background:#0d1021;border-left:4px solid #4caf50;padding:14px 16px;
-                    margin:8px 0;border-radius:4px">
+        <div style="background:var(--bg);border:1px solid var(--border);padding:14px 16px;
+                    margin:8px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">🥇</span>
-            <span style="color:var(--text);font-size:16px;font-weight:bold">WTAI.L</span>
-            <span style="color:var(--muted);font-size:11px">Inteligência Artificial (WisdomTree UCITS Acc)</span>
-            <span style="color:#ef5350;font-size:10px">● Temáticos / Inovação</span>
+            <span style="color:var(--text);font-size:16px;font-weight:bold">IUCS.L</span>
+            <span style="color:var(--muted);font-size:11px">S&amp;P 500 Consumer Staples (iShares UCITS Acc)</span>
+            <span style="color:#26a69a;font-size:10px">● EUA – Sectores UCITS</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
-            <div style="flex:1;background:#1e2130;border-radius:4px;height:7px;max-width:200px">
-              <div style="width:80%;background:#4caf50;border-radius:4px;height:7px"></div>
+            <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
+              <div style="width:28%;background:var(--muted);border-radius:4px;height:7px"></div>
             </div>
-            <span style="color:#4caf50;font-weight:bold;font-size:13px">80/100</span>
+            <span style="color:var(--muted);font-weight:bold;font-size:13px">28/100</span>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
-            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+27.7%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+35.4%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+8.9%</b></span>
-            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--yellow)">74</b></span>
-            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">39</b></span>
-            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">3.8</b></span>
-            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
+            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+9.8%</b></span>
+            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--red)">-6.5%</b></span>
+            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-2.9%</b></span>
+            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">40</b></span>
+            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">21</b></span>
+            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--muted)">-1.5</b></span>
+            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <p style="color:#b0bec5;font-size:11px;line-height:1.7;font-style:italic">O Inteligência Artificial tem um momentum de 6 meses excepcionalmente forte (+27.7% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Subiu +8.9% esta semana — o momentum está activo. O RSI (74) ainda não está em zona de sobrecompra extrema. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (39). sharpe de 3.8 — retorno consistente por unidade de risco. Score técnico composto: 80/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O S&P 500 Consumer Staples mostra um momentum positivo de 6 meses (+9.8%), suficiente para ser considerado em tendência ascendente estabelecida. Está a consolidar esta semana (-2.9%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação.  Score técnico composto: 28/100 (alinhamento moderado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
-        <div style="background:#0d1021;border-left:4px solid #4caf50;padding:14px 16px;
-                    margin:8px 0;border-radius:4px">
+        <div style="background:var(--bg);border:1px solid var(--border);padding:14px 16px;
+                    margin:8px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">🥈</span>
-            <span style="color:var(--text);font-size:16px;font-weight:bold">RBOT.L</span>
-            <span style="color:var(--muted);font-size:11px">Automação & Robótica (iShares UCITS Acc)</span>
-            <span style="color:#ef5350;font-size:10px">● Temáticos / Inovação</span>
+            <span style="color:var(--text);font-size:16px;font-weight:bold">IUES.L</span>
+            <span style="color:var(--muted);font-size:11px">S&amp;P 500 Energy (iShares UCITS Acc)</span>
+            <span style="color:#26a69a;font-size:10px">● EUA – Sectores UCITS</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
-            <div style="flex:1;background:#1e2130;border-radius:4px;height:7px;max-width:200px">
-              <div style="width:80%;background:#4caf50;border-radius:4px;height:7px"></div>
+            <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
+              <div style="width:24%;background:var(--muted);border-radius:4px;height:7px"></div>
             </div>
-            <span style="color:#4caf50;font-weight:bold;font-size:13px">80/100</span>
+            <span style="color:var(--muted);font-weight:bold;font-size:13px">24/100</span>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
-            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+20.5%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+22.2%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+5.1%</b></span>
-            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--yellow)">67</b></span>
-            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">33</b></span>
-            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">2.7</b></span>
-            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
+            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+31.7%</b></span>
+            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+3.3%</b></span>
+            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-6.0%</b></span>
+            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">41</b></span>
+            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">15</b></span>
+            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--muted)">0.6</b></span>
+            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <p style="color:#b0bec5;font-size:11px;line-height:1.7;font-style:italic">O Automação & Robótica apresenta um momentum sólido de 6 meses (+20.5%), o que indica que os investidores institucionais continuam a comprar. Este factor é o que tem mais evidência histórica de continuação. Subiu +5.1% esta semana — o momentum está activo. O RSI (67) ainda não está em zona de sobrecompra extrema. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (33). sharpe de 2.7 — retorno consistente por unidade de risco. Score técnico composto: 80/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O S&P 500 Energy tem um momentum de 6 meses excepcionalmente forte (+31.7% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Esta semana corrigiu -6.0% dentro de uma tendência de alta — tecnicamente o melhor cenário: o activo 'respira' sem quebrar a estrutura. Historicamente, pullbacks neste contexto criam pontos de entrada favoráveis.  Score técnico composto: 24/100 (alinhamento moderado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
-        <div style="background:#0d1021;border-left:4px solid #4caf50;padding:14px 16px;
-                    margin:8px 0;border-radius:4px">
+        <div style="background:var(--bg);border:1px solid var(--border);padding:14px 16px;
+                    margin:8px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">🥉</span>
-            <span style="color:var(--text);font-size:16px;font-weight:bold">XMEM.DE</span>
-            <span style="color:var(--muted);font-size:11px">MSCI Emerging Markets (Xtrackers UCITS Acc)</span>
-            <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
+            <span style="color:var(--text);font-size:16px;font-weight:bold">IUUS.L</span>
+            <span style="color:var(--muted);font-size:11px">S&amp;P 500 Utilities (iShares UCITS Acc)</span>
+            <span style="color:#26a69a;font-size:10px">● EUA – Sectores UCITS</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
-            <div style="flex:1;background:#1e2130;border-radius:4px;height:7px;max-width:200px">
-              <div style="width:70%;background:#4caf50;border-radius:4px;height:7px"></div>
+            <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
+              <div style="width:18%;background:var(--muted);border-radius:4px;height:7px"></div>
             </div>
-            <span style="color:#4caf50;font-weight:bold;font-size:13px">70/100</span>
+            <span style="color:var(--muted);font-weight:bold;font-size:13px">18/100</span>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
-            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+21.0%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+9.9%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+3.3%</b></span>
-            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--yellow)">67</b></span>
-            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">26</b></span>
-            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">1.5</b></span>
-            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
+            <span><span style="color:var(--muted)">Mom.6-1M</span> <b style="color:var(--green)">+5.4%</b></span>
+            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--red)">-5.2%</b></span>
+            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-0.9%</b></span>
+            <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">42</b></span>
+            <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">17</b></span>
+            <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--muted)">-1.2</b></span>
+            <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
-          <p style="color:#b0bec5;font-size:11px;line-height:1.7;font-style:italic">O MSCI Emerging Markets apresenta um momentum sólido de 6 meses (+21.0%), o que indica que os investidores institucionais continuam a comprar. Este factor é o que tem mais evidência histórica de continuação. Subiu +3.3% esta semana — o momentum está activo. O RSI (67) ainda não está em zona de sobrecompra extrema. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (26). sharpe de 1.5 — retorno consistente por unidade de risco. Score técnico composto: 70/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O S&P 500 Utilities mostra um momentum positivo de 6 meses (+5.4%), suficiente para ser considerado em tendência ascendente estabelecida. Está a consolidar esta semana (-0.9%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação.  Score técnico composto: 18/100 (alinhamento moderado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
@@ -375,42 +500,42 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
 <section class="section">
   <h2 class="section-title">Rotação por Categoria</h2>
   <div class="cat-grid">
-        <div class="cat-tile" style="background:#1b3a2a;border-left:3px solid #ef5350">
+        <div class="cat-tile" style="background:oklch(13% 0.045 188);border:1px solid #ef5350">
           <div style="color:#ef5350;font-size:10px;font-weight:bold;margin-bottom:4px">Temáticos / Inovação</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.729</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 6 ETFs · top 0.874</div>
         </div>
-        <div class="cat-tile" style="background:#1b3a2a;border-left:3px solid #7c83fd">
+        <div class="cat-tile" style="background:oklch(13% 0.045 188);border:1px solid #7c83fd">
           <div style="color:#7c83fd;font-size:10px;font-weight:bold;margin-bottom:4px">EUA – Mercado Largo</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.674</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 3 ETFs · top 0.762</div>
+          <div style="font-size:10px;color:var(--green);margin-top:2px">▲ 3 ETFs · top 0.762</div>
         </div>
-        <div class="cat-tile" style="background:#1b3a2a;border-left:3px solid #ff7043">
+        <div class="cat-tile" style="background:oklch(13% 0.045 188);border:1px solid #ff7043">
           <div style="color:#ff7043;font-size:10px;font-weight:bold;margin-bottom:4px">Mercados Emergentes</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.666</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 2 ETFs · top 0.712</div>
         </div>
-        <div class="cat-tile" style="background:#1e2f1a;border-left:3px solid #66bb6a">
+        <div class="cat-tile" style="background:oklch(12% 0.025 188);border:1px solid #66bb6a">
           <div style="color:#66bb6a;font-size:10px;font-weight:bold;margin-bottom:4px">Factor / Smart Beta</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.634</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 4 ETFs · top 0.816</div>
         </div>
-        <div class="cat-tile" style="background:#1e2f1a;border-left:3px solid #4caf50">
+        <div class="cat-tile" style="background:oklch(12% 0.025 188);border:1px solid #4caf50">
           <div style="color:#4caf50;font-size:10px;font-weight:bold;margin-bottom:4px">Global / MSCI World</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.565</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 6 ETFs · top 0.597</div>
         </div>
-        <div class="cat-tile" style="background:#2a2510;border-left:3px solid #ab47bc">
+        <div class="cat-tile" style="background:oklch(13% 0.04 80);border:1px solid #ab47bc">
           <div style="color:#ab47bc;font-size:10px;font-weight:bold;margin-bottom:4px">Internacional Desenvolvido</div>
           <div style="font-size:20px;font-weight:bold;color:var(--green)">0.521</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 2 ETFs · top 0.535</div>
         </div>
-        <div class="cat-tile" style="background:#2a2510;border-left:3px solid #26a69a">
+        <div class="cat-tile" style="background:oklch(13% 0.04 80);border:1px solid #26a69a">
           <div style="color:#26a69a;font-size:10px;font-weight:bold;margin-bottom:4px">EUA – Sectores UCITS</div>
           <div style="font-size:20px;font-weight:bold;color:var(--red)">0.471</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 10 ETFs · top 0.793</div>
         </div>
-        <div class="cat-tile" style="background:#2a1508;border-left:3px solid #ffb300">
+        <div class="cat-tile" style="background:oklch(12% 0.04 35);border:1px solid #ffb300">
           <div style="color:#ffb300;font-size:10px;font-weight:bold;margin-bottom:4px">Commodities</div>
           <div style="font-size:20px;font-weight:bold;color:var(--red)">0.396</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">→ 3 ETFs · top 0.440</div>
@@ -426,19 +551,19 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
       const ctx = document.getElementById("scoreChart").getContext("2d");
       new Chart(ctx, {
         type: "line",
-        data: {"labels": ["2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01"], "datasets": [{"label": "ECAR.L", "data": [null, null, 0.8743, 0.873, 0.8725, 0.8735, 0.8735, 0.8736], "borderColor": "#7c83fd", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "WTAI.L", "data": [null, null, 0.8604, 0.8684, 0.8625, 0.8636, 0.8636, 0.8637], "borderColor": "#4caf50", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "IWVL.L", "data": [null, null, 0.8223, 0.8277, 0.8198, 0.8157, 0.8157, 0.8158], "borderColor": "#ffd54f", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "XDWT.DE", "data": [null, null, 0.7913, 0.7885, 0.7896, 0.7997, 0.7997, 0.7999], "borderColor": "#f44336", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "IUIT.L", "data": [null, null, 0.7041, 0.7097, 0.7057, 0.793, 0.793, 0.7932], "borderColor": "#29b6f6", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}]},
+        data: {"labels": ["2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01"], "datasets": [{"label": "ECAR.L", "data": [null, null, 0.8743, 0.873, 0.8725, 0.8735, 0.8735, 0.8736], "borderColor": "oklch(84% 0.19 80.46)", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "WTAI.L", "data": [null, null, 0.8604, 0.8684, 0.8625, 0.8636, 0.8636, 0.8637], "borderColor": "oklch(68% 0.11 188)", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "IWVL.L", "data": [null, null, 0.8223, 0.8277, 0.8198, 0.8157, 0.8157, 0.8158], "borderColor": "oklch(58% 0.15 35)", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "XDWT.DE", "data": [null, null, 0.7913, 0.7885, 0.7896, 0.7997, 0.7997, 0.7999], "borderColor": "oklch(78% 0.10 188)", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}, {"label": "IUIT.L", "data": [null, null, 0.7041, 0.7097, 0.7057, 0.793, 0.793, 0.7932], "borderColor": "oklch(68% 0.16 80)", "backgroundColor": "transparent", "tension": 0.3, "pointRadius": 1, "borderWidth": 2}]},
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            x: { ticks: { color:"#666", maxTicksLimit:8, font:{size:10} },
-                   grid: { color:"#1e2130" } },
-            y: { min:0, max:1, ticks: { color:"#666", font:{size:10} },
-                   grid: { color:"#1e2130" } }
+            x: { ticks: { color:"oklch(63% 0.024 82)", maxTicksLimit:8, font:{size:10} },
+                   grid: { color:"oklch(15% 0.008 95)" } },
+            y: { min:0, max:1, ticks: { color:"oklch(63% 0.024 82)", font:{size:10} },
+                   grid: { color:"oklch(15% 0.008 95)" } }
           },
           plugins: {
-            legend: { labels: { color:"#e8eaf6", font:{size:11} } },
-            tooltip: { backgroundColor:"#0d1021" }
+            legend: { labels: { color:"oklch(81% 0.03 82)", font:{size:11} } },
+            tooltip: { backgroundColor:"oklch(4% 0.004 95)",titleColor:"oklch(84% 0.19 80.46)",bodyColor:"oklch(81% 0.03 82)" }
           }
         }
       });
@@ -456,20 +581,20 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
     <button class="tab-btn" onclick="showTab('bt-bear',this)">BEAR</button>
   </div>
   <div id="bt-all"  class="tab-content active">
-            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #0d1021;flex-wrap:wrap">
-              <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">FORTE COMPRA</span>
+            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+              <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">FORTE COMPRA</span>
               <span style="color:var(--muted);font-size:11px">n=6</span>
               <span style="font-size:12px"><span style="color:var(--muted)">Ret. médio 21d</span> <b style="color:var(--green)">+0.3%</b></span>
               <span style="font-size:12px"><span style="color:var(--muted)">Win rate</span> <b style="color:var(--green)">50%</b></span>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #0d1021;flex-wrap:wrap">
-              <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">COMPRA</span>
+            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+              <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">COMPRA</span>
               <span style="color:var(--muted);font-size:11px">n=42</span>
               <span style="font-size:12px"><span style="color:var(--muted)">Ret. médio 21d</span> <b style="color:var(--green)">+3.4%</b></span>
               <span style="font-size:12px"><span style="color:var(--muted)">Win rate</span> <b style="color:var(--green)">60%</b></span>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #0d1021;flex-wrap:wrap">
-              <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">POTENCIAL</span>
+            <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+              <span style="background:var(--yellow);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center">POTENCIAL</span>
               <span style="color:var(--muted);font-size:11px">n=35</span>
               <span style="font-size:12px"><span style="color:var(--muted)">Ret. médio 21d</span> <b style="color:var(--green)">+1.5%</b></span>
               <span style="font-size:12px"><span style="color:var(--muted)">Win rate</span> <b style="color:var(--green)">51%</b></span>
@@ -489,10 +614,8 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
   <h2 class="section-title">Todos os ETFs</h2>
   <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
-      style="background:#0d1021;border:1px solid var(--border);color:var(--text);
-             padding:6px 12px;border-radius:4px;font-size:12px;width:220px">
-    <select id="tbl-filter" style="background:#0d1021;border:1px solid var(--border);
-             color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px">
+      style="width:220px">
+    <select id="tbl-filter">
       <option value="">Todos</option>
       <option value="FORTE COMPRA">FORTE COMPRA</option>
       <option value="COMPRA">COMPRA</option>
@@ -501,9 +624,9 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
     </select>
   </div>
   <div style="overflow-x:auto">
-    <table id="etf-table" style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px">
+    <table id="etf-table" style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px;background:var(--bg)">
       <thead>
-        <tr id="tbl-head" style="background:#0d1021;color:var(--blue)">
+        <tr id="tbl-head" style="background:var(--deep);color:var(--champagne)">
           <th class="sortable" data-col="ticker"  style="padding:7px 10px;text-align:left;cursor:pointer;white-space:nowrap">ETF ↕</th>
           <th class="sortable" data-col="nome"    style="padding:7px 10px;text-align:left;cursor:pointer">Nome ↕</th>
           <th class="sortable" data-col="cat"     style="padding:7px 10px;text-align:left;cursor:pointer">Categ. ↕</th>
@@ -528,15 +651,19 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
     const ETF_ROWS = [{"ticker": "ECAR.L", "nome": "Veículos Elétricos & Condução (iShares UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.8736, "pct": "P83", "r1d": 0.0126, "r5d": 0.1582, "r21d": 0.3033, "r63d": 0.4347, "rsi": 77.6, "adx": 39.9, "dd": NaN, "vol": 0.4294, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "WTAI.L", "nome": "Inteligência Artificial (WisdomTree UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.8637, "pct": "P83", "r1d": 0.0075, "r5d": 0.089, "r21d": 0.2518, "r63d": 0.354, "rsi": 73.5, "adx": 38.8, "dd": NaN, "vol": 0.3506, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "IWVL.L", "nome": "MSCI World Value (iShares Edge UCITS Acc)", "cat": "Factor / Smart Beta", "cat_color": "#66bb6a", "score": 0.8158, "pct": "P50", "r1d": 0.0054, "r5d": 0.0692, "r21d": 0.1825, "r63d": 0.2006, "rsi": 77.2, "adx": 40.8, "dd": NaN, "vol": 0.2263, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "XDWT.DE", "nome": "MSCI World IT (Xtrackers UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.7999, "pct": "P100", "r1d": 0.0157, "r5d": 0.0326, "r21d": 0.1567, "r63d": 0.2666, "rsi": 75.1, "adx": 44.3, "dd": NaN, "vol": 0.2242, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "IUIT.L", "nome": "S&P 500 IT (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.7932, "pct": "P100", "r1d": 0.0179, "r5d": 0.06, "r21d": 0.1663, "r63d": 0.2633, "rsi": 73.7, "adx": 42.8, "dd": NaN, "vol": 0.2382, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "CNDX.L", "nome": "Nasdaq 100 (iShares UCITS Acc)", "cat": "EUA – Mercado Largo", "cat_color": "#7c83fd", "score": 0.7618, "pct": "P100", "r1d": 0.0046, "r5d": 0.0424, "r21d": 0.1291, "r63d": 0.2183, "rsi": 73.9, "adx": 30.0, "dd": NaN, "vol": 0.1713, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "IWMO.L", "nome": "MSCI World Momentum (iShares Edge UCITS Acc)", "cat": "Factor / Smart Beta", "cat_color": "#66bb6a", "score": 0.729, "pct": "P83", "r1d": -0.0062, "r5d": 0.0302, "r21d": 0.1076, "r63d": 0.1356, "rsi": 64.6, "adx": 30.7, "dd": -0.0062, "vol": 0.2243, "trend": 1, "macd": 0, "rs": 1, "s200": 1}, {"ticker": "XMEM.DE", "nome": "MSCI Emerging Markets (Xtrackers UCITS Acc)", "cat": "Mercados Emergentes", "cat_color": "#ff7043", "score": 0.7122, "pct": "P83", "r1d": 0.0017, "r5d": 0.0331, "r21d": 0.0944, "r63d": 0.0988, "rsi": 67.0, "adx": 25.6, "dd": NaN, "vol": 0.2499, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "RBOT.L", "nome": "Automação & Robótica (iShares UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.7026, "pct": "P50", "r1d": 0.0002, "r5d": 0.0507, "r21d": 0.1326, "r63d": 0.2216, "rsi": 67.4, "adx": 32.8, "dd": NaN, "vol": 0.2906, "trend": 1, "macd": 0, "rs": 1, "s200": 1}, {"ticker": "CSPX.L", "nome": "S&P 500 (iShares Core UCITS Acc)", "cat": "EUA – Mercado Largo", "cat_color": "#7c83fd", "score": 0.669, "pct": "P100", "r1d": 0.0013, "r5d": 0.0143, "r21d": 0.0667, "r63d": 0.0994, "rsi": 72.9, "adx": 47.2, "dd": NaN, "vol": 0.1133, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "DGTL.L", "nome": "Digitalização (iShares UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.6574, "pct": "P100", "r1d": 0.0244, "r5d": 0.0514, "r21d": 0.0997, "r63d": 0.1538, "rsi": 75.8, "adx": 24.5, "dd": -0.0682, "vol": 0.1702, "trend": 1, "macd": 1, "rs": 1, "s200": 1}, {"ticker": "EIMI.L", "nome": "MSCI EM IMI (iShares Core UCITS Acc)", "cat": "Mercados Emergentes", "cat_color": "#ff7043", "score": 0.62, "pct": "P50", "r1d": 0.0047, "r5d": 0.0539, "r21d": 0.0934, "r63d": 0.0824, "rsi": 65.1, "adx": 22.1, "dd": NaN, "vol": 0.2734, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "XDWD.DE", "nome": "MSCI World (Xtrackers UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.5972, "pct": "P50", "r1d": 0.002, "r5d": 0.0046, "r21d": 0.062, "r63d": 0.0803, "rsi": 72.3, "adx": 43.5, "dd": -0.0009, "vol": 0.0957, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "VWCE.DE", "nome": "FTSE All-World EUR (Vanguard UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.5949, "pct": "P50", "r1d": 0.0021, "r5d": 0.0095, "r21d": 0.0656, "r63d": 0.0815, "rsi": 72.1, "adx": 41.6, "dd": NaN, "vol": 0.1117, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "VUAA.L", "nome": "S&P 500 (Vanguard UCITS Acc)", "cat": "EUA – Mercado Largo", "cat_color": "#7c83fd", "score": 0.5922, "pct": "P83", "r1d": 0.0041, "r5d": 0.0255, "r21d": 0.0665, "r63d": 0.0975, "rsi": 72.5, "adx": 46.2, "dd": NaN, "vol": 0.1121, "trend": 1, "macd": 0, "rs": 1, "s200": 1}, {"ticker": "VWRP.L", "nome": "FTSE All-World USD (Vanguard UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.5862, "pct": "P83", "r1d": 0.0011, "r5d": 0.0229, "r21d": 0.0665, "r63d": 0.0842, "rsi": 75.0, "adx": 49.4, "dd": NaN, "vol": 0.1002, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "SWRD.L", "nome": "MSCI World (SPDR UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.571, "pct": "P83", "r1d": 0.0044, "r5d": 0.0241, "r21d": 0.0595, "r63d": 0.0689, "rsi": 70.3, "adx": 30.6, "dd": NaN, "vol": 0.1172, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IWDA.L", "nome": "MSCI World (iShares Core UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.5698, "pct": "P100", "r1d": 0.0038, "r5d": 0.0233, "r21d": 0.0582, "r63d": 0.0685, "rsi": 69.3, "adx": 43.0, "dd": NaN, "vol": 0.1209, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IWQU.L", "nome": "MSCI World Quality (iShares Edge UCITS Acc)", "cat": "Factor / Smart Beta", "cat_color": "#66bb6a", "score": 0.5371, "pct": "P50", "r1d": 0.0012, "r5d": 0.0154, "r21d": 0.0399, "r63d": 0.0341, "rsi": 66.3, "adx": 26.0, "dd": NaN, "vol": 0.109, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IJPA.L", "nome": "MSCI Japan IMI (iShares Core UCITS Acc)", "cat": "Internacional Desenvolvido", "cat_color": "#ab47bc", "score": 0.5351, "pct": "P100", "r1d": 0.0037, "r5d": 0.0289, "r21d": 0.0636, "r63d": 0.0054, "rsi": 60.7, "adx": 13.8, "dd": -0.0036, "vol": 0.1664, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IUCD.L", "nome": "S&P 500 Consumer Discretionary (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.5271, "pct": "P83", "r1d": 0.0023, "r5d": 0.0334, "r21d": 0.0408, "r63d": 0.0657, "rsi": 61.0, "adx": 18.0, "dd": -0.0122, "vol": 0.2048, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "SMEA.L", "nome": "MSCI Europe (iShares Core UCITS Acc)", "cat": "Internacional Desenvolvido", "cat_color": "#ab47bc", "score": 0.5072, "pct": "P100", "r1d": 0.0006, "r5d": 0.0128, "r21d": 0.0421, "r63d": 0.0045, "rsi": 63.4, "adx": 12.5, "dd": -0.038, "vol": 0.1345, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IUIS.L", "nome": "S&P 500 Industrials (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.5064, "pct": "P100", "r1d": -0.0024, "r5d": 0.0266, "r21d": 0.0212, "r63d": -0.0094, "rsi": 54.2, "adx": 13.2, "dd": -0.019, "vol": 0.1769, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IUMS.L", "nome": "S&P 500 Materials (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.4876, "pct": "P100", "r1d": 0.0035, "r5d": 0.029, "r21d": 0.0004, "r63d": -0.0389, "rsi": 52.3, "adx": 13.6, "dd": -0.041, "vol": 0.1894, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "BTEC.L", "nome": "Nasdaq Biotecnologia (iShares UCITS Acc)", "cat": "Temáticos / Inovação", "cat_color": "#ef5350", "score": 0.4754, "pct": "P83", "r1d": 0.0006, "r5d": 0.0202, "r21d": 0.0199, "r63d": -0.0132, "rsi": 55.2, "adx": 10.5, "dd": -0.0229, "vol": 0.1991, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "WSML.L", "nome": "MSCI World Small Cap (iShares UCITS Acc)", "cat": "Global / MSCI World", "cat_color": "#4caf50", "score": 0.4729, "pct": "P50", "r1d": 0.001, "r5d": 0.0335, "r21d": 0.05, "r63d": 0.046, "rsi": 65.0, "adx": 17.9, "dd": NaN, "vol": 0.1581, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "MVOL.L", "nome": "MSCI World Min Volatility (iShares Edge UCITS Acc)", "cat": "Factor / Smart Beta", "cat_color": "#66bb6a", "score": 0.4552, "pct": "P83", "r1d": -0.0008, "r5d": -0.0022, "r21d": 0.0094, "r63d": -0.0249, "rsi": 51.7, "adx": 16.8, "dd": -0.0371, "vol": 0.0856, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IUCM.L", "nome": "S&P 500 Communication Services (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.4412, "pct": "P50", "r1d": -0.0063, "r5d": -0.0043, "r21d": 0.0154, "r63d": 0.0539, "rsi": 51.6, "adx": 8.8, "dd": -0.0191, "vol": 0.1399, "trend": 1, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "PHAG.L", "nome": "Prata Física (WisdomTree ETC)", "cat": "Commodities", "cat_color": "#ffb300", "score": 0.4405, "pct": "P83", "r1d": 0.0162, "r5d": 0.008, "r21d": 0.0436, "r63d": -0.1632, "rsi": 47.6, "adx": 13.3, "dd": -0.3335, "vol": 0.6162, "trend": 1, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "IUHC.L", "nome": "S&P 500 Health Care (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.4375, "pct": "P100", "r1d": -0.0079, "r5d": 0.0144, "r21d": 0.0354, "r63d": -0.0517, "rsi": 57.5, "adx": 13.6, "dd": -0.0614, "vol": 0.1493, "trend": 1, "macd": 1, "rs": 0, "s200": 1}, {"ticker": "IUFS.L", "nome": "S&P 500 Financials (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.3893, "pct": "P67", "r1d": 0.0103, "r5d": 0.0046, "r21d": -0.0065, "r63d": 0.0069, "rsi": 53.3, "adx": 12.8, "dd": -0.0766, "vol": 0.1109, "trend": 1, "macd": 0, "rs": 0, "s200": 0}, {"ticker": "IUES.L", "nome": "S&P 500 Energy (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.3884, "pct": "P50", "r1d": -0.0155, "r5d": -0.0599, "r21d": -0.0325, "r63d": 0.0329, "rsi": 41.3, "adx": 15.1, "dd": -0.1144, "vol": 0.2738, "trend": 0, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "IUCS.L", "nome": "S&P 500 Consumer Staples (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.3808, "pct": "P50", "r1d": -0.0202, "r5d": -0.0294, "r21d": -0.0241, "r63d": -0.0646, "rsi": 39.7, "adx": 20.7, "dd": -0.0798, "vol": 0.2011, "trend": 1, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "IGLN.L", "nome": "Ouro Físico (iShares ETC)", "cat": "Commodities", "cat_color": "#ffb300", "score": 0.3746, "pct": "P100", "r1d": 0.0222, "r5d": 0.016, "r21d": 0.0014, "r63d": -0.1205, "rsi": 48.0, "adx": 25.8, "dd": -0.1361, "vol": 0.2119, "trend": 0, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "PHAU.L", "nome": "Ouro Físico (WisdomTree ETC)", "cat": "Commodities", "cat_color": "#ffb300", "score": 0.3737, "pct": "P100", "r1d": 0.0219, "r5d": 0.0158, "r21d": 0.0013, "r63d": -0.1212, "rsi": 47.9, "adx": 26.7, "dd": -0.1386, "vol": 0.2106, "trend": 0, "macd": 0, "rs": 0, "s200": 1}, {"ticker": "IUUS.L", "nome": "S&P 500 Utilities (iShares UCITS Acc)", "cat": "EUA – Sectores UCITS", "cat_color": "#26a69a", "score": 0.3549, "pct": "P50", "r1d": -0.009, "r5d": -0.0095, "r21d": -0.0427, "r63d": -0.0522, "rsi": 42.2, "adx": 17.0, "dd": -0.0671, "vol": 0.1496, "trend": 0, "macd": 1, "rs": 0, "s200": 1}];
     let sortCol = "score", sortAsc = false;
 
+    const CONV_STRONG_SCORE = 0.62, CONV_STRONG_SIGS = 6;
+    const CONV_BUY_SCORE    = 0.54,        CONV_BUY_SIGS    = 4;
+    const CONV_POT_SCORE    = 0.48,  CONV_POT_SIGS    = 3;
+
     function convictionLevel(row) {
       const s = row.score, trend = row.trend, macd = row.macd,
             rsi = row.rsi, rs = row.rs, r5d = row.r5d, dd = row.dd;
       const vol_thresh = 0.07;
       const late = rsi > 68 || r5d > vol_thresh;
       let sigs = (trend?1:0)+(macd?1:0)+(rsi>=40&&rsi<=65?1:0)+(rs?1:0)+(r5d<0.04?1:0)+(dd>-0.08?1:0);
-      if (!late && s >= 0.62 && sigs >= 6) return "FORTE COMPRA";
-      if (!late && s >= 0.54 && sigs >= 4) return "COMPRA";
-      if (s >= 0.48 && sigs >= 3) return "POTENCIAL";
+      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "FORTE COMPRA";
+      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "COMPRA";
+      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENCIAL";
       return null;
     }
 
@@ -548,13 +675,13 @@ footer { text-align: center; color: var(--muted); font-size: 10px;
 
     function renderTable(rows) {
       const tbody = document.getElementById("etf-tbody");
-      const td = "padding:5px 10px;border-bottom:1px solid #0d1021";
+      const td = "padding:5px 10px;border-bottom:1px solid var(--border)";
       tbody.innerHTML = rows.map(r => {
         const lvl = convictionLevel(r);
         const lvlBadge = lvl ? `<span style="background:${
           lvl==='FORTE COMPRA'?'var(--green)':lvl==='COMPRA'?'var(--light-green)':'var(--yellow)'
-        };color:#000;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:bold">${lvl}</span>` : "";
-        return `<tr style="background:#0f1117">
+        };color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${lvl}</span>` : "";
+        return `<tr style="background:var(--bg)">
           <td style="${td};color:var(--text);font-weight:bold">
             <span style="color:${r.cat_color}">●</span> ${r.ticker} ${lvlBadge}
           </td>
