@@ -5,6 +5,7 @@ Lê: scores_latest.csv, scores_history.csv, backtest_signals.csv (opcional), SPY
 Produz: HTML auto-suficiente com Chart.js (CDN), tabela ordenável/pesquisável, sparklines.
 """
 
+import html as html_mod
 import json
 import sys
 from datetime import datetime, timezone
@@ -15,10 +16,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates
-
-REPORTS     = Path("data/reports")
-DATA_DAILY  = Path("data/daily")
-SCORES_HIST = Path("data/scores_history.csv")
+from paths import DATA_DAILY, REPORTS, SCORES_HIST
 
 
 # ── Carrega dados ─────────────────────────────────────────────────────────────
@@ -326,9 +324,9 @@ def advisor_section(rows_raw: list[dict]) -> str:
                     margin:8px 0;border-radius:4px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">{medal}</span>
-            <span style="color:var(--text);font-size:16px;font-weight:bold">{r['ticker']}</span>
-            <span style="color:var(--muted);font-size:11px">{r['nome']}</span>
-            <span style="color:{r['cor']};font-size:10px">● {r['categoria']}</span>
+            <span style="color:var(--text);font-size:16px;font-weight:bold">{html_mod.escape(r['ticker'])}</span>
+            <span style="color:var(--muted);font-size:11px">{html_mod.escape(r['nome'])}</span>
+            <span style="color:{r['cor']};font-size:10px">● {html_mod.escape(r['categoria'])}</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
@@ -386,10 +384,10 @@ def buy_signals_section(signals: list[dict]) -> str:
         cards += f"""
         <div style="background:{bg};border-left:4px solid {clr};padding:12px 16px;margin:6px 0;border-radius:4px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="color:var(--text);font-size:17px;font-weight:bold">{s['ticker']}</span>
-            <span style="color:var(--muted);font-size:11px">{s['nome']}</span>
+            <span style="color:var(--text);font-size:17px;font-weight:bold">{html_mod.escape(s['ticker'])}</span>
+            <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
             <span style="background:{clr};color:#000;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold">{s['level']}</span>
-            <span style="color:{s['cor']};font-size:10px">● {s['categoria']}</span>
+            <span style="color:{s['cor']};font-size:10px">● {html_mod.escape(s['categoria'])}</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:{clr}">{s['score']:.3f}</b> {pct_html}</span>
@@ -400,7 +398,7 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span><span style="color:var(--muted)">Drawdown</span> <b style="color:{'var(--green)' if s.get('drawdown',0)>-0.05 else 'var(--red)'}">{_pct(s.get('drawdown',0))}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{s.get('rationale','')}</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
           <p style="color:#9fa8da;font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
         </div>"""
 

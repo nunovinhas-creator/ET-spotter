@@ -5,7 +5,7 @@ Score v2:
   - Normalização cross-sectional via z-score (todos os ETFs ao mesmo momento)
   - Momentum: sigmoid(0.2*cs_z(ret_21d) + 0.4*cs_z(ret_63d) + 0.4*cs_z(ret_126d))
   - Trend: (trend_sma + macd_bullish + rsi_zone + rs_positive) / 4
-  - Risk: 0.4*sigmoid(cs_z(sharpe_63)) + 0.3*(adx>20) + 0.3*(1+drawdown.clip(-1,0))
+  - Risk: 0.4*sigmoid(cs_z(calmar_63)) + 0.3*(adx>20) + 0.3*(1+drawdown.clip(-1,0))
   - Final: 0.40*momentum + 0.30*trend + 0.30*risk
 
 Gera data/reports/scores_latest.csv e appenda a data/scores_history.csv.
@@ -19,10 +19,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs
-
-DATA_DAILY    = Path("data/daily")
-REPORTS       = Path("data/reports")
-SCORES_HIST   = Path("data/scores_history.csv")
+from paths import DATA_DAILY, REPORTS, SCORES_HIST
 
 
 def _safe(v, default=np.nan):

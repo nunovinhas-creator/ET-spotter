@@ -18,10 +18,7 @@ import seaborn as sns
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs, get_category_map, get_categories, category_summary
-
-DATA_DAILY    = Path("data/daily")
-REPORTS       = Path("data/reports")
-SCORES_HIST   = Path("data/scores_history.csv")
+from paths import DATA_DAILY, REPORTS, SCORES_HIST
 
 PALETTE = {
     "bg":       "#0f1117",

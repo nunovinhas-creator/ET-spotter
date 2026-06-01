@@ -14,8 +14,7 @@ import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_all_symbols
-
-DATA_DAILY = Path("data/daily")
+from paths import DATA_DAILY
 
 # Limiar para detectar movimento suspeito num único dia (possível split não ajustado)
 SPLIT_THRESHOLD = 0.40
@@ -171,6 +170,8 @@ def main():
     if failed:
         print(f"\n[SUMÁRIO] {ok_count}/{len(symbols)} símbolos descarregados com sucesso.")
         print(f"[FALHAS]  {len(failed)} símbolo(s) sem dados: {', '.join(sorted(failed))}", file=sys.stderr)
+        if ok_count == 0:
+            sys.exit(1)
     else:
         print(f"\n[SUMÁRIO] {ok_count}/{len(symbols)} símbolos descarregados — sem falhas.")
 

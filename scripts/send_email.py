@@ -14,9 +14,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 465
+sys.path.insert(0, str(Path(__file__).parent))
+from constants import SMTP_HOST, SMTP_PORT
 
 
 def _build_message(

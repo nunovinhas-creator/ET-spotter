@@ -17,13 +17,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, compute_conviction
+from paths import DATA_DAILY, REPORTS, SCORES_HIST
 
-SCORES_HIST = Path("data/scores_history.csv")
-DATA_DAILY  = Path("data/daily")
-REPORTS     = Path("data/reports")
-
-FORWARD_DAYS = 42   # horizonte máximo para testes
 HORIZONS     = [5, 10, 21, 42]
+FORWARD_DAYS = max(HORIZONS)
 
 
 def load_history() -> pd.DataFrame:
@@ -71,8 +68,9 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
         return pd.DataFrame()
 
     n_days = hist["date"].nunique()
-    if n_days < FORWARD_DAYS + 1:
-        print(f"[SKIP] Histórico insuficiente ({n_days} dias únicos). Mínimo: {FORWARD_DAYS + 1}.")
+    min_days = FORWARD_DAYS * 2 + 1
+    if n_days < min_days:
+        print(f"[SKIP] Histórico insuficiente ({n_days} dias únicos). Mínimo: {min_days}.")
         return pd.DataFrame()
 
     spy_close, spy_sma200 = load_spy_daily()

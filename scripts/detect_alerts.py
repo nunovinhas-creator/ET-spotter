@@ -15,25 +15,17 @@ Cada alerta inclui snapshot técnico completo e avaliação de entrada.
 import os
 import sys
 import html
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs, get_category_map, compute_conviction, analyst_rationale
+from constants import US_MARKET_HOURS, SCORE_DANGER, SCORE_DROP_FAST, SCORE_RECOVERY_THRESHOLD
+from paths import DATA_INTRA as DATA_HOURLY, DATA_DAILY, REPORTS
 
-try:
-    from constants import US_MARKET_HOURS, SCORE_DANGER, SCORE_DROP_FAST, SCORE_RECOVERY_THRESHOLD
-except ImportError:
-    US_MARKET_HOURS = (13, 22)
-    SCORE_DANGER = 0.40
-    SCORE_DROP_FAST = 0.07
-    SCORE_RECOVERY_THRESHOLD = 0.48
-
-DATA_HOURLY   = Path("data/hourly")
-DATA_DAILY    = Path("data/daily")
-SCORES_LATEST = Path("data/reports/scores_latest.csv")
+SCORES_LATEST = REPORTS / "scores_latest.csv"
 
 
 def load_scores() -> dict:
@@ -199,7 +191,7 @@ def entry_assessment(alert_type: str, tech: dict) -> dict:
 
 def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
     """Detecta quedas intradiárias durante horas de mercado US."""
-    utc_hour = datetime.utcnow().hour
+    utc_hour = datetime.now(timezone.utc).hour
     if not (US_MARKET_HOURS[0] <= utc_hour <= US_MARKET_HOURS[1]):
         return []
     path = DATA_HOURLY / f"{symbol}.csv"
@@ -297,7 +289,7 @@ def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
 
 def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
     """Constrói email HTML com os alertas."""
-    ts = datetime.now().strftime("%d/%m/%Y  %H:%M")
+    ts = datetime.now(timezone.utc).strftime("%d/%m/%Y  %H:%M UTC")
     n  = len(all_alerts)
 
     type_color = {
@@ -318,7 +310,6 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
         assessment = entry_assessment(t, a.get("tech", {}))
 
         clr, bg = type_color.get(t, ("#aaa", "#1a1d2e"))
-        verdict_clr = assessment["color"]
 
         cards += f"""<div style="background:{bg};border-left:4px solid {clr};padding:14px;margin:10px 0;border-radius:4px">
           <div style="color:#e8eaf6;font-weight:bold">{html.escape(sym)} — {name} — {html.escape(t)}</div>

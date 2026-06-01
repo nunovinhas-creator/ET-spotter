@@ -3,21 +3,21 @@ Relatório diário às 19h — perspectiva de analista:
 sinais de compra, rotação sectorial, tabela completa.
 """
 
+import html as html_mod
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import (load_config, get_etfs, get_category_map,
-                   category_summary, build_buy_signals, build_advisor_candidates)
+                   category_summary, build_buy_signals, build_advisor_candidates,
+                   _c, _pct, _etf_row_raw)
 from generate_charts import plot_scores_bar, plot_category_summary
 from send_email import send_email
-
-DATA_DAILY = Path("data/daily")
-REPORTS    = Path("data/reports")
+from paths import DATA_DAILY, REPORTS
 
 
 # ─── Carrega dados ────────────────────────────────────────────────────────────
@@ -42,62 +42,28 @@ def load_rows(cfg: dict) -> tuple[list[dict], pd.DataFrame]:
         prev = df.iloc[-2] if len(df) >= 2 else last
         info = cmap.get(sym, {})
 
-        score       = float(last.get("score",        0) or 0)
-        score_prev  = float(prev.get("score",        0) or 0)
-        delta_score = round(score - score_prev, 4)
-        trend_sma   = int(last.get("trend_sma",      0) or 0)
-        macd_bull   = int(last.get("macd_bullish",   0) or 0)
-        ret_1d      = float(last.get("ret_1d",       0) or 0)
-        ret_5d      = float(last.get("ret_5d",       0) or 0)
-        ret_21d     = float(last.get("ret_21d",      0) or 0)
-        ret_63d     = float(last.get("ret_63d",      0) or 0)
-        ret_126d    = float(last.get("ret_126d",     0) or 0)
-        ret_252d    = float(last.get("ret_252d",     0) or 0)
-        sharpe_63   = float(last.get("sharpe_63",    0) or 0)
-        calmar_63   = float(last.get("calmar_63",    0) or 0)
-        rs_mom_63   = float(last.get("rs_mom_63",    0) or 0)
-        drawdown    = float(last.get("drawdown",     0) or 0)
-        vol_21      = float(last.get("vol_21",       0) or 0)
-        rsi         = float(last.get("rsi",          50) or 50)
-        adx         = float(last.get("adx",          0) or 0)
-        rs_positive = int(last.get("rs_positive",    0) or 0)
-        rs_mom_21   = float(last.get("rs_mom_21",    0) or 0)
-        above_sma200 = int(last.get("above_sma200",  0) or 0)
-        score_pct_raw = last.get("score_pct", None)
-        score_pct   = float(score_pct_raw) if score_pct_raw not in (None, "") else None
+        score      = round(float(last.get("score", 0) or 0), 3)
+        score_prev = float(prev.get("score", 0) or 0)
+        delta      = round(score - score_prev, 4)
 
-        rows_raw.append({
-            "ticker": sym, "nome": info.get("name", sym),
-            "categoria": info.get("category_name", "—"),
-            "cor": info.get("color", "#7c83fd"),
-            "score": round(score, 3), "delta_score": delta_score,
-            "trend_sma": trend_sma, "macd_bullish": macd_bull,
-            "ret_5d": ret_5d, "ret_21d": ret_21d, "ret_63d": ret_63d,
-            "ret_126d": ret_126d, "ret_252d": ret_252d,
-            "ret_24h": ret_1d,
-            "drawdown": drawdown, "vol_21": vol_21,
-            "rsi": rsi, "adx": adx,
-            "rs_positive": rs_positive, "rs_mom_21": rs_mom_21, "rs_mom_63": rs_mom_63,
-            "above_sma200": above_sma200, "score_pct": score_pct,
-            "sharpe_63": sharpe_63, "calmar_63": calmar_63,
-            "close": round(float(last.get("close", 0) or 0), 2),
-        })
+        row = _etf_row_raw(sym, last, info, delta_score=delta)
+        rows_raw.append(row)
         rows_display.append({
-            "etf": sym, "delta_score": delta_score, "ret_24h": ret_1d,
-            "ETF":         sym,
-            "Nome":        info.get("name", sym),
-            "Categoria":   info.get("category_name", "—"),
-            "Cor":         info.get("color", "#7c83fd"),
-            "Score":       round(score, 3),
-            "Δ Score":     delta_score,
-            "Ret. Dia":    ret_1d,
-            "Ret. 5d":     ret_5d,
-            "Ret. 3M":     ret_63d,
-            "Vol 21d":     vol_21,
-            "RSI":         round(rsi, 1),
-            "Trend":       "↑" if trend_sma else "↓",
-            "MACD":        "+" if macd_bull else "−",
-            "RS vs SPY":   "✓" if rs_positive else "✗",
+            "etf": sym, "delta_score": delta, "ret_24h": row["ret_24h"],
+            "ETF":       sym,
+            "Nome":      row["nome"],
+            "Categoria": row["categoria"],
+            "Cor":       row["cor"],
+            "Score":     score,
+            "Δ Score":   delta,
+            "Ret. Dia":  row["ret_24h"],
+            "Ret. 5d":   row["ret_5d"],
+            "Ret. 3M":   row["ret_63d"],
+            "Vol 21d":   row["vol_21"],
+            "RSI":       round(row["rsi"], 1),
+            "Trend":     "↑" if row["trend_sma"] else "↓",
+            "MACD":      "+" if row["macd_bullish"] else "−",
+            "RS vs SPY": "✓" if row["rs_positive"] else "✗",
         })
 
     if rows_display:
@@ -109,17 +75,10 @@ def load_rows(cfg: dict) -> tuple[list[dict], pd.DataFrame]:
 
 # ─── HTML helpers ─────────────────────────────────────────────────────────────
 
-def _c(val: float, neutral: float = 0) -> str:
-    return "#4caf50" if val >= neutral else "#f44336"
-
-
 def advisor_email_html(rows_raw: list[dict]) -> str:
     candidates = build_advisor_candidates(rows_raw, top_n=3)
     if not candidates:
         return '<p style="color:#555;font-size:12px">Sem candidatos que cumpram os critérios técnicos hoje.</p>'
-
-    def _c(v, n=0): return "#4caf50" if v >= n else "#f44336"
-    def _pct(v): return f"{v:+.1%}" if v is not None else "—"
 
     medals = ["🥇", "🥈", "🥉"]
     cards = ""
@@ -133,13 +92,15 @@ def advisor_email_html(rows_raw: list[dict]) -> str:
         ret_21d   = float(r.get("ret_21d",  0) or 0)
         momentum  = (ret_252d - ret_21d) if ret_252d != 0 else (ret_126d - ret_21d)
         mom_label = "Mom.12-1M" if ret_252d != 0 else "Mom.6-1M"
+        ticker_e  = html_mod.escape(str(r.get("ticker", "")))
+        nome_e    = html_mod.escape(str(r.get("nome", "")))
         cards += f"""
         <div style="background:#13162a;border-left:4px solid {bar_color};
                     padding:12px 16px;margin:6px 0;border-radius:4px">
           <div style="margin-bottom:6px">
             <span style="font-size:16px">{medal}</span>
-            <span style="color:#e8eaf6;font-size:16px;font-weight:bold;margin-left:6px">{r['ticker']}</span>
-            <span style="color:#666;font-size:11px;margin-left:8px">{r['nome']}</span>
+            <span style="color:#e8eaf6;font-size:16px;font-weight:bold;margin-left:6px">{ticker_e}</span>
+            <span style="color:#666;font-size:11px;margin-left:8px">{nome_e}</span>
             <span style="background:{bar_color};color:#000;padding:1px 8px;border-radius:8px;
                          font-size:10px;font-weight:bold;margin-left:8px">{pts}/100</span>
           </div>
@@ -185,10 +146,10 @@ def buy_signals_html(signals: list[dict]) -> str:
             f'<span style="color:{_c(s["score"], 0.5)};font-weight:bold">{s["score"]:.3f}</span>'
             f'{pct_str}&nbsp;&nbsp;'
             f'<span style="color:#aaa">Ret. 3M:</span> '
-            f'<span style="color:{_c(s.get("ret_63d", 0))}">{s.get("ret_63d", 0):.2%}</span>'
+            f'<span style="color:{_c(s.get("ret_63d", 0))}">{_pct(s.get("ret_63d", 0))}</span>'
             f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">Ret. 5d:</span> '
-            f'<span style="color:{_c(s["ret_5d"])}">{s["ret_5d"]:.2%}</span>'
+            f'<span style="color:{_c(s["ret_5d"])}">{_pct(s["ret_5d"])}</span>'
             f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">RSI:</span> '
             f'<span style="color:{rsi_color}">{rsi_val:.0f}</span>'
@@ -200,21 +161,25 @@ def buy_signals_html(signals: list[dict]) -> str:
             f'<span style="color:{_c(s["delta_score"])}">{s["delta_score"]:+.3f}</span>'
             f'&nbsp;&nbsp;'
             f'<span style="color:#aaa">Drawdown:</span> '
-            f'<span style="color:{_c(s["drawdown"], -0.05)}">{s["drawdown"]:.1%}</span>'
+            f'<span style="color:{_c(s["drawdown"], -0.05)}">{_pct(s["drawdown"])}</span>'
         )
+        ticker_e = html_mod.escape(str(s.get("ticker", "")))
+        nome_e   = html_mod.escape(str(s.get("nome", "")))
+        cat_e    = html_mod.escape(str(s.get("categoria", "")))
+        rationale_e = html_mod.escape(str(s.get("rationale", "")))
         cards += f"""
         <div style="background:{s['bg']};border-left:4px solid {s['color']};
                     padding:14px 18px;margin:8px 0;border-radius:4px">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
             <div>
-              <span style="color:#e8eaf6;font-size:19px;font-weight:bold">{s['ticker']}</span>
-              <span style="color:#888;font-size:11px;margin-left:8px">{s['nome']}</span>
+              <span style="color:#e8eaf6;font-size:19px;font-weight:bold">{ticker_e}</span>
+              <span style="color:#888;font-size:11px;margin-left:8px">{nome_e}</span>
               &nbsp;{badge_html}
-              <span style="color:{s['cor']};font-size:11px;margin-left:10px">● {s['categoria']}</span>
+              <span style="color:{s['cor']};font-size:11px;margin-left:10px">● {cat_e}</span>
             </div>
           </div>
           <div style="color:#bbb;font-size:12px;margin-top:8px;line-height:1.6">
-            {s['rationale']}
+            {rationale_e}
           </div>
           <div style="margin-top:8px;font-size:12px">
             {metrics}
@@ -233,7 +198,7 @@ def sector_rotation_html(cats: list[dict]) -> str:
             f'<span style="background:#1a1d2e;border:1px solid {c["color"]};'
             f'color:{c["color"]};padding:4px 10px;border-radius:12px;'
             f'font-size:11px;margin:3px;display:inline-block">'
-            f'{c["momentum"]} {c["name"]} <span style="color:#666">({c["score_avg"]:.2f})</span>'
+            f'{c["momentum"]} {html_mod.escape(c["name"])} <span style="color:#666">({c["score_avg"]:.2f})</span>'
             f'</span>'
         )
 
@@ -263,27 +228,27 @@ def sector_rotation_html(cats: list[dict]) -> str:
 def full_table_html(df: pd.DataFrame) -> str:
     cols = ["ETF", "Nome", "Categoria", "Score", "Δ Score", "Ret. Dia", "Ret. 5d", "Ret. 3M", "RSI", "RS vs SPY", "Vol 21d", "Trend", "MACD"]
     th = "background:#0d1021;color:#7c83fd;padding:6px 10px;text-align:right;font-size:11px;white-space:nowrap"
-    headers = "".join(f'<th style="{th}">{c}</th>' for c in cols)
     td = "padding:4px 10px;border-bottom:1px solid #0d1021;font-size:11px;text-align:right"
+    headers = "".join(f'<th style="{th}">{c}</th>' for c in cols)
     rows = ""
     for _, r in df.iterrows():
         dot = f'<span style="color:{r["Cor"]}">●</span> '
         rows += "<tr>"
         for c in cols:
             if c == "ETF":
-                rows += f'<td style="{td};color:#e8eaf6;text-align:left">{dot}{r["ETF"]}</td>'
+                rows += f'<td style="{td};color:#e8eaf6;text-align:left">{dot}{html_mod.escape(str(r["ETF"]))}</td>'
             elif c == "Nome":
-                rows += f'<td style="{td};color:#666;text-align:left;max-width:160px;overflow:hidden">{r["Nome"]}</td>'
+                rows += f'<td style="{td};color:#666;text-align:left;max-width:160px;overflow:hidden">{html_mod.escape(str(r["Nome"]))}</td>'
             elif c == "Categoria":
-                rows += f'<td style="{td};color:{r["Cor"]}">{r["Categoria"]}</td>'
+                rows += f'<td style="{td};color:{r["Cor"]}">{html_mod.escape(str(r["Categoria"]))}</td>'
             elif c in ("Ret. Dia", "Ret. 5d", "Ret. 3M"):
-                v = r.get(c, 0); rows += f'<td style="{td};color:{_c(v)}">{v:.2%}</td>'
+                v = r.get(c, 0); rows += f'<td style="{td};color:{_c(v)}">{_pct(v)}</td>'
             elif c == "Δ Score":
                 v = r[c]; rows += f'<td style="{td};color:{_c(v)}">{v:+.3f}</td>'
             elif c == "Score":
                 v = r[c]; rows += f'<td style="{td};color:{_c(v,0.5)};font-weight:bold">{v}</td>'
             elif c == "Vol 21d":
-                v = r.get(c, 0); rows += f'<td style="{td};color:#e8eaf6">{v:.2%}</td>'
+                v = r.get(c, 0); rows += f'<td style="{td};color:#e8eaf6">{_pct(v)}</td>'
             elif c == "RSI":
                 v = r.get(c, 50)
                 rsi_c = "#4caf50" if 40 <= v <= 65 else ("#ffd54f" if v > 70 else "#aaa")
@@ -308,12 +273,12 @@ def category_table_html(cats: list[dict]) -> str:
         mom_color = {"▲": "#4caf50", "→": "#78909c", "▼": "#f44336"}.get(c["momentum"], "#aaa")
         rows += (
             f'<tr>'
-            f'<td style="{td};color:{c["color"]};text-align:left">{c["name"]}</td>'
+            f'<td style="{td};color:{c["color"]};text-align:left">{html_mod.escape(c["name"])}</td>'
             f'<td style="{td};color:#666">{c["n"]}</td>'
             f'<td style="{td};color:{_c(sc,0.5)};font-weight:bold">{sc:.3f}</td>'
             f'<td style="{td};color:{_c(c["delta_avg"])}">{c["delta_avg"]:+.4f}</td>'
             f'<td style="{td};color:{mom_color};font-size:16px">{c["momentum"]}</td>'
-            f'<td style="{td};color:{_c(rc)}">{rc:.2%}</td>'
+            f'<td style="{td};color:{_c(rc)}">{_pct(rc)}</td>'
             f'<td style="{td};color:#4caf50">{c["score_max"]:.3f}</td>'
             f'<td style="{td};color:#f44336">{c["score_min"]:.3f}</td>'
             f'</tr>'
@@ -341,6 +306,7 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
 
     n_strong = sum(1 for s in signals if s["level"] == "FORTE COMPRA")
     n_buy    = sum(1 for s in signals if s["level"] == "COMPRA")
+    n_etfs   = len(get_etfs(cfg))
     summary_line = (
         f'<span style="color:#4caf50;font-weight:bold">{n_strong} FORTE COMPRA</span> · '
         f'<span style="color:#8bc34a">{n_buy} COMPRA</span> · '
@@ -354,7 +320,7 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
              padding:24px 28px;max-width:820px;margin:0 auto">
 
   <h1 style="color:#7c83fd;margin-bottom:2px;font-size:22px">ET-Spotter</h1>
-  <p style="color:#555;margin-top:0;font-size:13px">{date_str} · Análise técnica diária · {len(get_etfs(cfg))} ETFs</p>
+  <p style="color:#555;margin-top:0;font-size:13px">{html_mod.escape(date_str)} · Análise técnica diária · {n_etfs} ETFs</p>
 
   <!-- MELHOR POSICIONADOS -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0;
@@ -430,7 +396,6 @@ def main():
         print("[SKIP] Sem dados.")
         return
 
-    # category_summary espera colunas específicas
     df_for_cats = pd.DataFrame([{
         "etf": r["ticker"], "score": r["score"],
         "ret_24h": r["ret_24h"], "delta_score": r["delta_score"]
@@ -446,11 +411,11 @@ def main():
         if p: chart_paths.append(p)
     chart_paths = [p for p in chart_paths if p and p.exists()]
 
-    date_str    = datetime.utcnow().strftime("%d/%m/%Y")
-    html        = build_html(rows_raw, df_display, cats, date_str, cfg,
-                             [p.name for p in chart_paths])
+    date_str = datetime.now(timezone.utc).strftime("%d/%m/%Y")
+    html     = build_html(rows_raw, df_display, cats, date_str, cfg,
+                          [p.name for p in chart_paths])
 
-    out = REPORTS / f"daily_{datetime.utcnow().strftime('%Y%m%d')}.html"
+    out = REPORTS / f"daily_{datetime.now(timezone.utc).strftime('%Y%m%d')}.html"
     out.write_text(html, encoding="utf-8")
     print(f"[OK] {out.name}")
 

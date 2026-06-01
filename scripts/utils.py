@@ -7,9 +7,11 @@ import json
 import math
 from pathlib import Path
 
+_CONFIG_DEFAULT = Path(__file__).parent.parent / "config" / "etfs.json"
 
-def load_config(path: str | Path = "config/etfs.json") -> dict:
-    with open(path) as f:
+
+def load_config(path: str | Path | None = None) -> dict:
+    with open(path or _CONFIG_DEFAULT) as f:
         return json.load(f)
 
 
@@ -191,6 +193,53 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
         parts.append(f"drawdown contido ({drawdown:.1%})")
 
     return ". ".join(parts[:3]).capitalize() + "." if parts else "Confluência de sinais técnicos favoráveis."
+
+
+def _c(val: float, neutral: float = 0) -> str:
+    """Cor HTML para valor positivo/negativo (emails HTML)."""
+    return "#4caf50" if val >= neutral else "#f44336"
+
+
+def _pct(v, digits: int = 1) -> str:
+    """Formata float como percentagem com sinal; retorna '—' se inválido."""
+    try:
+        x = float(v)
+        return f"{x:+.{digits}%}" if x == x else "—"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _etf_row_raw(sym: str, last, info: dict, delta_score: float = 0.0) -> dict:
+    """Extrai campos padrão de ETF de uma última linha de DataFrame."""
+    score_pct_raw = last.get("score_pct", None)
+    return {
+        "ticker":       sym,
+        "nome":         info.get("name", sym),
+        "categoria":    info.get("category_name", "—"),
+        "cor":          info.get("color", "#7c83fd"),
+        "score":        round(float(last.get("score",        0) or 0), 3),
+        "delta_score":  delta_score,
+        "trend_sma":    int(last.get("trend_sma",      0) or 0),
+        "macd_bullish": int(last.get("macd_bullish",   0) or 0),
+        "ret_5d":       float(last.get("ret_5d",       0) or 0),
+        "ret_21d":      float(last.get("ret_21d",      0) or 0),
+        "ret_63d":      float(last.get("ret_63d",      0) or 0),
+        "ret_126d":     float(last.get("ret_126d",     0) or 0),
+        "ret_252d":     float(last.get("ret_252d",     0) or 0),
+        "ret_24h":      float(last.get("ret_1d",       0) or 0),
+        "drawdown":     float(last.get("drawdown",     0) or 0),
+        "vol_21":       float(last.get("vol_21",       0) or 0),
+        "rsi":          float(last.get("rsi",          50) or 50),
+        "adx":          float(last.get("adx",          0) or 0),
+        "rs_positive":  int(last.get("rs_positive",    0) or 0),
+        "rs_mom_21":    float(last.get("rs_mom_21",    0) or 0),
+        "rs_mom_63":    float(last.get("rs_mom_63",    0) or 0),
+        "above_sma200": int(last.get("above_sma200",   0) or 0),
+        "score_pct":    float(score_pct_raw) if score_pct_raw not in (None, "") else None,
+        "sharpe_63":    float(last.get("sharpe_63",    0) or 0),
+        "calmar_63":    float(last.get("calmar_63",    0) or 0),
+        "close":        round(float(last.get("close",  0) or 0), 2),
+    }
 
 
 def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:

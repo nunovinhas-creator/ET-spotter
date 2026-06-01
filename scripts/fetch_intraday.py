@@ -16,17 +16,8 @@ import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_all_symbols
-
-try:
-    from constants import INTRADAY_FETCH_PERIOD, INTRADAY_INTERVAL, MAX_API_RETRIES, RETRY_BASE_WAIT_TIME
-except ImportError:
-    # Fallback se constants.py não existir ainda
-    INTRADAY_FETCH_PERIOD = "60d"
-    INTRADAY_INTERVAL = "1h"
-    MAX_API_RETRIES = 3
-    RETRY_BASE_WAIT_TIME = 1
-
-DATA_HOURLY = Path("data/hourly")
+from constants import INTRADAY_FETCH_PERIOD, INTRADAY_INTERVAL, MAX_API_RETRIES, RETRY_BASE_WAIT_TIME
+from paths import DATA_INTRA as DATA_HOURLY
 
 
 def fetch_intraday(symbol: str, period: str = INTRADAY_FETCH_PERIOD, interval: str = INTRADAY_INTERVAL) -> pd.DataFrame:

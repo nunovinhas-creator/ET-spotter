@@ -23,8 +23,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_all_symbols
-
-DATA_DAILY = Path("data/daily")
+from paths import DATA_DAILY
 
 
 def compute_macd(series: pd.Series, fast=12, slow=26, signal=9) -> tuple:
