@@ -36,3 +36,11 @@ SCORE_HISTORY_WINDOW = 252    # ~1 ano de dias úteis
 # Configurações de email/notificações
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
+
+# Limiares de convicção para sinais de compra (compute_conviction)
+CONVICTION_STRONG_BUY_SCORE   = 0.62
+CONVICTION_STRONG_BUY_SIGNALS = 6
+CONVICTION_BUY_SCORE          = 0.54
+CONVICTION_BUY_SIGNALS        = 4
+CONVICTION_POTENTIAL_SCORE    = 0.48
+CONVICTION_POTENTIAL_SIGNALS  = 3

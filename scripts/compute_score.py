@@ -134,16 +134,16 @@ def compute_score_percentile(snap: pd.DataFrame) -> pd.DataFrame:
         return snap
 
     hist = pd.read_csv(SCORES_HIST)
-    pcts = []
-    for _, row in snap.iterrows():
-        etf_hist = hist[hist["etf"] == row["etf"]]["score"].dropna()
-        # Últimos 252 registos (aprox. 1 ano de dias úteis)
-        etf_hist = etf_hist.iloc[-252:]
-        if len(etf_hist) < 5:
-            pcts.append(np.nan)
-        else:
-            pcts.append(round((etf_hist < row["score"]).mean(), 3))
-    snap["score_pct"] = pcts
+    hist_by_etf = {
+        etf: grp["score"].dropna().iloc[-252:]
+        for etf, grp in hist.groupby("etf")
+    }
+
+    def _calc_pct(row):
+        h = hist_by_etf.get(row["etf"], pd.Series(dtype=float))
+        return round((h < row["score"]).mean(), 3) if len(h) >= 5 else np.nan
+
+    snap["score_pct"] = snap.apply(_calc_pct, axis=1)
     return snap
 
 

@@ -15,8 +15,13 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates
+from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw
 from paths import DATA_DAILY, REPORTS, SCORES_HIST
+from constants import (
+    CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
+    CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
+    CONVICTION_POTENTIAL_SCORE,  CONVICTION_POTENTIAL_SIGNALS,
+)
 
 
 # ── Carrega dados ─────────────────────────────────────────────────────────────
@@ -66,35 +71,10 @@ def load_data(cfg: dict) -> dict:
                 delta_map[str(etf_sym)] = round(curr - prev, 4)
 
     # rows completos para build_buy_signals
-    rows_raw = []
-    for _, row in scores_df.iterrows():
-        sym  = str(row.get("etf", ""))
-        info = cmap.get(sym, {})
-        rows_raw.append({
-            "ticker":       sym,
-            "nome":         info.get("name", sym),
-            "categoria":    info.get("category_name", "—"),
-            "cor":          info.get("color", "#7c83fd"),
-            "score":        float(row.get("score",        0) or 0),
-            "delta_score":  delta_map.get(sym, 0.0),
-            "trend_sma":    int(row.get("trend_sma",      0) or 0),
-            "macd_bullish": int(row.get("macd_bullish",   0) or 0),
-            "rsi":          float(row.get("rsi",          50) or 50),
-            "rs_positive":  int(row.get("rs_positive",    0) or 0),
-            "ret_5d":       float(row.get("ret_5d",       0) or 0),
-            "ret_21d":      float(row.get("ret_21d",      0) or 0),
-            "ret_63d":      float(row.get("ret_63d",      0) or 0),
-            "ret_126d":     float(row.get("ret_126d",     0) or 0),
-            "ret_252d":     float(row.get("ret_252d",     0) or 0),
-            "drawdown":     float(row.get("drawdown",     0) or 0),
-            "vol_21":       float(row.get("vol_21",       0) or 0),
-            "adx":          float(row.get("adx",          0) or 0),
-            "above_sma200": int(row.get("above_sma200",   0) or 0),
-            "sharpe_63":    float(row.get("sharpe_63",    0) or 0),
-            "calmar_63":    float(row.get("calmar_63",    0) or 0),
-            "rs_mom_63":    float(row.get("rs_mom_63",    0) or 0),
-            "score_pct":    row.get("score_pct", None),
-        })
+    rows_raw = [
+        _etf_row_raw(str(r.get("etf", "")), r, cmap.get(str(r.get("etf", "")), {}), delta_map.get(str(r.get("etf", "")), 0.0))
+        for r in scores_df.to_dict("records")
+    ]
 
     df_for_cats = pd.DataFrame([{
         "etf": r["ticker"], "score": r["score"],
@@ -120,10 +100,6 @@ def load_data(cfg: dict) -> dict:
 
 def _c(v: float, neutral: float = 0) -> str:
     return "var(--green)" if v >= neutral else "var(--red)"
-
-
-def _pct(v, digits=1) -> str:
-    return f"{v:+.{digits}%}" if pd.notna(v) else "—"
 
 
 def _num(v, digits=3) -> str:
@@ -526,15 +502,19 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
     const ETF_ROWS = {rows_json};
     let sortCol = "score", sortAsc = false;
 
+    const CONV_STRONG_SCORE = {CONVICTION_STRONG_BUY_SCORE}, CONV_STRONG_SIGS = {CONVICTION_STRONG_BUY_SIGNALS};
+    const CONV_BUY_SCORE    = {CONVICTION_BUY_SCORE},        CONV_BUY_SIGS    = {CONVICTION_BUY_SIGNALS};
+    const CONV_POT_SCORE    = {CONVICTION_POTENTIAL_SCORE},  CONV_POT_SIGS    = {CONVICTION_POTENTIAL_SIGNALS};
+
     function convictionLevel(row) {{
       const s = row.score, trend = row.trend, macd = row.macd,
             rsi = row.rsi, rs = row.rs, r5d = row.r5d, dd = row.dd;
       const vol_thresh = 0.07;
       const late = rsi > 68 || r5d > vol_thresh;
       let sigs = (trend?1:0)+(macd?1:0)+(rsi>=40&&rsi<=65?1:0)+(rs?1:0)+(r5d<0.04?1:0)+(dd>-0.08?1:0);
-      if (!late && s >= 0.62 && sigs >= 6) return "FORTE COMPRA";
-      if (!late && s >= 0.54 && sigs >= 4) return "COMPRA";
-      if (s >= 0.48 && sigs >= 3) return "POTENCIAL";
+      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "FORTE COMPRA";
+      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "COMPRA";
+      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENCIAL";
       return null;
     }}
 

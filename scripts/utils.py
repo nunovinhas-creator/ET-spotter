@@ -7,6 +7,12 @@ import json
 import math
 from pathlib import Path
 
+from constants import (
+    CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
+    CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
+    CONVICTION_POTENTIAL_SCORE,  CONVICTION_POTENTIAL_SIGNALS,
+)
+
 _CONFIG_DEFAULT = Path(__file__).parent.parent / "config" / "etfs.json"
 
 
@@ -131,11 +137,11 @@ def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
         vol_threshold = 0.07
     late_entry = rsi_val > 68 or ret5 > vol_threshold
 
-    if not late_entry and score >= 0.62 and signals >= 6:
+    if not late_entry and score >= CONVICTION_STRONG_BUY_SCORE and signals >= CONVICTION_STRONG_BUY_SIGNALS:
         return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals}
-    if not late_entry and score >= 0.54 and signals >= 4:
+    if not late_entry and score >= CONVICTION_BUY_SCORE and signals >= CONVICTION_BUY_SIGNALS:
         return {"level": "COMPRA",       "color": "#8bc34a", "bg": "#1e2f1a", "signals": signals}
-    if score >= 0.48 and signals >= 3:
+    if score >= CONVICTION_POTENTIAL_SCORE and signals >= CONVICTION_POTENTIAL_SIGNALS:
         return {"level": "POTENCIAL",    "color": "#ffd54f", "bg": "#2a2510", "signals": signals}
     return {"level": None, "color": None, "bg": None, "signals": signals}
 
@@ -193,6 +199,24 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
         parts.append(f"drawdown contido ({drawdown:.1%})")
 
     return ". ".join(parts[:3]).capitalize() + "." if parts else "Confluência de sinais técnicos favoráveis."
+
+
+def _safe_finite(v, default: float = 0.0) -> float:
+    """Float seguro: NaN/inf/None → default. Preserva 0.0."""
+    try:
+        x = float(v)
+        return default if (math.isnan(x) or math.isinf(x)) else x
+    except (TypeError, ValueError):
+        return default
+
+
+def _is_finite(v) -> bool:
+    """True se v é um float finito válido (não NaN, não inf)."""
+    try:
+        x = float(v)
+        return not (math.isnan(x) or math.isinf(x))
+    except (TypeError, ValueError):
+        return False
 
 
 def _c(val: float, neutral: float = 0) -> str:
@@ -293,35 +317,21 @@ def compute_advisor_score(
 
     Devolve None se o ETF não cumpre os critérios de regime mínimos.
     """
-    def _f(v, default=0.0):
-        try:
-            x = float(v)
-            return default if math.isnan(x) or math.isinf(x) else x
-        except (TypeError, ValueError):
-            return default
-
-    def _available(v) -> bool:
-        try:
-            x = float(v)
-            return not (math.isnan(x) or math.isinf(x))
-        except (TypeError, ValueError):
-            return False
-
     # Check data availability BEFORE NaN-cleaning (to distinguish NaN from genuine 0.0)
-    _has_252d = _available(ret_252d)
-    _has_126d = _available(ret_126d)
+    _has_252d = _is_finite(ret_252d)
+    _has_126d = _is_finite(ret_126d)
 
-    ret_252d  = _f(ret_252d)
-    ret_126d  = _f(ret_126d)
-    ret_21d   = _f(ret_21d)
-    ret_5d    = _f(ret_5d)
-    rsi       = _f(rsi, 50.0)
-    adx       = _f(adx)
-    rs_mom_63 = _f(rs_mom_63)
-    sharpe_63 = _f(sharpe_63)
-    calmar_63 = _f(calmar_63)
-    vol_21    = _f(vol_21)
-    drawdown  = _f(drawdown, -0.25)   # safe-side: unknown drawdown → disqualify
+    ret_252d  = _safe_finite(ret_252d)
+    ret_126d  = _safe_finite(ret_126d)
+    ret_21d   = _safe_finite(ret_21d)
+    ret_5d    = _safe_finite(ret_5d)
+    rsi       = _safe_finite(rsi, 50.0)
+    adx       = _safe_finite(adx)
+    rs_mom_63 = _safe_finite(rs_mom_63)
+    sharpe_63 = _safe_finite(sharpe_63)
+    calmar_63 = _safe_finite(calmar_63)
+    vol_21    = _safe_finite(vol_21)
+    drawdown  = _safe_finite(drawdown, -0.25)   # safe-side: unknown drawdown → disqualify
 
     # ── Filtros de regime (Faber: só estar comprado quando acima de SMA200) ─────
     if not above_sma200:   return None

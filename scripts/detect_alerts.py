@@ -34,11 +34,11 @@ def load_scores() -> dict:
     try:
         df = pd.read_csv(SCORES_LATEST)
         return {
-            row["etf"]: {
-                "score":     float(row.get("score",     0) or 0),
-                "score_pct": float(row.get("score_pct", float("nan")) or float("nan")),
+            r["etf"]: {
+                "score":     float(r.get("score",     0) or 0),
+                "score_pct": float(r.get("score_pct", float("nan")) or float("nan")),
             }
-            for _, row in df.iterrows()
+            for r in df.to_dict("records")
         }
     except Exception:
         return {}
