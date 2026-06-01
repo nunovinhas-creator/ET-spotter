@@ -25,6 +25,15 @@ REPORTS       = Path("data/reports")
 SCORES_HIST   = Path("data/scores_history.csv")
 
 
+def _safe(v, default=np.nan):
+    """Float seguro: preserva 0.0; converte None/NaN para default."""
+    try:
+        x = float(v)
+        return default if x != x else x  # x != x é True apenas para NaN
+    except (TypeError, ValueError):
+        return default
+
+
 def cs_z(s: pd.Series) -> pd.Series:
     """Z-score cross-sectional (todos os ETFs ao mesmo momento)."""
     return (s - s.mean()) / (s.std() + 1e-10)
@@ -58,25 +67,25 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
 
         rows.append({
             "etf":          symbol,
-            "close":        float(last.get("close",       np.nan) or np.nan),
-            "ret_1d":       float(last.get("ret_1d",      np.nan) or np.nan),
-            "ret_5d":       float(last.get("ret_5d",      np.nan) or np.nan),
-            "ret_21d":      float(last.get("ret_21d",     np.nan) or np.nan),
-            "ret_63d":      float(last.get("ret_63d",     np.nan) or np.nan),
-            "ret_126d":     float(last.get("ret_126d",    np.nan) or np.nan),
-            "ret_252d":     float(last.get("ret_252d",    np.nan) or np.nan),
-            "vol_21":       float(last.get("vol_21",      np.nan) or np.nan),
-            "sharpe_63":    float(last.get("sharpe_63",   np.nan) or np.nan),
-            "rsi":          float(last.get("rsi",         np.nan) or np.nan),
-            "adx":          float(last.get("adx",         np.nan) or np.nan),
+            "close":        _safe(last.get("close")),
+            "ret_1d":       _safe(last.get("ret_1d")),
+            "ret_5d":       _safe(last.get("ret_5d")),
+            "ret_21d":      _safe(last.get("ret_21d")),
+            "ret_63d":      _safe(last.get("ret_63d")),
+            "ret_126d":     _safe(last.get("ret_126d")),
+            "ret_252d":     _safe(last.get("ret_252d")),
+            "vol_21":       _safe(last.get("vol_21")),
+            "sharpe_63":    _safe(last.get("sharpe_63")),
+            "rsi":          _safe(last.get("rsi")),
+            "adx":          _safe(last.get("adx")),
             "rs_positive":  int(last.get("rs_positive",   0) or 0),
-            "rs_mom_21":    float(last.get("rs_mom_21",   np.nan) or np.nan),
-            "rs_mom_63":    float(last.get("rs_mom_63",    np.nan) or np.nan),
-            "calmar_63":    float(last.get("calmar_63",    np.nan) or np.nan),
+            "rs_mom_21":    _safe(last.get("rs_mom_21")),
+            "rs_mom_63":    _safe(last.get("rs_mom_63")),
+            "calmar_63":    _safe(last.get("calmar_63")),
             "trend_sma":    int(last.get("trend_sma",     0) or 0),
             "macd_bullish": int(last.get("macd_bullish",  0) or 0),
             "above_sma200": int(last.get("above_sma200",  0) or 0),
-            "drawdown":     float(last.get("drawdown",    np.nan) or np.nan),
+            "drawdown":     _safe(last.get("drawdown")),
         })
 
     if not rows:
@@ -166,7 +175,9 @@ def persist_scores(snap: pd.DataFrame) -> None:
     else:
         combined = hist
 
-    combined.to_csv(SCORES_HIST, index=False)
+    tmp = SCORES_HIST.with_suffix(".tmp")
+    combined.to_csv(tmp, index=False)
+    tmp.replace(SCORES_HIST)  # rename atómico: evita corrupção em falha a meio da escrita
 
 
 def main():

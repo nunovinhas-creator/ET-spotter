@@ -215,7 +215,8 @@ def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
             tech = load_technicals(symbol)
             return [{"type": "QUEDA HORÁRIA", "symbol": symbol, "ret_1h": ret_1h, "tech": tech}]
         return []
-    except Exception:
+    except Exception as e:
+        print(f"[AVISO] {symbol}: erro em alerta intradiário: {e}", file=sys.stderr)
         return []
 
 
@@ -289,7 +290,8 @@ def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
             })
 
         return alerts
-    except Exception:
+    except Exception as e:
+        print(f"[AVISO] {symbol}: erro em alerta estrutural: {e}", file=sys.stderr)
         return []
 
 
