@@ -23,9 +23,25 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_etfs, get_category_map, compute_conviction, analyst_rationale
 from constants import US_MARKET_HOURS, SCORE_DANGER, SCORE_DROP_FAST, SCORE_RECOVERY_THRESHOLD
-from paths import DATA_INTRA as DATA_HOURLY, DATA_DAILY, REPORTS
+from paths import DATA_INTRA as DATA_HOURLY, DATA_DAILY, REPORTS, SCORES_HIST
 
 SCORES_LATEST = REPORTS / "scores_latest.csv"
+
+
+def _load_prev_scores() -> dict[str, float]:
+    """Lê o penúltimo score de cada ETF do histórico para calcular delta diário."""
+    if not SCORES_HIST.exists():
+        return {}
+    try:
+        hist = pd.read_csv(SCORES_HIST)
+        result = {}
+        for etf, grp in hist.groupby("etf"):
+            s = grp["score"].dropna()
+            if len(s) >= 2:
+                result[str(etf)] = float(s.iloc[-2])
+        return result
+    except Exception:
+        return {}
 
 
 def load_scores() -> dict:
@@ -74,10 +90,9 @@ def load_technicals(symbol: str) -> dict:
             "ret_63d":      float(last.get("ret_63d",     0) or 0),
             "drawdown":     float(last.get("drawdown",    0) or 0),
             "vol_21":       float(last.get("vol_21",      0) or 0),
-            "score":        float(last.get("score",       0) or 0),
-            "score_prev":   float(prev.get("score",       0) or 0),
         }
-    except Exception:
+    except Exception as e:
+        print(f"[AVISO] load_technicals({symbol}): {e}", file=sys.stderr)
         return {}
 
 
@@ -202,7 +217,10 @@ def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
         if df.empty:
             return []
         df["ret_1h"] = df["close"].pct_change(1)
-        ret_1h = float(df["ret_1h"].iloc[-1] or 0)
+        val_1h = df["ret_1h"].iloc[-1]
+        if pd.isna(val_1h):   # só 1 linha: sem retorno calculável
+            return []
+        ret_1h = float(val_1h)
         if ret_1h <= thresholds.get("ret_1h_drop", -0.02):
             tech = load_technicals(symbol)
             return [{"type": "QUEDA HORÁRIA", "symbol": symbol, "ret_1h": ret_1h, "tech": tech}]
@@ -212,7 +230,7 @@ def detect_intraday_alerts(symbol: str, thresholds: dict) -> list[dict]:
         return []
 
 
-def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
+def detect_structural_alerts(symbol: str, scores: dict, prev_scores: dict) -> list[dict]:
     """Detecta alertas estruturais (breaks, deteriorações, etc.)."""
     alerts = []
     path = DATA_DAILY / f"{symbol}.csv"
@@ -234,8 +252,8 @@ def detect_structural_alerts(symbol: str, scores: dict) -> list[dict]:
         sma200_prev  = float(prev.get("sma200", 0) or 0)
         close_prev2  = float(prev2.get("close",  0) or 0)
         sma200_prev2 = float(prev2.get("sma200", 0) or 0)
-        score_now   = tech.get("score",      scores.get(symbol, {}).get("score", 0))
-        score_prev  = tech.get("score_prev", score_now)
+        score_now  = scores.get(symbol, {}).get("score", 0.0)
+        score_prev = prev_scores.get(symbol, score_now)  # default: sem delta
 
         if (sma200_now > 0 and sma200_prev > 0 and sma200_prev2 > 0
                 and close_prev2 >= sma200_prev2
@@ -330,15 +348,16 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
 
 
 def main():
-    cfg        = load_config()
-    thresholds = cfg["params"]["alert_thresholds"]
-    scores     = load_scores()
-    cmap       = get_category_map(cfg)
-    all_alerts = []
+    cfg         = load_config()
+    thresholds  = cfg["params"]["alert_thresholds"]
+    scores      = load_scores()
+    prev_scores = _load_prev_scores()
+    cmap        = get_category_map(cfg)
+    all_alerts  = []
 
     for symbol in get_etfs(cfg):
         all_alerts.extend(detect_intraday_alerts(symbol, thresholds))
-        all_alerts.extend(detect_structural_alerts(symbol, scores))
+        all_alerts.extend(detect_structural_alerts(symbol, scores, prev_scores))
 
     if not all_alerts:
         print("[OK] Sem alertas activos.")

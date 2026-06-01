@@ -35,8 +35,10 @@ def fetch_intraday(symbol: str, period: str = INTRADAY_FETCH_PERIOD, interval: s
 
 def fetch_with_retry(symbol: str, max_retries: int = MAX_API_RETRIES) -> pd.DataFrame:
     """Recolhe dados com retry automático em caso de falha."""
-    last_error = None
-    
+    if max_retries < 1:
+        raise ValueError(f"max_retries deve ser >= 1, recebeu {max_retries}")
+    last_error: Exception = RuntimeError("fetch_with_retry: loop não executou")
+
     for attempt in range(max_retries):
         try:
             return fetch_intraday(symbol)

@@ -117,7 +117,7 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
                     spy_exit  = float(spy_future.iloc[20])
                     spy_fwd   = spy_exit / spy_entry - 1 if spy_entry > 0 else np.nan
                     fwd["fwd_21d_excess"] = round(
-                        (fwd.get("fwd_21d", np.nan) or np.nan) - spy_fwd, 6
+                        fwd["fwd_21d"] - spy_fwd, 6
                     ) if pd.notna(fwd.get("fwd_21d")) else np.nan
                 else:
                     fwd["fwd_21d_excess"] = np.nan

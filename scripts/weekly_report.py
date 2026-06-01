@@ -442,7 +442,7 @@ def main():
 
     df_for_cats = pd.DataFrame([{
         "etf": r["ticker"], "score": r["score"],
-        "ret_24h": r["ret_5d"], "delta_score": r["delta_score"]
+        "ret_24h": r["ret_5d"] / 5, "delta_score": r["delta_score"]
     } for r in rows_raw])
     cats = category_summary(df_for_cats, cfg)
 
