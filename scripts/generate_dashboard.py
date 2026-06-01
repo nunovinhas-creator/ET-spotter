@@ -57,6 +57,16 @@ def load_data(cfg: dict) -> dict:
     bt_path = REPORTS / "backtest_signals.csv"
     bt_df = pd.read_csv(bt_path) if bt_path.exists() else pd.DataFrame()
 
+    # delta_score: day-over-day change per ETF from history
+    delta_map: dict[str, float] = {}
+    if not hist_df.empty and "score" in hist_df.columns and "etf" in hist_df.columns:
+        for etf_sym, grp in hist_df.groupby("etf"):
+            grp_sorted = grp.sort_values("date")
+            if len(grp_sorted) >= 2:
+                prev = float(grp_sorted["score"].iloc[-2] or 0)
+                curr = float(grp_sorted["score"].iloc[-1] or 0)
+                delta_map[str(etf_sym)] = round(curr - prev, 4)
+
     # rows completos para build_buy_signals
     rows_raw = []
     for _, row in scores_df.iterrows():
@@ -68,7 +78,7 @@ def load_data(cfg: dict) -> dict:
             "categoria":    info.get("category_name", "—"),
             "cor":          info.get("color", "#7c83fd"),
             "score":        float(row.get("score",        0) or 0),
-            "delta_score":  0.0,
+            "delta_score":  delta_map.get(sym, 0.0),
             "trend_sma":    int(row.get("trend_sma",      0) or 0),
             "macd_bullish": int(row.get("macd_bullish",   0) or 0),
             "rsi":          float(row.get("rsi",          50) or 50),

@@ -156,6 +156,7 @@ def compute_metrics(df: pd.DataFrame, spy_close: pd.Series = None) -> pd.DataFra
         df["rs_ratio"]    = np.nan
         df["rs_mom_21"]   = np.nan
         df["rs_mom_63"]   = np.nan
+        df["rs_mom_126d"] = np.nan
         df["rs_positive"] = 0
 
     return df

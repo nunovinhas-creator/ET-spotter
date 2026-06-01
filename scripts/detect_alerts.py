@@ -319,7 +319,7 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
         verdict_clr = assessment["color"]
 
         cards += f"""<div style="background:{bg};border-left:4px solid {clr};padding:14px;margin:10px 0;border-radius:4px">
-          <div style="color:#e8eaf6;font-weight:bold">{html.escape(sym)} - {html.escape(t)}</div>
+          <div style="color:#e8eaf6;font-weight:bold">{html.escape(sym)} — {name} — {html.escape(t)}</div>
           <div style="color:#bbb;font-size:12px;margin-top:5px">{html.escape(assessment['explanation'])}</div>
         </div>"""
 
@@ -359,15 +359,15 @@ def main():
     if email_to:
         try:
             from send_email import send_email
-            html    = build_alert_html(all_alerts, cmap)
+            alert_html = build_alert_html(all_alerts, cmap)
             to_list = [t.strip() for t in email_to.split(",")]
             n       = len(all_alerts)
             tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
             suffix  = "..." if n > 3 else ""
-            
+
             send_email(
                 f"ET-Spotter: {n} alerta{'s' if n!=1 else ''} — {tickers}{suffix}",
-                html,
+                alert_html,
                 to_list,
             )
             print(f"[EMAIL] ✓ Enviado para {email_to}")

@@ -38,7 +38,8 @@ def fetch_intraday(symbol: str, period: str = INTRADAY_FETCH_PERIOD, interval: s
     if df.index.tz is not None:
         df.index = df.index.tz_convert(None)
     df.columns = [c.lower() for c in df.columns]
-    return df[["open", "high", "low", "close", "volume"]]
+    cols = [c for c in ["open", "high", "low", "close", "volume"] if c in df.columns]
+    return df[cols]
 
 
 def fetch_with_retry(symbol: str, max_retries: int = MAX_API_RETRIES) -> pd.DataFrame:
@@ -53,7 +54,7 @@ def fetch_with_retry(symbol: str, max_retries: int = MAX_API_RETRIES) -> pd.Data
             if attempt == max_retries - 1:
                 raise RuntimeError(f"Falhou após {max_retries} tentativas: {e}")
             
-            wait_time = (RETRY_BASE_WAIT_TIME ** attempt) + random.uniform(0, 1)
+            wait_time = (2 ** attempt) * RETRY_BASE_WAIT_TIME + random.uniform(0, 1)
             print(
                 f"[RETRY] {symbol}: tentativa {attempt + 1}/{max_retries} falhou, "
                 f"aguardando {wait_time:.1f}s... ({e})",

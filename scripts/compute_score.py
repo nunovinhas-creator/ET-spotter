@@ -64,6 +64,7 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
             "ret_21d":      float(last.get("ret_21d",     np.nan) or np.nan),
             "ret_63d":      float(last.get("ret_63d",     np.nan) or np.nan),
             "ret_126d":     float(last.get("ret_126d",    np.nan) or np.nan),
+            "ret_252d":     float(last.get("ret_252d",    np.nan) or np.nan),
             "vol_21":       float(last.get("vol_21",      np.nan) or np.nan),
             "sharpe_63":    float(last.get("sharpe_63",   np.nan) or np.nan),
             "rsi":          float(last.get("rsi",         np.nan) or np.nan),
@@ -145,7 +146,7 @@ def persist_scores(snap: pd.DataFrame) -> None:
     REPORTS.mkdir(parents=True, exist_ok=True)
 
     cols = [
-        "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d",
+        "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d", "ret_252d",
         "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21", "rs_mom_63",
         "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score", "score_pct",
     ]

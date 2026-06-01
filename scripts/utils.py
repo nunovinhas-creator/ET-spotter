@@ -4,6 +4,7 @@ Abstrai a estrutura do config para que os scripts não dependam do formato JSON.
 """
 
 import json
+import math
 from pathlib import Path
 
 
@@ -35,10 +36,6 @@ def get_category_map(cfg: dict) -> dict[str, dict]:
                 "color":         cat["color"],
             }
     return result
-
-
-def get_etf_name(cfg: dict, ticker: str) -> str:
-    return get_category_map(cfg).get(ticker, {}).get("name", ticker)
 
 
 def category_summary(scores_df, cfg: dict) -> list[dict]:
@@ -247,14 +244,23 @@ def compute_advisor_score(
 
     Devolve None se o ETF não cumpre os critérios de regime mínimos.
     """
-    import math
-
     def _f(v, default=0.0):
         try:
             x = float(v)
             return default if math.isnan(x) or math.isinf(x) else x
         except (TypeError, ValueError):
             return default
+
+    def _available(v) -> bool:
+        try:
+            x = float(v)
+            return not (math.isnan(x) or math.isinf(x))
+        except (TypeError, ValueError):
+            return False
+
+    # Check data availability BEFORE NaN-cleaning (to distinguish NaN from genuine 0.0)
+    _has_252d = _available(ret_252d)
+    _has_126d = _available(ret_126d)
 
     ret_252d  = _f(ret_252d)
     ret_126d  = _f(ret_126d)
@@ -266,7 +272,7 @@ def compute_advisor_score(
     sharpe_63 = _f(sharpe_63)
     calmar_63 = _f(calmar_63)
     vol_21    = _f(vol_21)
-    drawdown  = _f(drawdown, -0.01)
+    drawdown  = _f(drawdown, -0.25)   # safe-side: unknown drawdown → disqualify
 
     # ── Filtros de regime (Faber: só estar comprado quando acima de SMA200) ─────
     if not above_sma200:   return None
@@ -276,7 +282,10 @@ def compute_advisor_score(
 
     # ── Momentum composto: 12-1M ou 6-1M (Antonacci) ─────────────────────────
     # A exclusão do último mês evita o efeito de reversão de curto prazo
-    if ret_252d != 0.0:
+    if not _has_252d and not _has_126d:
+        return None  # sem histórico de retornos suficiente
+
+    if _has_252d:
         momentum = ret_252d - ret_21d   # 12-1M (preferido)
     else:
         momentum = ret_126d - ret_21d   # 6-1M (fallback para ETFs mais recentes)
@@ -296,7 +305,7 @@ def compute_advisor_score(
 
     # 2. Regime de tendência (10 pts) — Faber SMA200 + SMA20>SMA50
     if trend_sma and above_sma200:  pts += 10
-    elif above_sma200:              pts += 5
+    else:                           pts += 5  # acima de SMA200 mas sem trend_sma
 
     # 3. Força relativa vs benchmark (15 pts) — Antonacci dual momentum relativo
     if rs_positive and rs_mom_63 >= 0.05:  pts += 15
