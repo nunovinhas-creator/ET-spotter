@@ -110,68 +110,40 @@ def _num(v, digits=3) -> str:
 
 def about_strip_html() -> str:
     return """
-<div style="border-bottom:1px solid var(--border);background:var(--deep);padding:16px 0 20px">
-  <div style="max-width:1400px;margin:0 auto;padding:0 24px">
+<div style="border-bottom:1px solid var(--border);background:var(--deep);padding:10px 0">
+  <div style="max-width:1400px;margin:0 auto;padding:0 24px;
+              display:flex;align-items:center;gap:20px;flex-wrap:wrap">
 
-    <p style="color:var(--muted);font-size:0.72rem;line-height:1.6;margin-bottom:14px">
-      <span style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;
-                   font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;
-                   color:var(--gold);margin-right:6px">ET-SPOTTER</span>
-      — Monitorização automática de ETFs UCITS com sinais técnicos acionáveis e alertas por Email e Telegram.
-    </p>
+    <span style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;
+                 font-size:0.60rem;letter-spacing:0.14em;text-transform:uppercase;
+                 color:var(--gold);white-space:nowrap">ET-SPOTTER</span>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+    <span style="color:var(--muted);font-size:0.70rem;line-height:1.5;flex:1;min-width:200px">
+      Monitorização automática de ETFs UCITS — score técnico composto (0–1) com sinais de
+      <span style="color:var(--green)">FORTE COMPRA</span>,
+      <span style="color:var(--light-green)">COMPRA</span> e
+      <span style="color:var(--yellow)">POTENCIAL</span>
+      baseados em confluência de momentum, tendência e risco.
+    </span>
 
-      <div>
-        <p style="color:var(--muted);font-size:0.68rem;line-height:1.7;margin-bottom:8px">
-          ET‑Spotter recolhe dados diários e intradiários via yfinance e calcula indicadores técnicos.
-          Gera um score técnico composto (0–1) por ETF e classifica sinais em
-          <span style="color:var(--green)">FORTE COMPRA</span>,
-          <span style="color:var(--light-green)">COMPRA</span> e
-          <span style="color:var(--yellow)">POTENCIAL</span>.
-        </p>
-        <p style="color:var(--muted);font-size:0.67rem;line-height:1.6;margin-bottom:4px">
-          <strong style="color:var(--champagne);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase">Benefícios</strong>
-        </p>
-        <ul style="color:var(--muted);font-size:0.67rem;line-height:1.75;list-style:none;padding:0">
-          <li style="padding-left:10px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Decisão mais rápida e menos emocional com sinais baseados em confluência de indicadores.</li>
-          <li style="padding-left:10px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Transparência e auditabilidade: histórico e regras versionados em CSV no repositório.</li>
-          <li style="padding-left:10px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Operacionalidade: alertas práticos para gerir posições em tempo real.</li>
-        </ul>
-      </div>
-
-      <div>
-        <p style="color:var(--muted);font-size:0.67rem;line-height:1.6;margin-bottom:4px">
-          <strong style="color:var(--champagne);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase">Fundamentação académica</strong>
-        </p>
-        <ul style="color:var(--muted);font-size:0.67rem;line-height:1.75;list-style:none;padding:0;margin-bottom:10px">
-          <li><span style="color:var(--patina);margin-right:5px">✓</span>Baseia-se em 30+ anos de investigação académica (Jegadeesh, Titman, Faber, Sharpe)</li>
-          <li><span style="color:var(--patina);margin-right:5px">✓</span>Valida cada factor independentemente (multicolinearidade &lt; 1.2)</li>
-          <li><span style="color:var(--patina);margin-right:5px">✓</span>Exige convergência de múltiplos sinais (reduz falsos positivos)</li>
-          <li><span style="color:var(--patina);margin-right:5px">✓</span>Demonstra edge estatístico comprovado (FORTE COMPRA: +1.7%/mês, p &lt; 0.05)</li>
-          <li><span style="color:var(--patina);margin-right:5px">✓</span>Reconhece limitações (forward bias, regime-dependência, custos)</li>
-        </ul>
-        <p style="color:var(--muted);font-size:0.67rem;line-height:1.6">
-          <strong style="color:var(--champagne)">Para quem:</strong>
-          Investidores individuais europeus que seguem estratégias quantitativas baseadas em evidência académica
-          e querem um fluxo de sinais técnicos transparentes e reproduzíveis.
-        </p>
-      </div>
-
-      <div style="border-left:1px solid var(--border);padding-left:20px">
-        <p style="color:var(--muted);font-size:0.67rem;line-height:1.6;margin-bottom:4px">
-          <strong style="color:var(--champagne);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase">Nota legal</strong>
-        </p>
-        <p style="color:var(--muted);font-size:0.65rem;line-height:1.7;font-style:italic">
-          ET‑Spotter fornece informação técnica e resultados de backtest; não constitui aconselhamento financeiro.
-          Use os sinais como input sistemático, não como recomendação isolada.
-          Um sistema que não prediz preços futuros, mas identifica períodos de convergência estatística
-          de múltiplos factores — quando a probabilidade de retorno positivo no horizonte de momentum
-          (21 dias) é significativamente elevada acima do acaso.
-        </p>
-      </div>
-
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span style="background:var(--surface);border:1px solid var(--border);
+                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
+                   letter-spacing:0.06em;white-space:nowrap">
+        Momentum · Trend · Risk
+      </span>
+      <span style="background:var(--surface);border:1px solid var(--border);
+                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
+                   letter-spacing:0.06em;white-space:nowrap">
+        Faber · Jegadeesh · AQR
+      </span>
+      <span style="background:var(--surface);border:1px solid var(--border);
+                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
+                   letter-spacing:0.06em;white-space:nowrap">
+        Alertas Email · Telegram
+      </span>
     </div>
+
   </div>
 </div>"""
 
@@ -838,6 +810,34 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
       btn.classList.add("active");
     }}
   </script>
+
+  <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);
+              display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div>
+      <div style="font-family:'SFMono-Regular',monospace;font-size:0.59rem;letter-spacing:0.10em;
+                  text-transform:uppercase;color:var(--patina);margin-bottom:8px">Base Académica</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Jegadeesh & Titman (1993)</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Faber (2007)</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Antonacci (2014)</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px">AQR — Value & Momentum</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Sharpe Ratio</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'SFMono-Regular',monospace;font-size:0.59rem;letter-spacing:0.10em;
+                  text-transform:uppercase;color:var(--patina);margin-bottom:8px">Para quem</div>
+      <p style="color:var(--muted);font-size:0.67rem;line-height:1.6;margin:0">
+        Investidores europeus que seguem estratégias quantitativas baseadas em evidência académica
+        e querem sinais técnicos transparentes, reproduzíveis e auditáveis.
+      </p>
+    </div>
+  </div>
 </section>"""
 
 
@@ -1142,7 +1142,7 @@ async function subscribePush() {{
         portfolio_section(PORTFOLIO, data["cmap"]),
         etf_table_section(data["scores_df"], data["cmap"], metadata),
         '</div>',
-        f'<footer>ET-Spotter · dados via yfinance · não constitui aconselhamento financeiro{push_btn}</footer>',
+        f'<footer><div style="max-width:800px;margin:0 auto">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária<br><span style="font-size:0.62rem;opacity:0.6">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Use como input sistemático, não como recomendação isolada.</span></div>{push_btn}</footer>',
     ]
 
     html = f"""<!DOCTYPE html>
