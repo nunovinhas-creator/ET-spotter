@@ -8,33 +8,14 @@
       "name": "EUA – Mercado Largo",
       "color": "#7c83fd",
       "etfs": [
-        {
-          "ticker": "CSPX.L",
-          "name": "S&P 500 (iShares Core UCITS Acc)",
-          "ter": 0.07,
-          "aum_bn": 50.1,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B5BMR087"
-        },
-        {
-          "ticker": "VUAA.L",
-          "name": "S&P 500 (Vanguard UCITS Acc)",
-          "ter": 0.07,
-          "aum_bn": 30.2,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BFMXXD54"
-        },
-        {
-          "ticker": "CNDX.L",
-          "name": "Nasdaq 100 (iShares UCITS Acc)",
-          "ter": 0.33,
-          "aum_bn": 8.4,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B53SZB19"
-        }
+        { "ticker": "CSPX.L",  "name": "S&P 500 (iShares Core UCITS Acc)",       "ter": 0.07, "aum_bn": 50.1, "replica": "fisica",   "esg": false, "isin": "IE00B5BMR087" },
+        { "ticker": "VUAA.L",  "name": "S&P 500 (Vanguard UCITS Acc)",            "ter": 0.07, "aum_bn": 30.2, "replica": "fisica",   "esg": false, "isin": "IE00BFMXXD54" },
+        { "ticker": "VUSA.L",  "name": "S&P 500 (Vanguard UCITS Dist)",           "ter": 0.07, "aum_bn": 15.4, "replica": "fisica",   "esg": false, "isin": "IE00B3XXRP09" },
+        { "ticker": "IUSA.L",  "name": "S&P 500 (iShares UCITS Dist)",            "ter": 0.07, "aum_bn": 8.2,  "replica": "fisica",   "esg": false, "isin": "IE0031442068"  },
+        { "ticker": "CNDX.L",  "name": "Nasdaq 100 (iShares UCITS Acc)",          "ter": 0.33, "aum_bn": 8.4,  "replica": "fisica",   "esg": false, "isin": "IE00B53SZB19" },
+        { "ticker": "XNAS.L",  "name": "Nasdaq 100 (Xtrackers UCITS Acc)",        "ter": 0.20, "aum_bn": 3.5,  "replica": "sintetica","esg": false, "isin": "LU0274209237" },
+        { "ticker": "SPXS.L",  "name": "S&P 500 (Invesco UCITS Acc)",             "ter": 0.05, "aum_bn": 7.1,  "replica": "sintetica","esg": false, "isin": "IE00B3YCGJ38" },
+        { "ticker": "IUSS.L",  "name": "Russell 2000 Small Cap (iShares UCITS)",  "ter": 0.33, "aum_bn": 0.9,  "replica": "fisica",   "esg": false, "isin": "IE00B3VTML14" }
       ]
     },
     {
@@ -42,60 +23,16 @@
       "name": "Global / MSCI World",
       "color": "#4caf50",
       "etfs": [
-        {
-          "ticker": "VWCE.DE",
-          "name": "FTSE All-World EUR (Vanguard UCITS Acc)",
-          "ter": 0.22,
-          "aum_bn": 18.5,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BK5BQT80"
-        },
-        {
-          "ticker": "VWRP.L",
-          "name": "FTSE All-World USD (Vanguard UCITS Acc)",
-          "ter": 0.22,
-          "aum_bn": 4.2,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BK5BQT80"
-        },
-        {
-          "ticker": "IWDA.L",
-          "name": "MSCI World (iShares Core UCITS Acc)",
-          "ter": 0.2,
-          "aum_bn": 62.0,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4L5Y983"
-        },
-        {
-          "ticker": "SWRD.L",
-          "name": "MSCI World (SPDR UCITS Acc)",
-          "ter": 0.12,
-          "aum_bn": 7.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BFY0GT14"
-        },
-        {
-          "ticker": "XDWD.DE",
-          "name": "MSCI World (Xtrackers UCITS Acc)",
-          "ter": 0.19,
-          "aum_bn": 5.1,
-          "replica": "sintetica",
-          "esg": false,
-          "isin": "LU0274208692"
-        },
-        {
-          "ticker": "WSML.L",
-          "name": "MSCI World Small Cap (iShares UCITS Acc)",
-          "ter": 0.35,
-          "aum_bn": 2.9,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BF4RFH31"
-        }
+        { "ticker": "IWDA.L",  "name": "MSCI World (iShares Core UCITS Acc)",         "ter": 0.20, "aum_bn": 62.0, "replica": "fisica",   "esg": false, "isin": "IE00B4L5Y983" },
+        { "ticker": "VWCE.DE", "name": "FTSE All-World EUR (Vanguard UCITS Acc)",      "ter": 0.22, "aum_bn": 18.5, "replica": "fisica",   "esg": false, "isin": "IE00BK5BQT80" },
+        { "ticker": "VWRP.L",  "name": "FTSE All-World USD (Vanguard UCITS Acc)",      "ter": 0.22, "aum_bn": 4.2,  "replica": "fisica",   "esg": false, "isin": "IE00BK5BQT80" },
+        { "ticker": "VWRL.L",  "name": "FTSE All-World (Vanguard UCITS Dist)",         "ter": 0.22, "aum_bn": 7.8,  "replica": "fisica",   "esg": false, "isin": "IE00B3RBWM25" },
+        { "ticker": "SWRD.L",  "name": "MSCI World (SPDR UCITS Acc)",                  "ter": 0.12, "aum_bn": 7.8,  "replica": "fisica",   "esg": false, "isin": "IE00BFY0GT14" },
+        { "ticker": "XDWD.DE", "name": "MSCI World (Xtrackers UCITS Acc)",             "ter": 0.19, "aum_bn": 5.1,  "replica": "sintetica","esg": false, "isin": "LU0274208692" },
+        { "ticker": "FWRA.L",  "name": "FTSE All-World (Invesco UCITS Acc)",           "ter": 0.15, "aum_bn": 2.3,  "replica": "fisica",   "esg": false, "isin": "IE00BK5BQT80" },
+        { "ticker": "HMWO.L",  "name": "MSCI World (HSBC UCITS Acc)",                  "ter": 0.15, "aum_bn": 4.1,  "replica": "fisica",   "esg": false, "isin": "IE00B4X9L533" },
+        { "ticker": "WSML.L",  "name": "MSCI World Small Cap (iShares UCITS Acc)",     "ter": 0.35, "aum_bn": 2.9,  "replica": "fisica",   "esg": false, "isin": "IE00BF4RFH31" },
+        { "ticker": "XMAW.L",  "name": "MSCI All World (Xtrackers UCITS Acc)",         "ter": 0.17, "aum_bn": 1.8,  "replica": "fisica",   "esg": false, "isin": "IE00BGHQ0G80" }
       ]
     },
     {
@@ -103,96 +40,17 @@
       "name": "EUA – Sectores UCITS",
       "color": "#26a69a",
       "etfs": [
-        {
-          "ticker": "IUIT.L",
-          "name": "S&P 500 IT (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 3.1,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B3WJKG14"
-        },
-        {
-          "ticker": "IUHC.L",
-          "name": "S&P 500 Health Care (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 1.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B3WJKG14"
-        },
-        {
-          "ticker": "IUFS.L",
-          "name": "S&P 500 Financials (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B42NKQ00"
-        },
-        {
-          "ticker": "IUES.L",
-          "name": "S&P 500 Energy (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.5,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4MCHH59"
-        },
-        {
-          "ticker": "IUCD.L",
-          "name": "S&P 500 Consumer Discretionary (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.7,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B52VJ196"
-        },
-        {
-          "ticker": "IUCS.L",
-          "name": "S&P 500 Consumer Staples (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.6,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B3VWMM18"
-        },
-        {
-          "ticker": "IUIS.L",
-          "name": "S&P 500 Industrials (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.4,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4G93F45"
-        },
-        {
-          "ticker": "IUUS.L",
-          "name": "S&P 500 Utilities (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.3,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B3VWN179"
-        },
-        {
-          "ticker": "IUMS.L",
-          "name": "S&P 500 Materials (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.4,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4MCHH59"
-        },
-        {
-          "ticker": "IUCM.L",
-          "name": "S&P 500 Communication Services (iShares UCITS Acc)",
-          "ter": 0.15,
-          "aum_bn": 0.3,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B52VJ196"
-        }
+        { "ticker": "IUIT.L",  "name": "S&P 500 IT (iShares UCITS Acc)",                      "ter": 0.15, "aum_bn": 3.1, "replica": "fisica", "esg": false, "isin": "IE00B3WJKG14" },
+        { "ticker": "IUHC.L",  "name": "S&P 500 Health Care (iShares UCITS Acc)",              "ter": 0.15, "aum_bn": 1.8, "replica": "fisica", "esg": false, "isin": "IE00B43HR379" },
+        { "ticker": "IUFS.L",  "name": "S&P 500 Financials (iShares UCITS Acc)",               "ter": 0.15, "aum_bn": 0.8, "replica": "fisica", "esg": false, "isin": "IE00B42NKQ00" },
+        { "ticker": "IUES.L",  "name": "S&P 500 Energy (iShares UCITS Acc)",                   "ter": 0.15, "aum_bn": 0.5, "replica": "fisica", "esg": false, "isin": "IE00B4MCHH59" },
+        { "ticker": "IUCD.L",  "name": "S&P 500 Consumer Discretionary (iShares UCITS Acc)",  "ter": 0.15, "aum_bn": 0.7, "replica": "fisica", "esg": false, "isin": "IE00B52VJ196" },
+        { "ticker": "IUCS.L",  "name": "S&P 500 Consumer Staples (iShares UCITS Acc)",        "ter": 0.15, "aum_bn": 0.6, "replica": "fisica", "esg": false, "isin": "IE00B3VWMM18" },
+        { "ticker": "IUIS.L",  "name": "S&P 500 Industrials (iShares UCITS Acc)",             "ter": 0.15, "aum_bn": 0.4, "replica": "fisica", "esg": false, "isin": "IE00B4G93F45" },
+        { "ticker": "IUUS.L",  "name": "S&P 500 Utilities (iShares UCITS Acc)",               "ter": 0.15, "aum_bn": 0.3, "replica": "fisica", "esg": false, "isin": "IE00B3VWN179" },
+        { "ticker": "IUMS.L",  "name": "S&P 500 Materials (iShares UCITS Acc)",               "ter": 0.15, "aum_bn": 0.4, "replica": "fisica", "esg": false, "isin": "IE00B4MCHH59" },
+        { "ticker": "IUCM.L",  "name": "S&P 500 Communication Services (iShares UCITS Acc)", "ter": 0.15, "aum_bn": 0.3, "replica": "fisica", "esg": false, "isin": "IE00B52VJ196" },
+        { "ticker": "IURE.L",  "name": "S&P 500 Real Estate (iShares UCITS Acc)",             "ter": 0.15, "aum_bn": 0.2, "replica": "fisica", "esg": false, "isin": "IE00BSKRJZ44" }
       ]
     },
     {
@@ -200,24 +58,16 @@
       "name": "Internacional Desenvolvido",
       "color": "#ab47bc",
       "etfs": [
-        {
-          "ticker": "SMEA.L",
-          "name": "MSCI Europe (iShares Core UCITS Acc)",
-          "ter": 0.12,
-          "aum_bn": 7.4,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4K48X80"
-        },
-        {
-          "ticker": "IJPA.L",
-          "name": "MSCI Japan IMI (iShares Core UCITS Acc)",
-          "ter": 0.12,
-          "aum_bn": 2.1,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B2QWCY14"
-        }
+        { "ticker": "SMEA.L",  "name": "MSCI Europe (iShares Core UCITS Acc)",               "ter": 0.12, "aum_bn": 7.4,  "replica": "fisica",   "esg": false, "isin": "IE00B4K48X80" },
+        { "ticker": "VEUR.L",  "name": "FTSE Developed Europe (Vanguard UCITS Acc)",         "ter": 0.10, "aum_bn": 3.2,  "replica": "fisica",   "esg": false, "isin": "IE00B945VV12" },
+        { "ticker": "VERX.L",  "name": "FTSE Dev. Europe ex-UK (Vanguard UCITS Acc)",        "ter": 0.10, "aum_bn": 2.1,  "replica": "fisica",   "esg": false, "isin": "IE00BKX55S42" },
+        { "ticker": "IJPA.L",  "name": "MSCI Japan IMI (iShares Core UCITS Acc)",            "ter": 0.12, "aum_bn": 2.1,  "replica": "fisica",   "esg": false, "isin": "IE00B2QWCY14" },
+        { "ticker": "HMJP.L",  "name": "MSCI Japan (HSBC UCITS Acc)",                        "ter": 0.15, "aum_bn": 1.4,  "replica": "fisica",   "esg": false, "isin": "IE00B5LJNV57" },
+        { "ticker": "CUKX.L",  "name": "FTSE 100 (iShares Core UCITS Acc)",                  "ter": 0.07, "aum_bn": 10.2, "replica": "fisica",   "esg": false, "isin": "IE00B53HP851" },
+        { "ticker": "VUKE.L",  "name": "FTSE 100 (Vanguard UCITS Acc)",                      "ter": 0.09, "aum_bn": 2.8,  "replica": "fisica",   "esg": false, "isin": "IE00B810Q511" },
+        { "ticker": "HMCA.L",  "name": "MSCI Canada (HSBC UCITS Acc)",                       "ter": 0.19, "aum_bn": 0.8,  "replica": "fisica",   "esg": false, "isin": "IE00B52SF786" },
+        { "ticker": "XAUS.L",  "name": "MSCI Australia (Xtrackers UCITS Acc)",               "ter": 0.30, "aum_bn": 0.4,  "replica": "sintetica","esg": false, "isin": "LU0476289466" },
+        { "ticker": "IAPD.L",  "name": "Asia Pacific Dividend (iShares UCITS Dist)",         "ter": 0.59, "aum_bn": 0.9,  "replica": "fisica",   "esg": false, "isin": "IE00B14X4T88" }
       ]
     },
     {
@@ -225,24 +75,14 @@
       "name": "Mercados Emergentes",
       "color": "#ff7043",
       "etfs": [
-        {
-          "ticker": "EIMI.L",
-          "name": "MSCI EM IMI (iShares Core UCITS Acc)",
-          "ter": 0.18,
-          "aum_bn": 14.2,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BKM4GZ66"
-        },
-        {
-          "ticker": "XMEM.DE",
-          "name": "MSCI Emerging Markets (Xtrackers UCITS Acc)",
-          "ter": 0.2,
-          "aum_bn": 1.8,
-          "replica": "sintetica",
-          "esg": false,
-          "isin": "IE00BTJRMP35"
-        }
+        { "ticker": "EIMI.L",  "name": "MSCI EM IMI (iShares Core UCITS Acc)",             "ter": 0.18, "aum_bn": 14.2, "replica": "fisica",   "esg": false, "isin": "IE00BKM4GZ66" },
+        { "ticker": "VFEM.L",  "name": "FTSE Emerging Markets (Vanguard UCITS Acc)",       "ter": 0.22, "aum_bn": 3.8,  "replica": "fisica",   "esg": false, "isin": "IE00B3VVMM84" },
+        { "ticker": "XMEM.DE", "name": "MSCI Emerging Markets (Xtrackers UCITS Acc)",      "ter": 0.20, "aum_bn": 1.8,  "replica": "sintetica","esg": false, "isin": "IE00BTJRMP35" },
+        { "ticker": "IEEM.L",  "name": "MSCI EM (iShares UCITS Dist)",                     "ter": 0.18, "aum_bn": 5.1,  "replica": "fisica",   "esg": false, "isin": "IE00B4L5YC18" },
+        { "ticker": "ICHN.L",  "name": "MSCI China (iShares UCITS Acc)",                   "ter": 0.40, "aum_bn": 1.2,  "replica": "fisica",   "esg": false, "isin": "IE00B5VL1928" },
+        { "ticker": "IIND.L",  "name": "MSCI India (iShares UCITS Acc)",                   "ter": 0.65, "aum_bn": 1.5,  "replica": "fisica",   "esg": false, "isin": "IE00B3K4YY77" },
+        { "ticker": "IBZL.L",  "name": "MSCI Brazil (iShares UCITS Acc)",                  "ter": 0.74, "aum_bn": 0.5,  "replica": "fisica",   "esg": false, "isin": "IE00B27YCK28" },
+        { "ticker": "CSEM.L",  "name": "MSCI EM ex-China (iShares UCITS Acc)",             "ter": 0.20, "aum_bn": 0.9,  "replica": "fisica",   "esg": false, "isin": "IE00BF4RFH31" }
       ]
     },
     {
@@ -250,42 +90,14 @@
       "name": "Factor / Smart Beta",
       "color": "#66bb6a",
       "etfs": [
-        {
-          "ticker": "IWMO.L",
-          "name": "MSCI World Momentum (iShares Edge UCITS Acc)",
-          "ter": 0.3,
-          "aum_bn": 4.6,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BP3QZ601"
-        },
-        {
-          "ticker": "IWVL.L",
-          "name": "MSCI World Value (iShares Edge UCITS Acc)",
-          "ter": 0.3,
-          "aum_bn": 1.9,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BP3QZB59"
-        },
-        {
-          "ticker": "IWQU.L",
-          "name": "MSCI World Quality (iShares Edge UCITS Acc)",
-          "ter": 0.3,
-          "aum_bn": 3.2,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BP3QZ825"
-        },
-        {
-          "ticker": "MVOL.L",
-          "name": "MSCI World Min Volatility (iShares Edge UCITS Acc)",
-          "ter": 0.3,
-          "aum_bn": 3.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B8FHGS14"
-        }
+        { "ticker": "IWMO.L",  "name": "MSCI World Momentum (iShares Edge UCITS Acc)",       "ter": 0.30, "aum_bn": 4.6, "replica": "fisica", "esg": false, "isin": "IE00BP3QZ601" },
+        { "ticker": "IWVL.L",  "name": "MSCI World Value (iShares Edge UCITS Acc)",          "ter": 0.30, "aum_bn": 1.9, "replica": "fisica", "esg": false, "isin": "IE00BP3QZB59" },
+        { "ticker": "IWQU.L",  "name": "MSCI World Quality (iShares Edge UCITS Acc)",        "ter": 0.30, "aum_bn": 3.2, "replica": "fisica", "esg": false, "isin": "IE00BP3QZ825" },
+        { "ticker": "MVOL.L",  "name": "MSCI World Min Volatility (iShares Edge UCITS Acc)", "ter": 0.30, "aum_bn": 3.8, "replica": "fisica", "esg": false, "isin": "IE00B8FHGS14" },
+        { "ticker": "IWFM.L",  "name": "MSCI World Multifactor (iShares Edge UCITS Acc)",   "ter": 0.35, "aum_bn": 0.5, "replica": "fisica", "esg": false, "isin": "IE00BDBRDM35" },
+        { "ticker": "IWSZ.L",  "name": "MSCI World Size (iShares Edge UCITS Acc)",           "ter": 0.30, "aum_bn": 0.4, "replica": "fisica", "esg": false, "isin": "IE00BP3QZD73" },
+        { "ticker": "XDEQ.L",  "name": "MSCI World Quality (Xtrackers UCITS Acc)",           "ter": 0.25, "aum_bn": 1.2, "replica": "fisica", "esg": false, "isin": "IE00BL25JL35" },
+        { "ticker": "WDIV.L",  "name": "MSCI World High Dividend Yield (iShares UCITS)",     "ter": 0.38, "aum_bn": 2.1, "replica": "fisica", "esg": false, "isin": "IE00B975GH63" }
       ]
     },
     {
@@ -293,60 +105,17 @@
       "name": "Temáticos / Inovação",
       "color": "#ef5350",
       "etfs": [
-        {
-          "ticker": "XDWT.DE",
-          "name": "MSCI World IT (Xtrackers UCITS Acc)",
-          "ter": 0.25,
-          "aum_bn": 1.4,
-          "replica": "sintetica",
-          "esg": false,
-          "isin": "LU0322252924"
-        },
-        {
-          "ticker": "RBOT.L",
-          "name": "Automação & Robótica (iShares UCITS Acc)",
-          "ter": 0.4,
-          "aum_bn": 2.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BYZK4552"
-        },
-        {
-          "ticker": "WTAI.L",
-          "name": "Inteligência Artificial (WisdomTree UCITS Acc)",
-          "ter": 0.4,
-          "aum_bn": 0.3,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BDVPNG13"
-        },
-        {
-          "ticker": "DGTL.L",
-          "name": "Digitalização (iShares UCITS Acc)",
-          "ter": 0.4,
-          "aum_bn": 0.1,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BKPSFD44"
-        },
-        {
-          "ticker": "ECAR.L",
-          "name": "Veículos Elétricos & Condução (iShares UCITS Acc)",
-          "ter": 0.4,
-          "aum_bn": 0.5,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BGL86Z12"
-        },
-        {
-          "ticker": "BTEC.L",
-          "name": "Nasdaq Biotecnologia (iShares UCITS Acc)",
-          "ter": 0.35,
-          "aum_bn": 1.2,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00BYXG2H39"
-        }
+        { "ticker": "XDWT.DE", "name": "MSCI World IT (Xtrackers UCITS Acc)",               "ter": 0.25, "aum_bn": 1.4,  "replica": "sintetica","esg": false, "isin": "LU0322252924" },
+        { "ticker": "RBOT.L",  "name": "Automação & Robótica (iShares UCITS Acc)",           "ter": 0.40, "aum_bn": 2.8,  "replica": "fisica",   "esg": false, "isin": "IE00BYZK4552" },
+        { "ticker": "WTAI.L",  "name": "Inteligência Artificial (WisdomTree UCITS Acc)",     "ter": 0.40, "aum_bn": 0.3,  "replica": "fisica",   "esg": false, "isin": "IE00BDVPNG13" },
+        { "ticker": "DGTL.L",  "name": "Digitalização (iShares UCITS Acc)",                  "ter": 0.40, "aum_bn": 0.1,  "replica": "fisica",   "esg": false, "isin": "IE00BKPSFD44" },
+        { "ticker": "ECAR.L",  "name": "Veículos Elétricos & Condução (iShares UCITS Acc)", "ter": 0.40, "aum_bn": 0.5,  "replica": "fisica",   "esg": false, "isin": "IE00BGL86Z12" },
+        { "ticker": "BTEC.L",  "name": "Nasdaq Biotecnologia (iShares UCITS Acc)",           "ter": 0.35, "aum_bn": 1.2,  "replica": "fisica",   "esg": false, "isin": "IE00BYXG2H39" },
+        { "ticker": "INRG.L",  "name": "Energias Limpas Globais (iShares UCITS Acc)",        "ter": 0.65, "aum_bn": 1.8,  "replica": "fisica",   "esg": true,  "isin": "IE00B1XNHC34" },
+        { "ticker": "BNXG.L",  "name": "Baterias & Armazenamento (L&G UCITS Acc)",           "ter": 0.49, "aum_bn": 0.4,  "replica": "fisica",   "esg": true,  "isin": "IE00BF0M2Z96" },
+        { "ticker": "CYBR.L",  "name": "Cibersegurança (L&G UCITS Acc)",                     "ter": 0.69, "aum_bn": 1.3,  "replica": "fisica",   "esg": false, "isin": "IE00BYPLS672" },
+        { "ticker": "HEAL.L",  "name": "Inovação na Saúde (iShares UCITS Acc)",              "ter": 0.40, "aum_bn": 0.7,  "replica": "fisica",   "esg": false, "isin": "IE00BYZK4669" },
+        { "ticker": "XAIX.L",  "name": "AI & Big Data (Xtrackers UCITS Acc)",                "ter": 0.35, "aum_bn": 0.5,  "replica": "fisica",   "esg": false, "isin": "IE00BGV5VN51" }
       ]
     },
     {
@@ -354,33 +123,58 @@
       "name": "Commodities",
       "color": "#ffb300",
       "etfs": [
-        {
-          "ticker": "IGLN.L",
-          "name": "Ouro Físico (iShares ETC)",
-          "ter": 0.12,
-          "aum_bn": 1.6,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B8BTKG10"
-        },
-        {
-          "ticker": "PHAU.L",
-          "name": "Ouro Físico (WisdomTree ETC)",
-          "ter": 0.12,
-          "aum_bn": 3.1,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B579F325"
-        },
-        {
-          "ticker": "PHAG.L",
-          "name": "Prata Física (WisdomTree ETC)",
-          "ter": 0.19,
-          "aum_bn": 0.8,
-          "replica": "fisica",
-          "esg": false,
-          "isin": "IE00B4LSS636"
-        }
+        { "ticker": "IGLN.L",  "name": "Ouro Físico (iShares ETC)",                  "ter": 0.12, "aum_bn": 1.6,  "replica": "fisica", "esg": false, "isin": "IE00B8BTKG10" },
+        { "ticker": "PHAU.L",  "name": "Ouro Físico (WisdomTree ETC)",               "ter": 0.12, "aum_bn": 3.1,  "replica": "fisica", "esg": false, "isin": "IE00B579F325" },
+        { "ticker": "SGLN.L",  "name": "Ouro Físico (Invesco ETC)",                  "ter": 0.12, "aum_bn": 1.0,  "replica": "fisica", "esg": false, "isin": "IE00B579F325" },
+        { "ticker": "PHAG.L",  "name": "Prata Física (WisdomTree ETC)",              "ter": 0.19, "aum_bn": 0.8,  "replica": "fisica", "esg": false, "isin": "IE00B4LSS636" },
+        { "ticker": "PHPT.L",  "name": "Platina Física (WisdomTree ETC)",            "ter": 0.19, "aum_bn": 0.2,  "replica": "fisica", "esg": false, "isin": "IE00B4LPPM29" },
+        { "ticker": "AIGA.L",  "name": "Ouro Físico (Amundi ETC)",                   "ter": 0.12, "aum_bn": 0.5,  "replica": "fisica", "esg": false, "isin": "IE00B9QMRY22" },
+        { "ticker": "EXXY.L",  "name": "Commodities Diversificadas (iShares UCITS)", "ter": 0.19, "aum_bn": 1.2,  "replica": "sintetica", "esg": false, "isin": "IE00B3YCGJ38" },
+        { "ticker": "CRUD.L",  "name": "Crude Oil (WisdomTree ETC)",                 "ter": 0.49, "aum_bn": 0.4,  "replica": "sintetica", "esg": false, "isin": "IE00B9QMRN06" }
+      ]
+    },
+    {
+      "id": "obrigacoes",
+      "name": "Obrigações / Fixed Income",
+      "color": "#78909c",
+      "etfs": [
+        { "ticker": "IGLT.L",  "name": "UK Gilts (iShares Core UCITS Acc)",              "ter": 0.07, "aum_bn": 9.5,  "replica": "fisica", "esg": false, "isin": "IE00B1FZSF77" },
+        { "ticker": "IBTL.L",  "name": "USD Treasury Bond 20yr+ (iShares UCITS Acc)",    "ter": 0.07, "aum_bn": 2.1,  "replica": "fisica", "esg": false, "isin": "IE00BSKRJZ44" },
+        { "ticker": "IBTM.L",  "name": "USD Treasury Bond 7-10yr (iShares UCITS Acc)",   "ter": 0.07, "aum_bn": 3.2,  "replica": "fisica", "esg": false, "isin": "IE00B1FZS798" },
+        { "ticker": "IBTS.L",  "name": "USD Treasury Bond 1-3yr (iShares UCITS Acc)",    "ter": 0.07, "aum_bn": 2.8,  "replica": "fisica", "esg": false, "isin": "IE00B14X4Q57" },
+        { "ticker": "LQDE.L",  "name": "USD Corp Bond (iShares UCITS Acc)",               "ter": 0.20, "aum_bn": 5.8,  "replica": "fisica", "esg": false, "isin": "IE00B3F81R35" },
+        { "ticker": "IHYG.L",  "name": "USD High Yield Corp Bond (iShares UCITS Acc)",   "ter": 0.50, "aum_bn": 3.1,  "replica": "fisica", "esg": false, "isin": "IE00B4PY7Y77" },
+        { "ticker": "SEMB.L",  "name": "USD EM Bond J.P. Morgan (iShares UCITS Acc)",    "ter": 0.50, "aum_bn": 2.4,  "replica": "fisica", "esg": false, "isin": "IE00B2NPKV68" },
+        { "ticker": "SLXX.L",  "name": "GBP Corp Bond (iShares Core UCITS Acc)",         "ter": 0.20, "aum_bn": 3.5,  "replica": "fisica", "esg": false, "isin": "IE00B00FV011" },
+        { "ticker": "IDTP.L",  "name": "USD TIPS (iShares UCITS Acc)",                   "ter": 0.10, "aum_bn": 1.8,  "replica": "fisica", "esg": false, "isin": "IE00B1FZSC47" },
+        { "ticker": "IEAG.L",  "name": "EUR Aggregate Bond (iShares Core UCITS Acc)",    "ter": 0.10, "aum_bn": 8.3,  "replica": "fisica", "esg": false, "isin": "IE00B3DKXQ41" },
+        { "ticker": "IGLO.L",  "name": "Global Govt Bond (iShares UCITS Acc)",           "ter": 0.10, "aum_bn": 2.0,  "replica": "fisica", "esg": false, "isin": "IE00B3F81K65" },
+        { "ticker": "VGOV.L",  "name": "UK Govt Bond (Vanguard UCITS Acc)",              "ter": 0.07, "aum_bn": 1.9,  "replica": "fisica", "esg": false, "isin": "IE00B42WWV65" }
+      ]
+    },
+    {
+      "id": "reits",
+      "name": "Imobiliário / REITs",
+      "color": "#8d6e63",
+      "etfs": [
+        { "ticker": "IWDP.L",  "name": "Developed Markets Property Yield (iShares UCITS)", "ter": 0.59, "aum_bn": 2.8, "replica": "fisica", "esg": false, "isin": "IE00B1FZS244" },
+        { "ticker": "IPRP.L",  "name": "European Property Yield (iShares UCITS Acc)",      "ter": 0.40, "aum_bn": 1.4, "replica": "fisica", "esg": false, "isin": "IE00B0M63284" },
+        { "ticker": "REIT.L",  "name": "FTSE EPRA/NAREIT Developed (HSBC UCITS Acc)",      "ter": 0.17, "aum_bn": 0.9, "replica": "fisica", "esg": false, "isin": "IE00B5L01S80" },
+        { "ticker": "XREA.L",  "name": "FTSE EPRA/NAREIT Global (Xtrackers UCITS Acc)",    "ter": 0.25, "aum_bn": 0.7, "replica": "fisica", "esg": false, "isin": "LU0489337690" },
+        { "ticker": "GLRE.L",  "name": "Global Real Estate Dividend (L&G UCITS Acc)",      "ter": 0.59, "aum_bn": 0.3, "replica": "fisica", "esg": false, "isin": "IE00BVXC4140" }
+      ]
+    },
+    {
+      "id": "esg",
+      "name": "ESG / Sustentável",
+      "color": "#43a047",
+      "etfs": [
+        { "ticker": "SUSW.L",  "name": "MSCI World SRI (iShares UCITS Acc)",              "ter": 0.20, "aum_bn": 6.2,  "replica": "fisica", "esg": true, "isin": "IE00BYX2JD69" },
+        { "ticker": "MVEW.L",  "name": "MSCI World ESG (Xtrackers UCITS Acc)",            "ter": 0.20, "aum_bn": 3.1,  "replica": "fisica", "esg": true, "isin": "IE00BZ02LR44" },
+        { "ticker": "SUEZ.L",  "name": "MSCI EM SRI (iShares UCITS Acc)",                 "ter": 0.25, "aum_bn": 0.8,  "replica": "fisica", "esg": true, "isin": "IE00BYVJRR92" },
+        { "ticker": "SUWU.L",  "name": "MSCI USA SRI (iShares UCITS Acc)",                "ter": 0.20, "aum_bn": 1.4,  "replica": "fisica", "esg": true, "isin": "IE00BYVJRP76" },
+        { "ticker": "SUEE.L",  "name": "MSCI Europe SRI (iShares UCITS Acc)",             "ter": 0.20, "aum_bn": 0.9,  "replica": "fisica", "esg": true, "isin": "IE00BYVJRQ83" },
+        { "ticker": "PABD.L",  "name": "MSCI Global SDG (iShares UCITS Acc)",             "ter": 0.65, "aum_bn": 0.4,  "replica": "fisica", "esg": true, "isin": "IE00BKX55T58" }
       ]
     }
   ],
@@ -399,12 +193,7 @@
       "trend": 0.3,
       "risk": 0.3
     },
-    "backtest_horizons": [
-      5,
-      10,
-      21,
-      42
-    ],
+    "backtest_horizons": [5, 10, 21, 42],
     "vapid_public_key": ""
   },
   "email": {
