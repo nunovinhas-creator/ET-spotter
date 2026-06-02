@@ -175,10 +175,75 @@ footer {
     </div>
     <div style="text-align:right">
       <div style="color:var(--text);font-size:13px">SPY 758.54 &nbsp;·&nbsp; SMA200 679.27 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold">BULL</span></div>
-      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 02/06/2026  08:53 UTC</div>
+      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 02/06/2026  09:43 UTC</div>
     </div>
   </div>
-</header><div class="main">
+</header>
+<div id="about-strip" style="border-bottom:1px solid var(--border);background:var(--deep)">
+  <div style="max-width:1400px;margin:0 auto;padding:0 24px">
+
+    <button onclick="(function(){var b=document.getElementById('about-body');var a=document.getElementById('about-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';a.style.transform=open?'rotate(0deg)':'rotate(180deg)';})()"
+      style="display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;
+             padding:8px 0;cursor:pointer;text-align:left">
+      <span style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;
+                   font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;
+                   color:var(--gold)">ET-SPOTTER</span>
+      <span style="color:var(--muted);font-size:0.68rem;flex:1">
+        — Monitorização automática de ETFs UCITS com sinais técnicos acionáveis e alertas por Email e Telegram.
+      </span>
+      <svg id="about-chevron" viewBox="0 0 12 12" width="10" height="10"
+           style="color:var(--muted);flex-shrink:0;transition:transform 200ms cubic-bezier(0.2,0.8,0.2,1)">
+        <polyline points="1,3.5 6,8.5 11,3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <div id="about-body" style="display:none;padding-bottom:14px;border-top:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding-top:12px">
+
+        <div>
+          <p style="color:var(--muted);font-size:0.7rem;line-height:1.7;margin-bottom:10px">
+            ET‑Spotter recolhe dados diários e intradiários via yfinance e calcula indicadores técnicos.
+            Gera um score técnico composto (0–1) por ETF e classifica sinais em
+            <span style="color:var(--green)">FORTE COMPRA</span>,
+            <span style="color:var(--light-green)">COMPRA</span> e
+            <span style="color:var(--yellow)">POTENCIAL</span>.
+          </p>
+          <ul style="color:var(--muted);font-size:0.68rem;line-height:1.8;list-style:none;padding:0;margin-bottom:10px">
+            <li style="padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Decisão mais rápida e menos emocional com sinais baseados em confluência de indicadores.</li>
+            <li style="padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Transparência e auditabilidade: histórico e regras versionados em CSV no repositório.</li>
+            <li style="padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--gold)">·</span>Operacionalidade: alertas práticos para gerir posições em tempo real.</li>
+          </ul>
+          <p style="color:var(--muted);font-size:0.68rem;line-height:1.7">
+            <strong style="color:var(--champagne)">Para quem:</strong>
+            Investidores individuais europeus que seguem estratégias quantitativas baseadas em evidência académica
+            e querem um fluxo de sinais técnicos transparentes e reproduzíveis.
+          </p>
+        </div>
+
+        <div>
+          <ul style="color:var(--muted);font-size:0.68rem;line-height:1.9;list-style:none;padding:0;margin-bottom:10px">
+            <li><span style="color:var(--patina);margin-right:6px">✓</span>Baseia-se em 30+ anos de investigação académica (Jegadeesh, Titman, Faber, Sharpe)</li>
+            <li><span style="color:var(--patina);margin-right:6px">✓</span>Valida cada factor independentemente (multicolinearidade &lt; 1.2)</li>
+            <li><span style="color:var(--patina);margin-right:6px">✓</span>Exige convergência de múltiplos sinais (reduz falsos positivos)</li>
+            <li><span style="color:var(--patina);margin-right:6px">✓</span>Demonstra edge estatístico comprovado (FORTE COMPRA: +1.7%/mês, p &lt; 0.05)</li>
+            <li><span style="color:var(--patina);margin-right:6px">✓</span>Reconhece limitações (forward bias, regime-dependência, custos)</li>
+          </ul>
+          <p style="color:var(--muted);font-size:0.62rem;line-height:1.7;
+                     border-top:1px solid var(--border);padding-top:8px;font-style:italic">
+            <strong style="color:var(--champagne);font-style:normal">Nota legal:</strong>
+            ET‑Spotter fornece informação técnica e resultados de backtest; não constitui aconselhamento financeiro.
+            Use os sinais como input sistemático, não como recomendação isolada.
+            Um sistema que não prediz preços futuros, mas identifica períodos de convergência estatística
+            de múltiplos factores — quando a probabilidade de retorno positivo no horizonte de momentum
+            (21 dias) é significativamente elevada acima do acaso.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div><div class="main">
 <section class="summary-grid">
   
         <div class="card" style="border-top:1px solid var(--green)">
