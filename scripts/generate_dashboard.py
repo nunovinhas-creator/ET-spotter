@@ -15,8 +15,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw
-from paths import DATA_DAILY, REPORTS, SCORES_HIST
+from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw, get_etf_metadata
+from paths import DATA_DAILY, REPORTS, SCORES_HIST, PORTFOLIO
 from constants import (
     CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
     CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
@@ -482,11 +482,13 @@ def category_heatmap_section(cats: list[dict]) -> str:
 </section>"""
 
 
-def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
+def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None = None) -> str:
+    meta = metadata or {}
     rows_js = []
     for _, r in scores_df.iterrows():
         sym  = str(r.get("etf", ""))
         info = cmap.get(sym, {})
+        m    = meta.get(sym, {})
         score    = float(r.get("score",        0) or 0)
         ret_1d   = float(r.get("ret_1d",       0) or 0)
         ret_5d   = float(r.get("ret_5d",       0) or 0)
@@ -504,6 +506,8 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
         pct      = float(pct_raw) if pct_raw is not None and str(pct_raw) not in ("", "nan") else None
         pct_str  = f"P{pct*100:.0f}" if pct is not None else "—"
 
+        ter_val  = m.get("ter")
+        aum_val  = m.get("aum_bn")
         rows_js.append({
             "ticker":    sym,
             "nome":      info.get("name", sym),
@@ -523,13 +527,18 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
             "macd":      macd,
             "rs":        rs_pos,
             "s200":      above200,
+            "ter":       round(ter_val, 4) if ter_val is not None else None,
+            "aum":       round(aum_val, 2) if aum_val is not None else None,
+            "replica":   m.get("replica") or "—",
+            "esg":       bool(m.get("esg", False)),
+            "isin":      m.get("isin") or "—",
         })
 
     rows_json = json.dumps(rows_js, ensure_ascii=False)
     return f"""
 <section class="section">
   <h2 class="section-title">Todos os ETFs</h2>
-  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
     <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
       style="width:220px">
     <select id="tbl-filter">
@@ -539,11 +548,17 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
       <option value="POTENCIAL">POTENCIAL</option>
       <option value="score_high">Score ≥ 0.60</option>
     </select>
+    <button id="wl-toggle" onclick="toggleWatchlist()"
+      style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+             padding:6px 12px;border-radius:2px;cursor:pointer;font-size:0.8rem">
+      ☆ Watchlist
+    </button>
   </div>
   <div style="overflow-x:auto">
     <table id="etf-table" style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px;background:var(--bg)">
       <thead>
         <tr id="tbl-head" style="background:var(--deep);color:var(--champagne)">
+          <th style="padding:7px 6px;text-align:center;cursor:pointer" title="Watchlist">☆</th>
           <th class="sortable" data-col="ticker"  style="padding:7px 10px;text-align:left;cursor:pointer;white-space:nowrap">ETF ↕</th>
           <th class="sortable" data-col="nome"    style="padding:7px 10px;text-align:left;cursor:pointer">Nome ↕</th>
           <th class="sortable" data-col="cat"     style="padding:7px 10px;text-align:left;cursor:pointer">Categ. ↕</th>
@@ -559,6 +574,11 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
           <th style="padding:7px 10px;text-align:center">MACD</th>
           <th style="padding:7px 10px;text-align:center">RS/SPY</th>
           <th style="padding:7px 10px;text-align:center">SMA200</th>
+          <th class="sortable" data-col="ter"     style="padding:7px 10px;text-align:right;cursor:pointer">TER ↕</th>
+          <th class="sortable" data-col="aum"     style="padding:7px 10px;text-align:right;cursor:pointer">AuM Bn ↕</th>
+          <th style="padding:7px 10px;text-align:center">Réplica</th>
+          <th style="padding:7px 10px;text-align:center">ESG</th>
+          <th style="padding:7px 10px;text-align:left">ISIN</th>
         </tr>
       </thead>
       <tbody id="etf-tbody"></tbody>
@@ -566,11 +586,33 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
   </div>
   <script>
     const ETF_ROWS = {rows_json};
-    let sortCol = "score", sortAsc = false;
+    let sortCol = "score", sortAsc = false, wlOnly = false;
 
     const CONV_STRONG_SCORE = {CONVICTION_STRONG_BUY_SCORE}, CONV_STRONG_SIGS = {CONVICTION_STRONG_BUY_SIGNALS};
     const CONV_BUY_SCORE    = {CONVICTION_BUY_SCORE},        CONV_BUY_SIGS    = {CONVICTION_BUY_SIGNALS};
     const CONV_POT_SCORE    = {CONVICTION_POTENTIAL_SCORE},  CONV_POT_SIGS    = {CONVICTION_POTENTIAL_SIGNALS};
+
+    function loadWatchlist() {{
+      try {{ return new Set(JSON.parse(localStorage.getItem("et_watchlist") || "[]")); }}
+      catch {{ return new Set(); }}
+    }}
+    function saveWatchlist(wl) {{
+      localStorage.setItem("et_watchlist", JSON.stringify([...wl]));
+    }}
+    function watchlistStar(ticker) {{
+      const wl = loadWatchlist();
+      if (wl.has(ticker)) wl.delete(ticker); else wl.add(ticker);
+      saveWatchlist(wl);
+      applyFilters();
+    }}
+    function toggleWatchlist() {{
+      wlOnly = !wlOnly;
+      const btn = document.getElementById("wl-toggle");
+      btn.style.color = wlOnly ? "var(--gold)" : "var(--muted)";
+      btn.style.borderColor = wlOnly ? "var(--gold)" : "var(--border)";
+      btn.textContent = wlOnly ? "★ Watchlist" : "☆ Watchlist";
+      applyFilters();
+    }}
 
     function convictionLevel(row) {{
       const s = row.score, trend = row.trend, macd = row.macd,
@@ -591,14 +633,26 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
     }}
 
     function renderTable(rows) {{
+      const wl = loadWatchlist();
       const tbody = document.getElementById("etf-tbody");
       const td = "padding:5px 10px;border-bottom:1px solid var(--border)";
+      const tds = "padding:5px 6px;border-bottom:1px solid var(--border)";
       tbody.innerHTML = rows.map(r => {{
         const lvl = convictionLevel(r);
+        const starred = wl.has(r.ticker);
         const lvlBadge = lvl ? `<span style="background:${{
           lvl==='FORTE COMPRA'?'var(--green)':lvl==='COMPRA'?'var(--light-green)':'var(--yellow)'
         }};color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${{lvl}}</span>` : "";
+        const terStr = r.ter !== null ? (r.ter*100).toFixed(2)+"%" : "—";
+        const aumStr = r.aum !== null ? r.aum.toFixed(1)+"B" : "—";
+        const repColor = r.replica === "fisica" ? "var(--green)" : r.replica === "sintetica" ? "var(--yellow)" : "var(--muted)";
         return `<tr style="background:var(--bg)">
+          <td style="${{tds}};text-align:center">
+            <span onclick="watchlistStar('${{r.ticker}}')" title="Watchlist"
+              style="cursor:pointer;color:${{starred?'var(--gold)':'var(--border)'}};font-size:14px">
+              ${{starred?'★':'☆'}}
+            </span>
+          </td>
           <td style="${{td}};color:var(--text);font-weight:bold">
             <span style="color:${{r.cat_color}}">●</span> ${{r.ticker}} ${{lvlBadge}}
           </td>
@@ -616,6 +670,11 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
           <td style="${{td}};text-align:center">${{flagHtml(r.macd,'+','−')}}</td>
           <td style="${{td}};text-align:center">${{flagHtml(r.rs,'✓','✗')}}</td>
           <td style="${{td}};text-align:center">${{flagHtml(r.s200,'✓','✗')}}</td>
+          <td style="${{td}};color:var(--muted);text-align:right">${{terStr}}</td>
+          <td style="${{td}};color:var(--muted);text-align:right">${{aumStr}}</td>
+          <td style="${{td}};color:${{repColor}};text-align:center">${{r.replica}}</td>
+          <td style="${{td}};text-align:center">${{flagHtml(r.esg,'✓','✗')}}</td>
+          <td style="${{td}};color:var(--muted);font-family:monospace;font-size:10px">${{r.isin}}</td>
         </tr>`;
       }}).join("");
     }}
@@ -623,12 +682,14 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict) -> str:
     function applyFilters() {{
       const q = document.getElementById("tbl-search").value.toLowerCase();
       const f = document.getElementById("tbl-filter").value;
+      const wl = loadWatchlist();
       let rows = [...ETF_ROWS];
+      if (wlOnly) rows = rows.filter(r => wl.has(r.ticker));
       if (q) rows = rows.filter(r => r.ticker.toLowerCase().includes(q) || r.nome.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q));
       if (f === "score_high") rows = rows.filter(r => r.score >= 0.60);
       else if (f) rows = rows.filter(r => convictionLevel(r) === f);
       rows.sort((a, b) => {{
-        const va = a[sortCol], vb = b[sortCol];
+        const va = a[sortCol] ?? "", vb = b[sortCol] ?? "";
         if (typeof va === "string") return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
         return sortAsc ? va - vb : vb - va;
       }});
@@ -777,6 +838,81 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
       btn.classList.add("active");
     }}
   </script>
+</section>"""
+
+
+def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
+    if not portfolio_path.exists():
+        return ""
+    try:
+        df = pd.read_csv(portfolio_path)
+    except Exception:
+        return ""
+    if df.empty:
+        return ""
+
+    required = {"symbol", "qty", "market_value", "unrealized_pl", "unrealized_plpc"}
+    if not required.issubset(df.columns):
+        return ""
+
+    df = df.sort_values("market_value", ascending=False)
+    total_value = df["market_value"].sum()
+    total_pl    = df["unrealized_pl"].sum()
+    pl_color    = "var(--green)" if total_pl >= 0 else "var(--red)"
+
+    th = "padding:7px 10px;background:var(--deep);color:var(--champagne);text-align:right;font-size:11px"
+    td = "padding:5px 10px;border-bottom:1px solid var(--border);font-size:11px;text-align:right"
+
+    headers = "".join(f'<th style="{th};text-align:{"left" if i < 2 else "right"}">{h}</th>'
+                      for i, h in enumerate(["Símbolo", "Nome", "Qtd.", "Valor", "P&L", "P&L %", "Peso"]))
+    rows_html = ""
+    for _, r in df.iterrows():
+        sym      = str(r.get("symbol", ""))
+        info     = cmap.get(sym, {})
+        name     = info.get("name", sym)
+        qty      = float(r.get("qty", 0) or 0)
+        mv       = float(r.get("market_value", 0) or 0)
+        pl       = float(r.get("unrealized_pl", 0) or 0)
+        plpc     = float(r.get("unrealized_plpc", 0) or 0)
+        weight   = mv / total_value if total_value > 0 else 0
+        pl_c     = "var(--green)" if pl >= 0 else "var(--red)"
+        cat_color = info.get("color", "var(--muted)")
+        rows_html += (
+            f'<tr>'
+            f'<td style="{td};text-align:left;font-weight:bold">'
+            f'<span style="color:{cat_color}">●</span> {html_mod.escape(sym)}</td>'
+            f'<td style="{td};text-align:left;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{html_mod.escape(name)}</td>'
+            f'<td style="{td}">{qty:.4g}</td>'
+            f'<td style="{td}">${mv:,.2f}</td>'
+            f'<td style="{td};color:{pl_c}">{pl:+,.2f}</td>'
+            f'<td style="{td};color:{pl_c}">{plpc*100:+.2f}%</td>'
+            f'<td style="{td};color:var(--muted)">{weight:.1%}</td>'
+            f'</tr>'
+        )
+
+    return f"""
+<section class="section">
+  <h2 class="section-title">Portfólio Alpaca</h2>
+  <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
+    <div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Valor Total</div>
+      <div style="color:var(--champagne);font-size:18px;font-weight:600">${total_value:,.2f}</div>
+    </div>
+    <div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">P&L Não Realizado</div>
+      <div style="color:{pl_color};font-size:18px;font-weight:600">{total_pl:+,.2f}</div>
+    </div>
+    <div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Posições</div>
+      <div style="color:var(--champagne);font-size:18px;font-weight:600">{len(df)}</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="border-collapse:collapse;width:100%;min-width:600px;background:var(--bg)">
+      <thead><tr>{headers}</tr></thead>
+      <tbody>{rows_html}</tbody>
+    </table>
+  </div>
 </section>"""
 
 
@@ -948,8 +1084,50 @@ def generate_dashboard(cfg: dict) -> None:
         print("[SKIP] Sem dados para o dashboard.")
         return
 
-    ts = datetime.now(timezone.utc).strftime("%d/%m/%Y  %H:%M UTC")
-    signals = build_buy_signals(data["rows_raw"], top_n=10)
+    ts       = datetime.now(timezone.utc).strftime("%d/%m/%Y  %H:%M UTC")
+    ts_epoch = int(datetime.now(timezone.utc).timestamp())
+    signals  = build_buy_signals(data["rows_raw"], top_n=10)
+    metadata = get_etf_metadata(cfg)
+    vapid_key = cfg.get("params", {}).get("vapid_public_key", "")
+
+    push_btn = ""
+    sw_script = f"""
+<script>
+  if ('serviceWorker' in navigator) {{
+    navigator.serviceWorker.register('./sw.js').catch(function(){{}});
+  }}
+</script>"""
+
+    if vapid_key:
+        push_btn = f"""
+<button id="push-btn" onclick="subscribePush()"
+  style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+         padding:6px 12px;border-radius:2px;cursor:pointer;font-size:0.8rem;
+         margin-left:12px" title="Receber alertas push">
+  🔔 Activar alertas
+</button>
+<script>
+const VAPID_PUBLIC_KEY = "{vapid_key}";
+async function subscribePush() {{
+  try {{
+    const sw = await navigator.serviceWorker.ready;
+    const sub = await sw.pushManager.subscribe({{
+      userVisibleOnly: true,
+      applicationServerKey: VAPID_PUBLIC_KEY,
+    }});
+    await fetch('/api/subscribe', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify(sub),
+    }});
+    document.getElementById('push-btn').textContent = '🔔 Alertas activos';
+    document.getElementById('push-btn').style.color = 'var(--green)';
+    document.getElementById('push-btn').style.borderColor = 'var(--green)';
+  }} catch (e) {{
+    console.error('Push subscription failed:', e);
+  }}
+}}
+</script>"""
 
     sections = [
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
@@ -961,9 +1139,10 @@ def generate_dashboard(cfg: dict) -> None:
         category_heatmap_section(data["cats"]),
         history_chart_section(data["hist_df"], data["scores_df"]),
         backtest_section(data["bt_df"]),
-        etf_table_section(data["scores_df"], data["cmap"]),
+        portfolio_section(PORTFOLIO, data["cmap"]),
+        etf_table_section(data["scores_df"], data["cmap"], metadata),
         '</div>',
-        '<footer>ET-Spotter · dados via yfinance · não constitui aconselhamento financeiro</footer>',
+        f'<footer>ET-Spotter · dados via yfinance · não constitui aconselhamento financeiro{push_btn}</footer>',
     ]
 
     html = f"""<!DOCTYPE html>
@@ -972,7 +1151,9 @@ def generate_dashboard(cfg: dict) -> None:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
+  <meta name="theme-color" content="#080a10">
   <title>ET-Spotter Dashboard</title>
+  <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -980,8 +1161,12 @@ def generate_dashboard(cfg: dict) -> None:
 </head>
 <body>
 {"".join(sections)}
+{sw_script}
 </body>
 </html>"""
+
+    # Replace service worker cache-bust placeholder
+    html = html.replace("__BUILD_TS__", str(ts_epoch))
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out = REPORTS / "dashboard.html"

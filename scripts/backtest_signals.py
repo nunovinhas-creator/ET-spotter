@@ -19,8 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, compute_conviction
 from paths import DATA_DAILY, REPORTS, SCORES_HIST
 
-HORIZONS     = [5, 10, 21, 42]
-FORWARD_DAYS = max(HORIZONS)
+HORIZONS     = [5, 10, 21, 42]   # default; substituído por config em run_backtest()
+
+
+def get_horizons(cfg: dict) -> list[int]:
+    """Lê horizontes do config; fallback para HORIZONS se ausente ou inválido."""
+    raw = cfg.get("params", {}).get("backtest_horizons", HORIZONS)
+    parsed = [int(x) for x in raw if isinstance(x, (int, float)) and x > 0]
+    return sorted(parsed) if parsed else list(HORIZONS)
 
 
 def load_history() -> pd.DataFrame:
@@ -62,13 +68,16 @@ def classify_conviction(row: pd.Series) -> str | None:
 
 
 def run_backtest(cfg: dict) -> pd.DataFrame:
+    horizons     = get_horizons(cfg)
+    forward_days = max(horizons)
+
     hist = load_history()
     if hist.empty:
         print("[SKIP] Sem histórico de scores.")
         return pd.DataFrame()
 
     n_days = hist["date"].nunique()
-    min_days = FORWARD_DAYS * 2 + 1
+    min_days = forward_days * 2 + 1
     if n_days < min_days:
         print(f"[SKIP] Histórico insuficiente ({n_days} dias únicos). Mínimo: {min_days}.")
         return pd.DataFrame()
@@ -93,7 +102,7 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
 
             signal_date = row["date"]
             future = daily[daily.index > signal_date]["close"].dropna()
-            if len(future) < FORWARD_DAYS:
+            if len(future) < forward_days:
                 continue  # dados forward insuficientes
 
             entry = float(future.iloc[0])
@@ -102,27 +111,29 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
 
             # ── Retornos forward multi-horizonte ──────────────────────────
             fwd = {}
-            for h in HORIZONS:
+            for h in horizons:
                 if len(future) >= h:
                     exit_p = float(future.iloc[h - 1])
                     fwd[f"fwd_{h}d"] = round(exit_p / entry - 1, 6)
                 else:
                     fwd[f"fwd_{h}d"] = np.nan
 
-            # ── Excesso de retorno vs SPY ──────────────────────────────────
+            # ── Excesso de retorno vs SPY (horizonte 21d se disponível) ───
+            ref_h = 21 if 21 in horizons else horizons[-1]
             if not spy_close.empty:
                 spy_future = spy_close[spy_close.index > signal_date].dropna()
-                if len(spy_future) >= 21:
+                if len(spy_future) >= ref_h:
                     spy_entry = float(spy_future.iloc[0])
-                    spy_exit  = float(spy_future.iloc[20])
+                    spy_exit  = float(spy_future.iloc[ref_h - 1])
                     spy_fwd   = spy_exit / spy_entry - 1 if spy_entry > 0 else np.nan
-                    fwd["fwd_21d_excess"] = round(
-                        fwd["fwd_21d"] - spy_fwd, 6
-                    ) if pd.notna(fwd.get("fwd_21d")) else np.nan
+                    ref_fwd   = fwd.get(f"fwd_{ref_h}d")
+                    fwd[f"fwd_{ref_h}d_excess"] = round(
+                        ref_fwd - spy_fwd, 6
+                    ) if pd.notna(ref_fwd) else np.nan
                 else:
-                    fwd["fwd_21d_excess"] = np.nan
+                    fwd[f"fwd_{ref_h}d_excess"] = np.nan
             else:
-                fwd["fwd_21d_excess"] = np.nan
+                fwd[f"fwd_{ref_h}d_excess"] = np.nan
 
             # ── MAE/MFE na janela de 21 dias ──────────────────────────────
             window21 = future.iloc[:21] if len(future) >= 21 else future
@@ -156,7 +167,14 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
     return pd.DataFrame(results)
 
 
-def print_summary(df: pd.DataFrame) -> None:
+def print_summary(df: pd.DataFrame, horizons: list[int] | None = None) -> None:
+    if horizons is None:
+        horizons = HORIZONS
+    ref_h        = 21 if 21 in horizons else horizons[-1]
+    fwd_ref_col  = f"fwd_{ref_h}d"
+    exc_ref_col  = f"fwd_{ref_h}d_excess"
+    other_hs     = [h for h in horizons if h != ref_h]
+
     print("\n══════════════════════════════════════════════════════════════")
     print("  BACKTEST DE SINAIS — retornos forward multi-horizonte")
     print("══════════════════════════════════════════════════════════════")
@@ -169,7 +187,7 @@ def print_summary(df: pd.DataFrame) -> None:
             print(f"\n{'─'*60}")
             print(f"  REGIME: TODOS OS MERCADOS")
         else:
-            sub_df = df[df["spy_regime"] == regime]
+            sub_df = df[df["spy_regime"] == regime] if "spy_regime" in df.columns else pd.DataFrame()
             if sub_df.empty:
                 continue
             print(f"\n{'─'*60}")
@@ -177,31 +195,31 @@ def print_summary(df: pd.DataFrame) -> None:
         print(f"{'─'*60}")
 
         for level in order:
-            sub = sub_df[sub_df["level"] == level]
+            sub = sub_df[sub_df["level"] == level] if "level" in sub_df.columns else pd.DataFrame()
             if sub.empty:
                 print(f"\n  {level}: sem observações")
                 continue
 
-            fwd21 = sub["fwd_21d"].dropna()
-            excess = sub["fwd_21d_excess"].dropna() if "fwd_21d_excess" in sub.columns else pd.Series(dtype=float)
-            mae   = sub["mae_21d"].dropna() if "mae_21d" in sub.columns else pd.Series(dtype=float)
-            mfe   = sub["mfe_21d"].dropna() if "mfe_21d" in sub.columns else pd.Series(dtype=float)
+            fwd_ref = sub[fwd_ref_col].dropna() if fwd_ref_col in sub.columns else pd.Series(dtype=float)
+            excess  = sub[exc_ref_col].dropna()  if exc_ref_col  in sub.columns else pd.Series(dtype=float)
+            mae     = sub["mae_21d"].dropna()    if "mae_21d"     in sub.columns else pd.Series(dtype=float)
+            mfe     = sub["mfe_21d"].dropna()    if "mfe_21d"     in sub.columns else pd.Series(dtype=float)
 
-            if fwd21.empty:
+            if fwd_ref.empty:
                 print(f"\n  {level}: sem dados forward suficientes")
                 continue
 
-            win_rate  = (fwd21 > 0).mean()
-            avg_21    = fwd21.mean()
-            median_21 = fwd21.median()
-            std_21    = fwd21.std()
-            sharpe    = avg_21 / (std_21 + 1e-10)
+            win_rate = (fwd_ref > 0).mean()
+            avg_ref  = fwd_ref.mean()
+            med_ref  = fwd_ref.median()
+            std_ref  = fwd_ref.std()
+            sharpe   = avg_ref / (std_ref + 1e-10)
 
-            print(f"\n  {level}  (n={len(fwd21)})")
-            print(f"    Ret. médio 21d     : {avg_21:+.2%}")
-            print(f"    Ret. mediano 21d   : {median_21:+.2%}")
+            print(f"\n  {level}  (n={len(fwd_ref)})")
+            print(f"    Ret. médio {ref_h}d     : {avg_ref:+.2%}")
+            print(f"    Ret. mediano {ref_h}d   : {med_ref:+.2%}")
             if not excess.empty:
-                print(f"    Excesso vs SPY 21d : {excess.mean():+.2%}  (médio)")
+                print(f"    Excesso vs SPY {ref_h}d : {excess.mean():+.2%}  (médio)")
             print(f"    Taxa de sucesso    : {win_rate:.1%}")
             print(f"    Sharpe implícito   : {sharpe:+.2f}")
             if not mae.empty:
@@ -209,20 +227,18 @@ def print_summary(df: pd.DataFrame) -> None:
             if not mfe.empty:
                 print(f"    MFE médio (peak)   : {mfe.mean():.2%}")
 
-            # Multi-horizonte
-            for h in [5, 10, 42]:
+            for h in other_hs:
                 col = f"fwd_{h}d"
                 if col in sub.columns:
                     s = sub[col].dropna()
                     if not s.empty:
                         print(f"    Ret. médio {h:2d}d     : {s.mean():+.2%}  (win {(s>0).mean():.0%})")
 
-    # Totais
-    all_fwd = df["fwd_21d"].dropna()
+    all_fwd = df[fwd_ref_col].dropna() if fwd_ref_col in df.columns else pd.Series(dtype=float)
     if not all_fwd.empty:
         print(f"\n  Todos os sinais (n={len(all_fwd)}): média {all_fwd.mean():+.2%}")
-        if "fwd_21d_excess" in df.columns:
-            exc = df["fwd_21d_excess"].dropna()
+        if exc_ref_col in df.columns:
+            exc = df[exc_ref_col].dropna()
             if not exc.empty:
                 print(f"  Excesso vs SPY médio: {exc.mean():+.2%}")
     print("══════════════════════════════════════════════════════════════")
@@ -236,7 +252,7 @@ def main():
     if df.empty:
         return
 
-    print_summary(df)
+    print_summary(df, horizons=get_horizons(cfg))
     out = REPORTS / "backtest_signals.csv"
     df.to_csv(out, index=False)
     print(f"\n[OK] Resultados guardados em {out}")

@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "functions": {
+    "api/scores.py": { "runtime": "python3.9" }
+  },
+  "routes": [
+    { "src": "/api/scores", "dest": "/api/scores.py" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "s-maxage=300, stale-while-revalidate" }
+      ]
+    }
+  ]
+}

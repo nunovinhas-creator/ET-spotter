@@ -9,6 +9,7 @@ Credenciais lidas de variáveis de ambiente ou GitHub Secrets:
 import os
 import smtplib
 import sys
+from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -24,14 +25,16 @@ def _build_message(
     from_addr: str,
     to_addrs: list[str],
     images: list[Path] | None = None,
+    attachments: list[Path] | None = None,
 ) -> MIMEMultipart:
-    msg = MIMEMultipart("related")
+    msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = ", ".join(to_addrs)
 
+    related = MIMEMultipart("related")
     alt = MIMEMultipart("alternative")
-    msg.attach(alt)
+    related.attach(alt)
     alt.attach(MIMEText(body_html, "html", "utf-8"))
 
     if images:
@@ -39,10 +42,18 @@ def _build_message(
             with open(img_path, "rb") as f:
                 img = MIMEImage(f.read())
             img.add_header("Content-ID", f"<{img_path.name}>")
-            img.add_header(
-                "Content-Disposition", "inline", filename=img_path.name
-            )
-            msg.attach(img)
+            img.add_header("Content-Disposition", "inline", filename=img_path.name)
+            related.attach(img)
+
+    msg.attach(related)
+
+    if attachments:
+        for att_path in attachments:
+            with open(att_path, "rb") as f:
+                data = f.read()
+            part = MIMEApplication(data, Name=att_path.name)
+            part.add_header("Content-Disposition", "attachment", filename=att_path.name)
+            msg.attach(part)
 
     return msg
 
@@ -52,6 +63,7 @@ def send_email(
     body_html: str,
     to_addrs: list[str],
     images: list[Path] | None = None,
+    attachments: list[Path] | None = None,
 ):
     from_addr = os.getenv("EMAIL_FROM")
     password = os.getenv("EMAIL_PASSWORD")

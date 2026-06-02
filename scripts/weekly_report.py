@@ -14,13 +14,28 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import (load_config, get_etfs, get_category_map,
                    category_summary, build_buy_signals, build_advisor_candidates,
-                   _c, _pct, _etf_row_raw)
+                   _c, _pct, _etf_row_raw, get_users)
 from generate_charts import (
     plot_scores_bar, plot_category_summary,
     plot_trend, plot_score_evolution, plot_correlation_heatmap,
 )
 from send_email import send_email
 from paths import DATA_DAILY, REPORTS
+
+
+# ─── PDF export ───────────────────────────────────────────────────────────────
+
+def generate_pdf(html_str: str, out_path: Path) -> Path | None:
+    try:
+        from weasyprint import HTML
+        HTML(string=html_str).write_pdf(str(out_path))
+        return out_path
+    except ImportError:
+        print("[PDF] weasyprint não instalado — PDF ignorado.", file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f"[PDF] Erro ao gerar PDF: {e}", file=sys.stderr)
+        return None
 
 
 # ─── Carrega dados ────────────────────────────────────────────────────────────
@@ -480,16 +495,29 @@ def main():
     out.write_text(html, encoding="utf-8")
     print(f"[OK] {out.name}")
 
-    email_to = os.getenv("EMAIL_TO", "")
-    if email_to:
-        send_email(
-            f"ET-Spotter – Análise Semanal {now.strftime('%d %b %Y')}",
-            html,
-            [a.strip() for a in email_to.split(",")],
-            images=chart_paths,
-        )
-    else:
-        print("[EMAIL] EMAIL_TO não definido.")
+    pdf_path: Path | None = None
+    if os.getenv("GENERATE_PDF", "").strip() == "1":
+        pdf_out = REPORTS / f"weekly_{now.strftime('%Y%m%d')}.pdf"
+        pdf_path = generate_pdf(html, pdf_out)
+        if pdf_path:
+            print(f"[PDF] {pdf_path.name}")
+
+    attachments = [pdf_path] if pdf_path else None
+    subject = f"ET-Spotter – Análise Semanal {now.strftime('%d %b %Y')}"
+
+    users = get_users(cfg)
+    if not users:
+        print("[EMAIL] Nenhum utilizador configurado.")
+        return
+
+    for user in users:
+        email_to = user.get("email", "")
+        if not email_to:
+            continue
+        to_list = [a.strip() for a in email_to.split(",") if a.strip()]
+        if not to_list:
+            continue
+        send_email(subject, html, to_list, images=chart_paths, attachments=attachments)
 
 
 if __name__ == "__main__":

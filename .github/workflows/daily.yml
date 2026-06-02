@@ -26,6 +26,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Portfolio tracker
+        if: ${{ env.ALPACA_API_KEY != '' }}
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+          ALPACA_BASE_URL:   ${{ secrets.ALPACA_BASE_URL }}
+        run: python scripts/portfolio_tracker.py
+
       - name: Fetch intraday data
         run: python scripts/fetch_intraday.py
 
@@ -51,6 +59,15 @@ jobs:
           publish_dir: ./docs
           force_orphan: false
           commit_message: "chore: dashboard ${{ github.run_id }}"
+
+      - name: Detect alerts
+        env:
+          EMAIL_FROM:           ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD:       ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:             ${{ secrets.EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:     ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/detect_alerts.py
 
       - name: Send daily report
         env:

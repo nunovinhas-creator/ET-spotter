@@ -21,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_config, get_etfs, get_category_map, compute_conviction, analyst_rationale
+from utils import load_config, get_etfs, get_category_map, compute_conviction, analyst_rationale, get_users
 from constants import US_MARKET_HOURS, SCORE_DANGER, SCORE_DROP_FAST, SCORE_RECOVERY_THRESHOLD
 from paths import DATA_INTRA as DATA_HOURLY, DATA_DAILY, REPORTS, SCORES_HIST
 
@@ -347,16 +347,32 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
     return html_content
 
 
-def main():
-    cfg         = load_config()
-    thresholds  = cfg["params"]["alert_thresholds"]
-    scores      = load_scores()
-    prev_scores = _load_prev_scores()
-    cmap        = get_category_map(cfg)
-    all_alerts  = []
+def _resolve_thresholds(user: dict, global_thresholds: dict) -> dict:
+    """Merges per-user threshold overrides with global defaults."""
+    merged = dict(global_thresholds)
+    merged.update(user.get("thresholds", {}) or {})
+    return merged
 
+
+def _filter_alerts_for_user(all_alerts: list[dict], watchlist: list[str] | None) -> list[dict]:
+    """Returns alerts filtered to user's watchlist; all alerts when watchlist is None/empty."""
+    if not watchlist:
+        return all_alerts
+    wl = set(watchlist)
+    return [a for a in all_alerts if a["symbol"] in wl]
+
+
+def main():
+    cfg             = load_config()
+    global_thresh   = cfg["params"]["alert_thresholds"]
+    scores          = load_scores()
+    prev_scores     = _load_prev_scores()
+    cmap            = get_category_map(cfg)
+    telegram_token  = os.getenv("TELEGRAM_BOT_TOKEN")
+
+    all_alerts: list[dict] = []
     for symbol in get_etfs(cfg):
-        all_alerts.extend(detect_intraday_alerts(symbol, thresholds))
+        all_alerts.extend(detect_intraday_alerts(symbol, global_thresh))
         all_alerts.extend(detect_structural_alerts(symbol, scores, prev_scores))
 
     if not all_alerts:
@@ -366,40 +382,42 @@ def main():
     for a in all_alerts:
         print(f"[ALERTA] {a['type']}: {a['symbol']}")
 
-    # Enviar por email
-    email_to = os.getenv("EMAIL_TO")
-    if email_to:
-        try:
-            from send_email import send_email
-            alert_html = build_alert_html(all_alerts, cmap)
-            to_list = [t.strip() for t in email_to.split(",")]
-            n       = len(all_alerts)
-            tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
-            suffix  = "..." if n > 3 else ""
+    users = get_users(cfg)
+    if not users:
+        print("[AVISO] Nenhum utilizador configurado.")
+        return
 
-            send_email(
-                f"ET-Spotter: {n} alerta{'s' if n!=1 else ''} — {tickers}{suffix}",
-                alert_html,
-                to_list,
-            )
-            print(f"[EMAIL] ✓ Enviado para {email_to}")
-        except Exception as e:
-            print(f"[EMAIL] ✗ Erro: {e}")
+    from send_email import send_email
 
-    # Enviar por Telegram
-    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if telegram_token:
-        try:
-            from send_telegram import send_telegram_alert
-            n = len(all_alerts)
-            tickers = ", ".join(a["symbol"] for a in all_alerts[:3])
-            suffix = "..." if n > 3 else ""
-            
-            message = f"🚨 <b>ET-Spotter: {n} alerta{'s' if n!=1 else ''}</b>\n\n{tickers}{suffix}"
-            send_telegram_alert(message)
-            print("[TELEGRAM] ✓ Alerta enviado")
-        except Exception as e:
-            print(f"[TELEGRAM] ✗ Erro: {e}")
+    for user in users:
+        user_alerts = _filter_alerts_for_user(all_alerts, user.get("watchlist"))
+        if not user_alerts:
+            continue
+
+        n       = len(user_alerts)
+        tickers = ", ".join(a["symbol"] for a in user_alerts[:3])
+        suffix  = "..." if n > 3 else ""
+        subject = f"ET-Spotter: {n} alerta{'s' if n!=1 else ''} — {tickers}{suffix}"
+
+        email_to = user.get("email", "")
+        if email_to:
+            try:
+                alert_html = build_alert_html(user_alerts, cmap)
+                to_list = [t.strip() for t in email_to.split(",") if t.strip()]
+                send_email(subject, alert_html, to_list)
+                print(f"[EMAIL] ✓ {user.get('name', email_to)}: {n} alerta(s)")
+            except Exception as e:
+                print(f"[EMAIL] ✗ {user.get('name', email_to)}: {e}", file=sys.stderr)
+
+        tg_chat = user.get("telegram_chat_id", "")
+        if tg_chat and telegram_token:
+            try:
+                from send_telegram import send_telegram_alert
+                message = f"🚨 <b>ET-Spotter: {n} alerta{'s' if n!=1 else ''}</b>\n\n{tickers}{suffix}"
+                send_telegram_alert(message, chat_id=tg_chat)
+                print(f"[TELEGRAM] ✓ {user.get('name', tg_chat)}: {n} alerta(s)")
+            except Exception as e:
+                print(f"[TELEGRAM] ✗ {user.get('name', tg_chat)}: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

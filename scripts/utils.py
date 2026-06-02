@@ -42,8 +42,52 @@ def get_category_map(cfg: dict) -> dict[str, dict]:
                 "category_id":   cat["id"],
                 "category_name": cat["name"],
                 "color":         cat["color"],
+                # metadata opcional — None quando não preenchido
+                "ter":           e.get("ter"),
+                "aum_bn":        e.get("aum_bn"),
+                "replica":       e.get("replica"),
+                "esg":           e.get("esg"),
+                "isin":          e.get("isin"),
             }
     return result
+
+
+def get_etf_metadata(cfg: dict) -> dict[str, dict]:
+    """Devolve dicionário ticker → {ter, aum_bn, replica, esg, isin}."""
+    result = {}
+    for cat in cfg["categories"]:
+        for e in cat["etfs"]:
+            result[e["ticker"]] = {
+                "ter":     e.get("ter"),
+                "aum_bn":  e.get("aum_bn"),
+                "replica": e.get("replica"),
+                "esg":     e.get("esg"),
+                "isin":    e.get("isin"),
+            }
+    return result
+
+
+def get_users(cfg: dict) -> list[dict]:
+    """
+    Devolve lista de utilizadores do config.
+    Fallback para single-user via variáveis de ambiente quando 'users' está ausente.
+    """
+    import os
+    users = cfg.get("users", [])
+    if users:
+        return users
+    # compatibilidade retroactiva: single-user a partir de env vars
+    email   = os.getenv("EMAIL_TO", "")
+    tg_chat = os.getenv("TELEGRAM_CHAT_ID", "")
+    if email or tg_chat:
+        return [{
+            "name":             "default",
+            "email":            email,
+            "telegram_chat_id": tg_chat,
+            "thresholds":       {},
+            "watchlist":        None,
+        }]
+    return []
 
 
 def category_summary(scores_df, cfg: dict) -> list[dict]:
