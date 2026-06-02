@@ -108,45 +108,6 @@ def _num(v, digits=3) -> str:
 
 # ── Sections ──────────────────────────────────────────────────────────────────
 
-def about_strip_html() -> str:
-    return """
-<div style="border-bottom:1px solid var(--border);background:var(--deep);padding:10px 0">
-  <div style="max-width:1400px;margin:0 auto;padding:0 24px;
-              display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-
-    <span style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;
-                 font-size:0.60rem;letter-spacing:0.14em;text-transform:uppercase;
-                 color:var(--gold);white-space:nowrap">ET-SPOTTER</span>
-
-    <span style="color:var(--muted);font-size:0.70rem;line-height:1.5;flex:1;min-width:200px">
-      Monitorização automática de ETFs UCITS — score técnico composto (0–1) com sinais de
-      <span style="color:var(--green)">FORTE COMPRA</span>,
-      <span style="color:var(--light-green)">COMPRA</span> e
-      <span style="color:var(--yellow)">POTENCIAL</span>
-      baseados em confluência de momentum, tendência e risco.
-    </span>
-
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <span style="background:var(--surface);border:1px solid var(--border);
-                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
-                   letter-spacing:0.06em;white-space:nowrap">
-        Momentum · Trend · Risk
-      </span>
-      <span style="background:var(--surface);border:1px solid var(--border);
-                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
-                   letter-spacing:0.06em;white-space:nowrap">
-        Faber · Jegadeesh · AQR
-      </span>
-      <span style="background:var(--surface);border:1px solid var(--border);
-                   color:var(--muted);font-size:0.60rem;padding:3px 8px;border-radius:2px;
-                   letter-spacing:0.06em;white-space:nowrap">
-        Alertas Email · Telegram
-      </span>
-    </div>
-
-  </div>
-</div>"""
-
 def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     regime_color = "var(--green)" if spy_regime == "BULL" else ("var(--red)" if spy_regime == "BEAR" else "var(--muted)")
     spy_str = f"SPY {spy_close:.2f}" if spy_close else "SPY —"
@@ -160,7 +121,8 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
   <div class="header-inner">
     <div>
       <div class="logo">ET-SPOTTER</div>
-      <div class="subtitle">Dashboard de monitorização técnica · {n_etfs} ETFs</div>
+      <div class="subtitle">Monitorização automática de ETFs UCITS · score técnico composto (0–1)</div>
+      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · momentum · tendência · risco</div>
     </div>
     <div style="text-align:right">
       <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
@@ -185,6 +147,12 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
           {f'<div style="color:var(--muted);font-size:10px;margin-top:2px">{sub}</div>' if sub else ""}
         </div>"""
 
+    legend = (
+        '<span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;0.75 &nbsp;·&nbsp;'
+        '<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;0.55 &nbsp;·&nbsp;'
+        '<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;0.40 &nbsp;·&nbsp;'
+        'confluência de momentum, tendência e risco'
+    )
     return f"""
 <section class="summary-grid">
   {card("FORTE COMPRA",   n_fc,  "var(--green)")}
@@ -192,7 +160,10 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
   {card("POTENCIAL",      n_p,   "var(--yellow)")}
   {card("Score > 0.50",   n_high,"var(--blue)", f"de {len(scores_df)} ETFs")}
   {card("Score médio",    f"{avg_score:.3f}", "var(--blue-light)")}
-</section>"""
+</section>
+<div style="padding:6px 0 14px;color:var(--muted);font-size:0.62rem;letter-spacing:0.03em;opacity:0.7">
+  {legend}
+</div>"""
 
 
 def _nome_curto(s: dict) -> str:
@@ -1131,7 +1102,6 @@ async function subscribePush() {{
 
     sections = [
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
-        about_strip_html(),
         '<div class="main">',
         summary_cards_html(signals, data["scores_df"]),
         advisor_section(data["rows_raw"]),
