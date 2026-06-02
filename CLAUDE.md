@@ -13,3 +13,23 @@ apareça no dashboard), deves **imediatamente a seguir**:
 **Nunca** termines uma implementação visual sem regenerar e commitar o HTML.
 Esta regra aplica-se mesmo que a tarefa principal seja outra — se tocaste num
 script que afeta o dashboard, o HTML tem de acompanhar.
+
+## Deploy automático para GitHub Pages
+
+Após qualquer commit que altere `docs/index.html`, `docs/sw.js` ou `docs/manifest.json`,
+faz **sempre** o deploy directo para o branch `gh-pages` sem precisar de ser pedido.
+
+Procedimento (git plumbing a partir do repo principal para preservar o signing):
+
+```bash
+git fetch origin gh-pages
+HTML_BLOB=$(git hash-object -w docs/index.html)
+SW_BLOB=$(git hash-object -w docs/sw.js)
+MANI_BLOB=$(git hash-object -w docs/manifest.json)
+NOJEKYLL=$(git rev-parse origin/gh-pages:.nojekyll)
+NEW_TREE=$(printf "100644 blob %s\t.nojekyll\n100644 blob %s\tindex.html\n100644 blob %s\tmanifest.json\n100644 blob %s\tsw.js\n" \
+  "$NOJEKYLL" "$HTML_BLOB" "$MANI_BLOB" "$SW_BLOB" | git mktree)
+PARENT=$(git rev-parse origin/gh-pages)
+NEW_COMMIT=$(git commit-tree "$NEW_TREE" -p "$PARENT" -m "chore: deploy dashboard")
+git push origin "${NEW_COMMIT}:refs/heads/gh-pages"
+```
