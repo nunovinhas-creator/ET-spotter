@@ -307,7 +307,19 @@ def _etf_row_raw(sym: str, last, info: dict, delta_score: float = 0.0) -> dict:
         "sharpe_63":    float(last.get("sharpe_63",    0) or 0),
         "calmar_63":    float(last.get("calmar_63",    0) or 0),
         "close":        round(float(last.get("close",  0) or 0), 2),
+        "_momentum":    _safe_sub(last.get("_momentum")),
+        "_trend":       _safe_sub(last.get("_trend")),
+        "_risk":        _safe_sub(last.get("_risk")),
+        "_alpha":       _safe_sub(last.get("_alpha_quality")),
     }
+
+
+def _safe_sub(v) -> float | None:
+    try:
+        f = float(v)
+        return round(f, 3) if f == f else None
+    except (TypeError, ValueError):
+        return None
 
 
 def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:

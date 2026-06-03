@@ -228,6 +228,37 @@ def narrativa_simples(s: dict) -> str:
     return f"{p1}. {p2}. {p3}{fecho}"
 
 
+def _sub_bars_html(r: dict) -> str:
+    """Breakdown visual dos 4 sub-scores: M / T / R / α."""
+    mom = r.get("_momentum")
+    trd = r.get("_trend")
+    rsk = r.get("_risk")
+    alp = r.get("_alpha")
+    if None in (mom, trd, rsk, alp):
+        return ""
+
+    def bar(label, val, color, title):
+        w = max(4, round(val * 120))
+        return (
+            f'<div style="display:flex;align-items:center;gap:5px;min-width:70px">'
+            f'<span style="color:var(--muted);font-size:10px;width:12px;text-align:right">{label}</span>'
+            f'<div style="flex:1;background:var(--border);border-radius:3px;height:5px;max-width:120px">'
+            f'<div title="{title}: {val:.2f}" style="width:{w}px;max-width:120px;background:{color};border-radius:3px;height:5px"></div>'
+            f'</div>'
+            f'<span style="color:var(--muted);font-size:9px;width:26px">{val:.2f}</span>'
+            f'</div>'
+        )
+
+    return (
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:10px">'
+        + bar("M", mom, "var(--green)",      "Momentum")
+        + bar("T", trd, "#7c83fd",           "Trend")
+        + bar("R", rsk, "var(--blue-light)", "Risk")
+        + bar("α", alp, "var(--yellow)",     "Alpha quality")
+        + '</div>'
+    )
+
+
 def narrativa_advisor(r: dict) -> str:
     """Explicação em português simples do porquê este ETF está bem posicionado."""
     nome      = _nome_curto(r)
@@ -315,13 +346,14 @@ def advisor_section(rows_raw: list[dict]) -> str:
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(r['nome'])}</span>
             <span style="color:{r['cor']};font-size:10px">● {html_mod.escape(r['categoria'])}</span>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
             <span style="color:var(--muted);font-size:11px">Score técnico</span>
             <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:{pts}%;background:{bar_color};border-radius:4px;height:7px"></div>
             </div>
             <span style="color:{bar_color};font-weight:bold;font-size:13px">{pts}/100</span>
           </div>
+          {_sub_bars_html(r)}
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
             <span><span style="color:var(--muted)">{mom_label}</span> <b style="color:{'var(--green)' if momentum>=0 else 'var(--red)'}">{_pct(momentum)}</b></span>
             <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:{'var(--green)' if r.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_63d',0))}</b></span>
@@ -617,11 +649,16 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
           <td style="${{td}};color:${{r.cat_color}};white-space:nowrap">${{r.cat}}</td>
           <td style="${{td}};text-align:right" title="M:${{r.mom??'—'}} T:${{r.trd??'—'}} R:${{r.rsk??'—'}} α:${{r.alp??'—'}}">
             <span style="color:${{r.score>=0.75?'var(--green)':r.score>=0.55?'var(--light-green)':r.score>=0.40?'var(--yellow)':'var(--red)'}};font-weight:bold">${{r.score.toFixed(3)}}</span>
-            ${{r.mom!=null ? `<div style="display:flex;gap:2px;justify-content:flex-end;margin-top:3px">
-              <span title="Momentum ${{r.mom}}" style="display:inline-block;width:${{Math.round(r.mom*10)}}px;height:3px;background:var(--green);border-radius:1px;opacity:0.85"></span>
-              <span title="Trend ${{r.trd}}" style="display:inline-block;width:${{Math.round(r.trd*10)}}px;height:3px;background:#7c83fd;border-radius:1px;opacity:0.85"></span>
-              <span title="Risk ${{r.rsk}}" style="display:inline-block;width:${{Math.round(r.rsk*10)}}px;height:3px;background:var(--blue-light);border-radius:1px;opacity:0.85"></span>
-              <span title="Alpha ${{r.alp}}" style="display:inline-block;width:${{Math.round(r.alp*10)}}px;height:3px;background:var(--yellow);border-radius:1px;opacity:0.85"></span>
+            ${{r.mom!=null ? `<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:4px;align-items:center">
+              <span style="color:var(--muted);font-size:9px;margin-right:1px">M</span>
+              <span title="Momentum ${{r.mom}}" style="display:inline-block;width:${{Math.round(r.mom*28)}}px;height:4px;background:var(--green);border-radius:2px"></span>
+              <span style="color:var(--muted);font-size:9px;margin-left:2px">T</span>
+              <span title="Trend ${{r.trd}}" style="display:inline-block;width:${{Math.round(r.trd*28)}}px;height:4px;background:#7c83fd;border-radius:2px"></span>
+              <span style="color:var(--muted);font-size:9px;margin-left:2px">R</span>
+              <span title="Risk ${{r.rsk}}" style="display:inline-block;width:${{Math.round(r.rsk*28)}}px;height:4px;background:var(--blue-light);border-radius:2px"></span>
+              <span style="color:var(--muted);font-size:9px;margin-left:2px">α</span>
+              <span title="Alpha ${{r.alp}}" style="display:inline-block;width:${{Math.round(r.alp*28)}}px;height:4px;background:var(--yellow);border-radius:2px"></span>
+            </div>` : ''}}
             </div>` : ''}}
           </td>
           <td style="${{td}};color:var(--muted);text-align:right">${{r.pct}}</td>
