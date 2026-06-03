@@ -369,10 +369,29 @@ def advisor_section(rows_raw: list[dict]) -> str:
     return f"""
 <section class="section">
   <h2 class="section-title">Melhor Posicionados — Análise Técnica Consolidada</h2>
-  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:14px">
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos e de prática profissional (Faber, Antonacci, AQR).
   </p>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+    <span style="color:var(--muted);font-size:10px;letter-spacing:0.04em">SUB-SCORES:</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
+      <span style="display:inline-block;width:20px;height:4px;background:var(--green);border-radius:2px"></span>
+      <b style="color:var(--green)">M</b> Momentum
+    </span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
+      <span style="display:inline-block;width:20px;height:4px;background:#7c83fd;border-radius:2px"></span>
+      <b style="color:#7c83fd">T</b> Tendência
+    </span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
+      <span style="display:inline-block;width:20px;height:4px;background:var(--blue-light);border-radius:2px"></span>
+      <b style="color:var(--blue-light)">R</b> Risco
+    </span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
+      <span style="display:inline-block;width:20px;height:4px;background:var(--yellow);border-radius:2px"></span>
+      <b style="color:var(--yellow)">α</b> Alpha quality
+    </span>
+  </div>
   {cards}
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
