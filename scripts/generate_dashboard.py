@@ -1039,8 +1039,8 @@ header {
 .main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
 
 .summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1px;
   margin-bottom: 16px;
   background: var(--border);
@@ -1048,7 +1048,7 @@ header {
   border-radius: 2px;
   overflow: hidden;
 }
-.card { background: var(--surface); padding: 20px 16px; }
+.card { background: var(--surface); padding: 20px 16px; flex: 1 1 140px; }
 
 .section {
   background: var(--surface);
