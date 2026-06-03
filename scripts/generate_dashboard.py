@@ -238,19 +238,19 @@ def _sub_bars_html(r: dict) -> str:
         return ""
 
     def bar(label, val, color, title):
-        w = max(4, round(val * 120))
+        pct = round(val * 100)
         return (
-            f'<div style="display:flex;align-items:center;gap:5px;min-width:70px">'
-            f'<span style="color:var(--muted);font-size:10px;width:12px;text-align:right">{label}</span>'
-            f'<div style="flex:1;background:var(--border);border-radius:3px;height:5px;max-width:120px">'
-            f'<div title="{title}: {val:.2f}" style="width:{w}px;max-width:120px;background:{color};border-radius:3px;height:5px"></div>'
+            f'<div style="display:flex;align-items:center;gap:7px">'
+            f'<span style="color:{color};font-size:10px;font-weight:bold;width:14px;flex-shrink:0">{label}</span>'
+            f'<div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden">'
+            f'<div title="{title}: {val:.2f}" style="width:{pct}%;background:{color};border-radius:3px;height:5px"></div>'
             f'</div>'
-            f'<span style="color:var(--muted);font-size:9px;width:26px">{val:.2f}</span>'
+            f'<span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">{val:.2f}</span>'
             f'</div>'
         )
 
     return (
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:10px">'
+        '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'
         + bar("M", mom, "var(--green)",      "Momentum")
         + bar("T", trd, "#7c83fd",           "Trend")
         + bar("R", rsk, "var(--blue-light)", "Risk")
