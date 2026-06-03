@@ -372,7 +372,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
   <h2 class="section-title">Melhor Posicionados — Análise Técnica Consolidada</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
-    Baseado em critérios académicos e de prática profissional (Faber, Antonacci, AQR).
+    Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
   </p>
   {cards}
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
@@ -848,15 +848,26 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
                   text-transform:uppercase;color:var(--patina);margin-bottom:8px">Base Académica</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px">
         <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Jegadeesh & Titman (1993)</span>
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Momentum 12-1M: comprar vencedores, vender perdedores">Jegadeesh &amp; Titman (1993)</span>
         <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Faber (2007)</span>
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Trend following com SMA de 10 meses">Faber (2007)</span>
         <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Antonacci (2014)</span>
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Dual momentum: absoluto e relativo">Antonacci (2014)</span>
         <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-                     font-size:0.60rem;padding:2px 7px;border-radius:2px">AQR — Value & Momentum</span>
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Anomalia low-volatility: retorno ajustado ao risco (factor IR-momentum)">Ang et al. (2006)</span>
         <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-                     font-size:0.60rem;padding:2px 7px;border-radius:2px">Sharpe Ratio</span>
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="101 fórmulas de alpha cross-sectional — base do factor alpha quality">Kakushadze (2015) · alpha101</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Value &amp; Momentum Everywhere">AQR — Value &amp; Momentum</span>
+        <span style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
+                     font-size:0.60rem;padding:2px 7px;border-radius:2px"
+              title="Retorno ajustado ao risco: base do factor calmar/sharpe">Sharpe Ratio</span>
       </div>
     </div>
     <div>
