@@ -1,12 +1,19 @@
 """
 Calcula scores multi-factor cross-sectionais por ETF.
 
-Score v2:
+Score v3 — adicionados 4 factores alpha (inspirados em alpha101/WorldQuant e literatura académica):
   - Normalização cross-sectional via z-score (todos os ETFs ao mesmo momento)
-  - Momentum: sigmoid(0.2*cs_z(ret_21d) + 0.4*cs_z(ret_63d) + 0.4*cs_z(ret_126d))
-  - Trend: (trend_sma + macd_bullish + rsi_zone + rs_positive) / 4
-  - Risk: 0.4*sigmoid(cs_z(calmar_63)) + 0.3*(adx>20) + 0.3*(1+drawdown.clip(-1,0))
-  - Final: 0.40*momentum + 0.30*trend + 0.30*risk
+  - Momentum    (35%): sigmoid(0.2*cs_z(ret_21d) + 0.4*cs_z(ret_63d) + 0.4*cs_z(ret_126d))
+  - Trend       (25%): (trend_sma + macd_bullish + rsi_zone + f_rs_quality) / 4
+                       f_rs_quality: RS contínuo vs SPY (substitui binário rs_positive)
+  - Risk        (25%): 0.4*sigmoid(cs_z(calmar_63)) + 0.3*(adx>20) + 0.3*(1+drawdown)
+  - Alpha       (15%): média de 4 factores alpha101-inspired:
+      f_ir_mom    : ret_63d / vol_21  (retorno ajustado ao risco, Information Ratio proxy)
+      f_mom_accel : ret_21d - ret_63d/3  (aceleração do momentum: ritmo recente vs média 3M)
+      f_rs_quality: 0.4*cs_z(rs_mom_21) + 0.6*cs_z(rs_mom_63)  (RS contínuo vs benchmark)
+      f_annual_mom: ret_252d  (Jegadeesh-Titman 12M, factor mais validado empiricamente)
+
+Referências: Jegadeesh & Titman (1993), Ang et al. (2006), Kakushadze (2015) alpha101.
 
 Gera data/reports/scores_latest.csv e appenda a data/scores_history.csv.
 """
@@ -92,34 +99,70 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
 
 
 def compute_scores(snap: pd.DataFrame) -> pd.DataFrame:
-    """Calcula scores cross-sectionais para o snapshot de ETFs."""
+    """Calcula scores cross-sectionais para o snapshot de ETFs (v3 com alpha factors)."""
     snap = snap.copy()
 
-    # ── Momentum ──────────────────────────────────────────────────────────────
+    # ── Momentum (35%) ────────────────────────────────────────────────────────
     ret21  = winsorize(snap["ret_21d"].fillna(0))
     ret63  = winsorize(snap["ret_63d"].fillna(0))
     ret126 = winsorize(snap["ret_126d"].fillna(0))
     momentum = sigmoid(0.2 * cs_z(ret21) + 0.4 * cs_z(ret63) + 0.4 * cs_z(ret126))
 
-    # ── Trend ─────────────────────────────────────────────────────────────────
+    # ── Alpha Quality (15%) — 4 factores alpha101-inspired ────────────────────
+
+    # F1: IR-momentum — retorno ajustado à volatilidade (Information Ratio proxy)
+    #     Ang et al. (2006): low-vol anomaly; high IR → melhor qualidade de retorno
+    vol_safe  = snap["vol_21"].replace(0, np.nan).fillna(snap["vol_21"].median())
+    f_ir_mom  = sigmoid(cs_z(winsorize((snap["ret_63d"] / vol_safe).fillna(0))))
+
+    # F2: Momentum acceleration — ritmo recente vs média mensal do trimestre
+    #     Positivo quando o último mês supera o ritmo médio dos últimos 3 meses
+    mom_accel   = winsorize((snap["ret_21d"] - snap["ret_63d"] / 3.0).fillna(0))
+    f_mom_accel = sigmoid(cs_z(mom_accel))
+
+    # F3: Continuous relative strength — RS contínuo vs benchmark (SPY)
+    #     Jegadeesh-Titman: RS normalizado em vez de binário 0/1
+    rs_cont      = winsorize(
+        (0.4 * snap["rs_mom_21"].fillna(0) + 0.6 * snap["rs_mom_63"].fillna(0))
+    )
+    f_rs_quality = sigmoid(cs_z(rs_cont))
+
+    # F4: Annual momentum — Jegadeesh-Titman 12M, factor mais replicado na literatura
+    f_annual_mom = sigmoid(cs_z(winsorize(snap["ret_252d"].fillna(0))))
+
+    alpha_quality = (f_ir_mom + f_mom_accel + f_rs_quality + f_annual_mom) / 4.0
+
+    # ── Trend (25%) ───────────────────────────────────────────────────────────
+    # Usa f_rs_quality (contínuo 0–1) em vez do binário rs_positive
     rsi_zone = ((snap["rsi"] >= 40) & (snap["rsi"] <= 65)).astype(float).fillna(0)
     trend = (
         snap["trend_sma"].fillna(0).astype(float)
         + snap["macd_bullish"].fillna(0).astype(float)
         + rsi_zone
-        + snap["rs_positive"].fillna(0).astype(float)
+        + f_rs_quality
     ) / 4.0
 
-    # ── Risk ──────────────────────────────────────────────────────────────────
-    # Usa calmar_63 se disponível, senão sharpe_63 (calmar mais estável com n=63)
+    # ── Risk (25%) ────────────────────────────────────────────────────────────
     risk_series = snap["calmar_63"] if "calmar_63" in snap.columns else snap["sharpe_63"]
     sharpe_z  = sigmoid(cs_z(winsorize(risk_series.fillna(0))))
     adx_ok    = (snap["adx"] > 20).astype(float).fillna(0)
     dd_factor = (1 + snap["drawdown"].clip(lower=-1, upper=0)).fillna(0.9)
     risk = 0.4 * sharpe_z + 0.3 * adx_ok + 0.3 * dd_factor
 
-    # ── Final score ───────────────────────────────────────────────────────────
-    snap["score"] = (0.40 * momentum + 0.30 * trend + 0.30 * risk).round(6)
+    # ── Final score v3 ────────────────────────────────────────────────────────
+    # 35% momentum · 25% trend · 25% risk · 15% alpha quality
+    snap["score"] = (
+        0.35 * momentum
+        + 0.25 * trend
+        + 0.25 * risk
+        + 0.15 * alpha_quality
+    ).round(6)
+
+    # Guardar sub-scores para auditoria/debug
+    snap["_momentum"]      = momentum.round(4)
+    snap["_trend"]         = trend.round(4)
+    snap["_risk"]          = risk.round(4)
+    snap["_alpha_quality"] = alpha_quality.round(4)
 
     return snap
 
@@ -154,7 +197,9 @@ def persist_scores(snap: pd.DataFrame) -> None:
     cols = [
         "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d", "ret_252d",
         "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21", "rs_mom_63",
-        "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown", "score", "score_pct",
+        "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown",
+        "score", "score_pct",
+        "_momentum", "_trend", "_risk", "_alpha_quality",
     ]
     out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
     out.to_csv(REPORTS / "scores_latest.csv", index=False)

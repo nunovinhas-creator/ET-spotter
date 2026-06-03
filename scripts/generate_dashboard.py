@@ -451,6 +451,16 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
 
         ter_val  = m.get("ter")
         aum_val  = m.get("aum_bn")
+
+        def _sub(col):
+            v = r.get(col)
+            if v is None or str(v) in ("", "nan"):
+                return None
+            try:
+                return round(float(v), 3)
+            except (TypeError, ValueError):
+                return None
+
         rows_js.append({
             "ticker":    sym,
             "nome":      info.get("name", sym),
@@ -475,6 +485,10 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
             "replica":   m.get("replica") or "—",
             "esg":       bool(m.get("esg", False)),
             "isin":      m.get("isin") or "—",
+            "mom":       _sub("_momentum"),
+            "trd":       _sub("_trend"),
+            "rsk":       _sub("_risk"),
+            "alp":       _sub("_alpha_quality"),
         })
 
     rows_json = json.dumps(rows_js, ensure_ascii=False)
@@ -601,7 +615,15 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
           </td>
           <td style="${{td}};color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${{r.nome}}</td>
           <td style="${{td}};color:${{r.cat_color}};white-space:nowrap">${{r.cat}}</td>
-          <td style="${{td}};color:${{r.score>=0.5?'var(--green)':'var(--red)'}};font-weight:bold;text-align:right">${{r.score.toFixed(3)}}</td>
+          <td style="${{td}};text-align:right" title="M:${{r.mom??'—'}} T:${{r.trd??'—'}} R:${{r.rsk??'—'}} α:${{r.alp??'—'}}">
+            <span style="color:${{r.score>=0.75?'var(--green)':r.score>=0.55?'var(--light-green)':r.score>=0.40?'var(--yellow)':'var(--red)'}};font-weight:bold">${{r.score.toFixed(3)}}</span>
+            ${{r.mom!=null ? `<div style="display:flex;gap:2px;justify-content:flex-end;margin-top:3px">
+              <span title="Momentum ${{r.mom}}" style="display:inline-block;width:${{Math.round(r.mom*10)}}px;height:3px;background:var(--green);border-radius:1px;opacity:0.85"></span>
+              <span title="Trend ${{r.trd}}" style="display:inline-block;width:${{Math.round(r.trd*10)}}px;height:3px;background:#7c83fd;border-radius:1px;opacity:0.85"></span>
+              <span title="Risk ${{r.rsk}}" style="display:inline-block;width:${{Math.round(r.rsk*10)}}px;height:3px;background:var(--blue-light);border-radius:1px;opacity:0.85"></span>
+              <span title="Alpha ${{r.alp}}" style="display:inline-block;width:${{Math.round(r.alp*10)}}px;height:3px;background:var(--yellow);border-radius:1px;opacity:0.85"></span>
+            </div>` : ''}}
+          </td>
           <td style="${{td}};color:var(--muted);text-align:right">${{r.pct}}</td>
           <td style="${{td}};color:${{pctColor(r.r1d)}};text-align:right">${{(r.r1d*100).toFixed(2)}}%</td>
           <td style="${{td}};color:${{pctColor(r.r5d)}};text-align:right">${{(r.r5d*100).toFixed(2)}}%</td>
