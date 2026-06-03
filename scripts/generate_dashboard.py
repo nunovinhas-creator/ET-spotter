@@ -237,13 +237,14 @@ def _sub_bars_html(r: dict) -> str:
     if None in (mom, trd, rsk, alp):
         return ""
 
-    def bar(label, val, color, title):
+    def bar(label, name, val, color):
         pct = round(val * 100)
         return (
             f'<div style="display:flex;align-items:center;gap:7px">'
-            f'<span style="color:{color};font-size:10px;font-weight:bold;width:14px;flex-shrink:0">{label}</span>'
+            f'<span style="color:{color};font-size:10px;font-weight:bold;width:80px;flex-shrink:0">'
+            f'{label} <span style="color:var(--muted);font-weight:normal">{name}</span></span>'
             f'<div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden">'
-            f'<div title="{title}: {val:.2f}" style="width:{pct}%;background:{color};border-radius:3px;height:5px"></div>'
+            f'<div style="width:{pct}%;background:{color};border-radius:3px;height:5px"></div>'
             f'</div>'
             f'<span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">{val:.2f}</span>'
             f'</div>'
@@ -251,10 +252,10 @@ def _sub_bars_html(r: dict) -> str:
 
     return (
         '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'
-        + bar("M", mom, "var(--green)",      "Momentum")
-        + bar("T", trd, "#7c83fd",           "Trend")
-        + bar("R", rsk, "var(--blue-light)", "Risk")
-        + bar("α", alp, "var(--yellow)",     "Alpha quality")
+        + bar("M", "Momentum",   mom, "var(--green)")
+        + bar("T", "Tendência",  trd, "#7c83fd")
+        + bar("R", "Risco",      rsk, "var(--blue-light)")
+        + bar("α", "Alpha",      alp, "var(--yellow)")
         + '</div>'
     )
 
@@ -373,25 +374,6 @@ def advisor_section(rows_raw: list[dict]) -> str:
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos e de prática profissional (Faber, Antonacci, AQR).
   </p>
-  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
-    <span style="color:var(--muted);font-size:10px;letter-spacing:0.04em">SUB-SCORES:</span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
-      <span style="display:inline-block;width:20px;height:4px;background:var(--green);border-radius:2px"></span>
-      <b style="color:var(--green)">M</b> Momentum
-    </span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
-      <span style="display:inline-block;width:20px;height:4px;background:#7c83fd;border-radius:2px"></span>
-      <b style="color:#7c83fd">T</b> Tendência
-    </span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
-      <span style="display:inline-block;width:20px;height:4px;background:var(--blue-light);border-radius:2px"></span>
-      <b style="color:var(--blue-light)">R</b> Risco
-    </span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
-      <span style="display:inline-block;width:20px;height:4px;background:var(--yellow);border-radius:2px"></span>
-      <b style="color:var(--yellow)">α</b> Alpha quality
-    </span>
-  </div>
   {cards}
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
