@@ -96,6 +96,51 @@ def load_technicals(symbol: str) -> dict:
         return {}
 
 
+def technical_snapshot(tech: dict) -> str:
+    """Builds a compact one-line technical summary from available signal data. Zero-cost, rule-based."""
+    import math
+    parts = []
+
+    score      = tech.get("score",        0)
+    score_pct  = tech.get("score_pct",    float("nan"))
+    rsi        = tech.get("rsi",          50)
+    above_sma  = tech.get("above_sma200", 0)
+    trend_sma  = tech.get("trend_sma",    0)
+    ret_21d    = tech.get("ret_21d",      0)
+    ret_63d    = tech.get("ret_63d",      0)
+    drawdown   = tech.get("drawdown",     0)
+    vol_21     = tech.get("vol_21",       0)
+
+    if score > 0:
+        pct_str = f" · top {100 - int(score_pct * 100)}% universo" if (score_pct and not math.isnan(score_pct)) else ""
+        parts.append(f"Score {score:.2f}{pct_str}")
+
+    parts.append("acima SMA200" if above_sma else "abaixo SMA200")
+
+    if rsi >= 70:
+        parts.append(f"RSI sobrecomprado ({rsi:.0f})")
+    elif rsi <= 30:
+        parts.append(f"RSI sobrevenda ({rsi:.0f})")
+    else:
+        parts.append(f"RSI {rsi:.0f}")
+
+    if ret_63d != 0:
+        sign = "+" if ret_63d > 0 else ""
+        parts.append(f"momentum 3M {sign}{ret_63d:.1%}")
+
+    if ret_21d != 0:
+        sign = "+" if ret_21d > 0 else ""
+        parts.append(f"1M {sign}{ret_21d:.1%}")
+
+    if drawdown < -0.05:
+        parts.append(f"drawdown {drawdown:.1%}")
+
+    if vol_21 > 0:
+        parts.append(f"vol {vol_21:.1%}")
+
+    return " · ".join(parts)
+
+
 def entry_assessment(alert_type: str, tech: dict) -> dict:
     """Gera avaliação contextual de entrada com base no tipo de alerta e técnicos."""
     rsi      = tech.get("rsi",         50)
@@ -329,9 +374,11 @@ def build_alert_html(all_alerts: list[dict], cmap: dict) -> str:
 
         clr, bg = type_color.get(t, ("#aaa", "#1a1d2e"))
 
+        snapshot = technical_snapshot(a.get("tech", {}))
         cards += f"""<div style="background:{bg};border-left:4px solid {clr};padding:14px;margin:10px 0;border-radius:4px">
           <div style="color:#e8eaf6;font-weight:bold">{html.escape(sym)} — {name} — {html.escape(t)}</div>
           <div style="color:#bbb;font-size:12px;margin-top:5px">{html.escape(assessment['explanation'])}</div>
+          <div style="color:#666;font-size:11px;margin-top:6px;font-family:monospace">{html.escape(snapshot)}</div>
         </div>"""
 
     html_content = f"""<!DOCTYPE html>
@@ -413,7 +460,15 @@ def main():
         if tg_chat and telegram_token:
             try:
                 from send_telegram import send_telegram_alert
-                message = f"🚨 <b>ET-Spotter: {n} alerta{'s' if n!=1 else ''}</b>\n\n{tickers}{suffix}"
+                tg_lines = []
+                for a in user_alerts[:5]:
+                    sym = a["symbol"]
+                    info = cmap.get(sym, {})
+                    name_short = info.get("name", sym)[:30]
+                    snap = technical_snapshot(a.get("tech", {}))
+                    tg_lines.append(f"<b>{sym}</b> {a['type']}\n<i>{name_short}</i>\n{snap}")
+                suffix_tg = f"\n…+{n-5} mais" if n > 5 else ""
+                message = f"🚨 <b>ET-Spotter: {n} alerta{'s' if n!=1 else ''}</b>\n\n" + "\n\n".join(tg_lines) + suffix_tg
                 send_telegram_alert(message, chat_id=tg_chat)
                 print(f"[TELEGRAM] ✓ {user.get('name', tg_chat)}: {n} alerta(s)")
             except Exception as e:
