@@ -660,7 +660,6 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
               <span style="color:var(--muted);font-size:9px;margin-left:2px">α</span>
               <span title="Alpha ${{r.alp}}" style="display:inline-block;width:${{Math.round(r.alp*28)}}px;height:4px;background:var(--yellow);border-radius:2px"></span>
             </div>` : ''}}
-            </div>` : ''}}
           </td>
           <td style="${{td}};color:var(--muted);text-align:right">${{r.pct}}</td>
           <td style="${{td}};color:${{pctColor(r.r1d)}};text-align:right">${{(r.r1d*100).toFixed(2)}}%</td>
