@@ -166,6 +166,145 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
 </div>"""
 
 
+def explainer_section() -> str:
+    """Painel colapsável 'Como ler este dashboard' para utilizadores sem experiência técnica."""
+    return """
+<details style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
+  <summary style="padding:10px 16px;cursor:pointer;list-style:none;display:flex;
+                  justify-content:space-between;align-items:center;user-select:none">
+    <span style="color:var(--text);font-size:0.75rem;font-weight:600;letter-spacing:0.04em">
+      📖 Novo aqui? Como ler este dashboard
+    </span>
+    <span style="color:var(--muted);font-size:0.70rem">clica para expandir</span>
+  </summary>
+
+  <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:18px">
+
+    <!-- O que é um ETF -->
+    <div>
+      <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
+                  text-transform:uppercase;margin-bottom:6px">O que é um ETF?</div>
+      <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0">
+        Um ETF (fundo negociado em bolsa) funciona como um cabaz de ações: em vez de comprares uma
+        empresa, compras um fundo que replica centenas de empresas ao mesmo tempo.
+        É diversificado, barato e compra-se como uma ação normal. Os ETFs desta ferramenta
+        são todos <b style="color:var(--text)">UCITS</b> — regulados para investidores europeus.
+      </p>
+    </div>
+
+    <!-- Score técnico -->
+    <div>
+      <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
+                  text-transform:uppercase;margin-bottom:6px">O que é o Score Técnico (0–1)?</div>
+      <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0 0 8px">
+        É um número calculado automaticamente que resume o estado técnico de cada ETF
+        numa escala de 0 a 1. Quanto mais próximo de 1, mais indicadores apontam para
+        uma fase positiva. <b style="color:var(--text)">Não é uma previsão</b> — é uma fotografia do momento actual.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;
+                       padding:2px 8px;border-radius:2px;white-space:nowrap">FORTE COMPRA</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.75 — vários indicadores alinhados, momentum forte</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;
+                       padding:2px 8px;border-radius:2px;white-space:nowrap">COMPRA</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.55 — maioria dos indicadores positivos, fase construtiva</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;
+                       padding:2px 8px;border-radius:2px;white-space:nowrap">POTENCIAL</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.40 — alguns sinais positivos, aguardar confirmação</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-scores -->
+    <div>
+      <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
+                  text-transform:uppercase;margin-bottom:6px">Os 4 componentes do score</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="color:var(--green);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">M</span>
+          <div>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Momentum</span>
+            <span style="color:var(--muted);font-size:0.70rem"> — O ETF tem estado a subir nos últimos 1, 3 e 6 meses?
+            Momentum forte significa que a tendência de alta se mantém no tempo.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="color:#7c83fd;font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">T</span>
+          <div>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Tendência</span>
+            <span style="color:var(--muted);font-size:0.70rem"> — O preço está acima das médias de curto e longo prazo?
+            O MACD (indicador de força da tendência) é positivo?</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="color:var(--blue-light);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">R</span>
+          <div>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Risco</span>
+            <span style="color:var(--muted);font-size:0.70rem"> — A volatilidade está controlada? A queda face ao máximo
+            (drawdown) é pequena? O retorno compensa o risco assumido?</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="color:var(--yellow);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">α</span>
+          <div>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Alpha</span>
+            <span style="color:var(--muted);font-size:0.70rem"> — O ETF está a superar o S&amp;P 500?
+            O momentum está a acelerar? Mede a qualidade e consistência do desempenho.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Glossário -->
+    <div>
+      <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
+                  text-transform:uppercase;margin-bottom:6px">Glossário de termos</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline">
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">SMA200</span>
+          <span style="color:var(--muted);font-size:0.70rem">Média dos últimos 200 dias de fecho.
+            Acima = tendência de alta. Abaixo = tendência de baixa. Uma das linhas de referência mais usadas no mundo.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">RSI</span>
+          <span style="color:var(--muted);font-size:0.70rem">Mede se o ETF está "caro" tecnicamente (RSI &gt; 70, possível
+            pausa) ou "barato" (RSI &lt; 30, possível recuperação). Entre 40–65 é zona neutra saudável.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">ADX</span>
+          <span style="color:var(--muted);font-size:0.70rem">Força da tendência. Acima de 25 significa que existe
+            uma tendência clara (para cima ou para baixo). Abaixo de 20 é mercado sem direcção.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">Drawdown</span>
+          <span style="color:var(--muted);font-size:0.70rem">Quanto o ETF caiu face ao seu máximo mais recente.
+            Ex: −8% significa que está 8% abaixo do pico. Drawdown pequeno = boa gestão do risco.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">BULL / BEAR</span>
+          <span style="color:var(--muted);font-size:0.70rem">Indica se o mercado americano (SPY) está em fase de alta
+            (BULL, acima da SMA200) ou de baixa (BEAR, abaixo). Em regime BEAR os sinais são lidos com mais cautela.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">RS/SPY</span>
+          <span style="color:var(--muted);font-size:0.70rem">Força Relativa face ao S&amp;P 500.
+            ✓ significa que o ETF está a superar o índice americano — sinal positivo de liderança.</span>
+
+          <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">Sharpe</span>
+          <span style="color:var(--muted);font-size:0.70rem">Retorno dividido pelo risco. Um Sharpe de 1.0 ou mais
+            significa que o ETF está a gerar retorno razoável para o risco que implica.</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="color:var(--muted);font-size:0.65rem;font-style:italic;margin:0;border-top:1px solid var(--border);padding-top:10px">
+      Esta ferramenta é para investigação técnica. Não constitui aconselhamento financeiro.
+      Consulta sempre um profissional antes de investir.
+    </p>
+  </div>
+</details>"""
+
+
 def _nome_curto(s: dict) -> str:
     """Extrai o nome curto do ETF removendo o provider entre parênteses."""
     nome = s.get("nome", s.get("ticker", "Este ETF"))
@@ -1174,6 +1313,7 @@ async function subscribePush() {{
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
         '<div class="main">',
         summary_cards_html(signals, data["scores_df"]),
+        explainer_section(),
         advisor_section(data["rows_raw"]),
         buy_signals_section(signals),
         category_heatmap_section(data["cats"]),
