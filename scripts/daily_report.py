@@ -18,6 +18,7 @@ from utils import (load_config, get_etfs, get_category_map,
 from generate_charts import plot_scores_bar, plot_category_summary
 from send_email import send_email
 from paths import DATA_DAILY, REPORTS
+from email_helpers import email_intro_html, email_glossary_html
 
 
 # ─── Carrega dados ────────────────────────────────────────────────────────────
@@ -105,15 +106,15 @@ def advisor_email_html(rows_raw: list[dict]) -> str:
                          font-size:10px;font-weight:bold;margin-left:8px">{pts}/100</span>
           </div>
           <div style="font-size:11px;color:#aaa;line-height:1.8">
-            <span style="color:#666">{mom_label}:</span> <b style="color:{_c(momentum)}">{_pct(momentum)}</b>
+            <span style="color:#666">{mom_label} <span style="color:#444;font-size:10px">(retorno anual excl. último mês)</span>:</span> <b style="color:{_c(momentum)}">{_pct(momentum)}</b>
             &nbsp;·&nbsp;
-            <span style="color:#666">Ret.3M:</span> <b style="color:{_c(r.get('ret_63d',0))}">{_pct(r.get('ret_63d',0))}</b>
+            <span style="color:#666">Retorno 3M <span style="color:#444;font-size:10px">(últimos 3 meses)</span>:</span> <b style="color:{_c(r.get('ret_63d',0))}">{_pct(r.get('ret_63d',0))}</b>
             &nbsp;·&nbsp;
-            <span style="color:#666">RSI:</span> <b style="color:{'#4caf50' if 35<=rsi<=65 else '#ffd54f'}">{rsi:.0f}</b>
+            <span style="color:#666">RSI <span style="color:#444;font-size:10px">(40–65 = zona saudável)</span>:</span> <b style="color:{'#4caf50' if 35<=rsi<=65 else '#ffd54f'}">{rsi:.0f}</b>
             &nbsp;·&nbsp;
-            <span style="color:#666">Sharpe:</span> <b style="color:{'#4caf50' if r.get('sharpe_63',0)>=1 else '#aaa'}">{r.get('sharpe_63',0):.1f}</b>
+            <span style="color:#666">Sharpe <span style="color:#444;font-size:10px">(retorno/risco, ≥1 é bom)</span>:</span> <b style="color:{'#4caf50' if r.get('sharpe_63',0)>=1 else '#aaa'}">{r.get('sharpe_63',0):.1f}</b>
             &nbsp;·&nbsp;
-            <span style="color:#666">RS/SPY:</span> <b style="color:{'#4caf50' if r.get('rs_positive') else '#f44336'}">{'✓' if r.get('rs_positive') else '✗'}</b>
+            <span style="color:#666">vs S&P 500 <span style="color:#444;font-size:10px">(supera o índice americano?)</span>:</span> <b style="color:{'#4caf50' if r.get('rs_positive') else '#f44336'}">{'✓ sim' if r.get('rs_positive') else '✗ não'}</b>
           </div>
         </div>"""
 
@@ -142,25 +143,25 @@ def buy_signals_html(signals: list[dict]) -> str:
             if score_pct is not None and str(score_pct) != "nan" else ""
         )
         metrics = (
-            f'<span style="color:#aaa">Score:</span> '
+            f'<span style="color:#aaa">Score <span style="color:#555;font-size:10px">(0–1, mais alto = melhor)</span>:</span> '
             f'<span style="color:{_c(s["score"], 0.5)};font-weight:bold">{s["score"]:.3f}</span>'
             f'{pct_str}&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Ret. 3M:</span> '
+            f'<span style="color:#aaa">Retorno 3M <span style="color:#555;font-size:10px">(últimos 3 meses)</span>:</span> '
             f'<span style="color:{_c(s.get("ret_63d", 0))}">{_pct(s.get("ret_63d", 0))}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Ret. 5d:</span> '
+            f'<span style="color:#aaa">Retorno 5d <span style="color:#555;font-size:10px">(últimos 5 dias)</span>:</span> '
             f'<span style="color:{_c(s["ret_5d"])}">{_pct(s["ret_5d"])}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">RSI:</span> '
+            f'<span style="color:#aaa">RSI <span style="color:#555;font-size:10px">(40–65 = zona saudável)</span>:</span> '
             f'<span style="color:{rsi_color}">{rsi_val:.0f}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">RS vs SPY:</span> '
+            f'<span style="color:#aaa">vs S&P 500 <span style="color:#555;font-size:10px">(está a superar o índice?)</span>:</span> '
             f'<span style="color:{rs_color}">{rs_icon}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Δ Score:</span> '
+            f'<span style="color:#aaa">Δ Score <span style="color:#555;font-size:10px">(variação face a ontem)</span>:</span> '
             f'<span style="color:{_c(s["delta_score"])}">{s["delta_score"]:+.3f}</span>'
             f'&nbsp;&nbsp;'
-            f'<span style="color:#aaa">Drawdown:</span> '
+            f'<span style="color:#aaa">Drawdown <span style="color:#555;font-size:10px">(queda face ao máximo recente)</span>:</span> '
             f'<span style="color:{_c(s["drawdown"], -0.05)}">{_pct(s["drawdown"])}</span>'
         )
         ticker_e = html_mod.escape(str(s.get("ticker", "")))
@@ -306,11 +307,14 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
 
     n_strong = sum(1 for s in signals if s["level"] == "FORTE COMPRA")
     n_buy    = sum(1 for s in signals if s["level"] == "COMPRA")
+    n_pot    = len(signals) - n_strong - n_buy
     n_etfs   = len(get_etfs(cfg))
+    intro_html    = email_intro_html(n_strong, n_buy, n_pot, n_etfs)
+    glossary_html = email_glossary_html()
     summary_line = (
         f'<span style="color:#4caf50;font-weight:bold">{n_strong} FORTE COMPRA</span> · '
         f'<span style="color:#8bc34a">{n_buy} COMPRA</span> · '
-        f'<span style="color:#ffd54f">{len(signals)-n_strong-n_buy} POTENCIAL</span>'
+        f'<span style="color:#ffd54f">{n_pot} POTENCIAL</span>'
         f' — de {len(df_display)} ETFs analisados'
     )
 
@@ -320,16 +324,18 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
              padding:24px 28px;max-width:820px;margin:0 auto">
 
   <h1 style="color:#7c83fd;margin-bottom:2px;font-size:22px">ET-Spotter</h1>
-  <p style="color:#555;margin-top:0;font-size:13px">{html_mod.escape(date_str)} · Análise técnica diária · {n_etfs} ETFs</p>
+  <p style="color:#555;margin-top:0;font-size:13px">{html_mod.escape(date_str)} · Análise diária · {n_etfs} ETFs monitorizados</p>
+
+  {intro_html}
 
   <!-- MELHOR POSICIONADOS -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0;
               border-top:2px solid #7c83fd">
     <h2 style="color:#7c83fd;margin-top:0;font-size:16px">
-      Melhor Posicionados Hoje
+      Os Melhores ETFs Hoje
     </h2>
     <p style="color:#555;font-size:11px;margin-top:-8px;margin-bottom:12px">
-      Top 3 por score técnico composto: momentum multi-período · tendência · força relativa · qualidade de entrada
+      Top 3 com mais indicadores alinhados. Score alto = momentum, tendência, força relativa e risco todos a apontar na mesma direcção.
     </p>
     {adv_html}
   </div>
@@ -337,26 +343,26 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
   <!-- SINAIS DE COMPRA -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">
     <h2 style="color:#7c83fd;margin-top:0;font-size:16px">
-      Sinais de Compra – Análise de Confluência
+      Sinais de Compra
     </h2>
     <p style="color:#666;font-size:12px;margin-top:-8px">
-      ETFs com confluência de indicadores técnicos favoráveis · {summary_line}
+      ETFs onde vários indicadores convergem em simultâneo — sinais mais fiáveis quando aparecem em conjunto. {summary_line}
     </p>
     {sig_html}
   </div>
 
   <!-- ROTAÇÃO SECTORIAL -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">
-    <h2 style="color:#7c83fd;margin-top:0;font-size:16px">Rotação de Capital – Sectores</h2>
+    <h2 style="color:#7c83fd;margin-top:0;font-size:16px">Que Sectores Estão a Ganhar Força?</h2>
     <p style="color:#666;font-size:12px;margin-top:-8px">
-      Momentum médio por categoria (score médio + trajectória)
+      Áreas do mercado com mais ETFs em tendência positiva — útil para perceber onde o dinheiro se está a mover
     </p>
     {rot_html}
   </div>
 
   <!-- GRÁFICOS -->
   <div style="background:#0d1021;border-radius:8px;padding:20px;margin:20px 0">
-    <h2 style="color:#7c83fd;margin-top:0;font-size:16px">Scores Visuais</h2>
+    <h2 style="color:#7c83fd;margin-top:0;font-size:16px">Scores em Gráfico</h2>
     {images_html}
   </div>
 
@@ -371,11 +377,13 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
     <h2 style="color:#7c83fd;margin-top:0;font-size:16px">
       Todos os ETFs
       <span style="color:#555;font-size:12px;font-weight:normal;margin-left:8px">
-        ordenados por score decrescente
+        ordenados do melhor score para o pior
       </span>
     </h2>
     {table_html}
   </div>
+
+  {glossary_html}
 
   <hr style="border-color:#1e2130;margin-top:32px">
   <p style="color:#333;font-size:10px">
