@@ -106,6 +106,53 @@ def _num(v, digits=3) -> str:
     return f"{v:.{digits}f}" if pd.notna(v) else "—"
 
 
+# ── Brand banner (inline SVG — self-contained, no external asset needed) ─────
+
+BRAND_BANNER_SVG = """\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 160" width="100%" style="display:block">
+  <defs>
+    <linearGradient id="bb_fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#7c83fd" stop-opacity="0"/>
+      <stop offset="20%"  stop-color="#7c83fd" stop-opacity="1"/>
+      <stop offset="80%"  stop-color="#7c83fd" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#7c83fd" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bb_rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="35%"  stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="65%"  stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="160" fill="#000000"/>
+  <rect x="0" y="0" width="1280" height="2" fill="url(#bb_fade)"/>
+  <line x1="120" y1="30" x2="120" y2="130" stroke="#ffffff" stroke-width="0.5" opacity="0.04"/>
+  <line x1="1160" y1="30" x2="1160" y2="130" stroke="#ffffff" stroke-width="0.5" opacity="0.04"/>
+  <text x="640" y="96"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif"
+    font-size="72" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="-4">ET-SPOTTER</text>
+  <text x="640" y="124"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif"
+    font-size="11" font-weight="400" fill="#7c83fd" text-anchor="middle" letter-spacing="7">
+    QUANTITATIVE ETF ANALYSIS · AUTOMATED · OPEN SOURCE
+  </text>
+  <rect x="0" y="142" width="1280" height="1" fill="url(#bb_rule)"/>
+  <text x="640" y="156"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif"
+    font-size="9" font-weight="400" fill="#1e1e1e" text-anchor="middle" letter-spacing="3">
+    97 ETFs UCITS · GITHUB ACTIONS · YFINANCE · MIT LICENSE
+  </text>
+</svg>"""
+
+
+def brand_banner_section_html() -> str:
+    """Inline brand banner — exibido no fundo do dashboard antes do footer."""
+    return f"""
+<div style="margin:24px 0 0;border-top:1px solid var(--border);overflow:hidden;border-radius:0 0 2px 2px">
+  {BRAND_BANNER_SVG}
+</div>"""
+
+
 # ── Sections ──────────────────────────────────────────────────────────────────
 
 def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
@@ -1463,6 +1510,7 @@ async function subscribePush() {{
         backtest_section(data["bt_df"]),
         portfolio_section(PORTFOLIO, data["cmap"]),
         etf_table_section(data["scores_df"], data["cmap"], metadata),
+        brand_banner_section_html(),
         '</div>',
         f'<footer>'
         f'<div style="max-width:900px;margin:0 auto">'
