@@ -2008,7 +2008,7 @@ async function subscribePush() {{
         f'<span style="background:#0F1629;border:1px solid #00FF9D44;color:#00FF9D;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">◈ ETF SCANNER</span>'
         f'<span style="background:#0F1629;border:1px solid #FFB80044;color:#FFB800;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">✦ OPEN SOURCE</span>'
         f'</div>'
-        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
+        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · actualização diária</div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
         f'<span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span>'
         f'<span class="acad-badge" title="Trend following SMA">Faber (2007)</span>'
