@@ -157,11 +157,18 @@ def brand_banner_section_html() -> str:
 
 def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     regime_color = "var(--green)" if spy_regime == "BULL" else ("var(--red)" if spy_regime == "BEAR" else "var(--muted)")
-    spy_str = f"SPY {spy_close:.2f}" if spy_close else "SPY —"
-    sma_str = f"SMA200 {spy_sma200:.2f}" if spy_sma200 else ""
+    spy_price = f"{spy_close:.2f}" if spy_close else "—"
+    sma_price = f"{spy_sma200:.2f}" if spy_sma200 else "—"
+    arrow = ">" if spy_regime == "BULL" else "<"
+    regime_tip = (
+        f"Regime de mercado americano: SPY {spy_price} {arrow} SMA200 {sma_price}. "
+        f"BULL = S&P 500 acima da média de 200 dias (tendência de alta). "
+        f"BEAR = abaixo (tendência de baixa). "
+        f"O dashboard usa isto para contextualizar os sinais."
+    )
     regime_badge = (
-        f'<span style="background:{regime_color};color:#000;padding:2px 8px;'
-        f'border-radius:2px;font-size:11px;font-weight:bold">{spy_regime}</span>'
+        f'<span title="{regime_tip}" style="background:{regime_color};color:#000;padding:2px 8px;'
+        f'border-radius:2px;font-size:11px;font-weight:bold;cursor:help">{spy_regime}</span>'
     )
     return f"""
 <div class="top-accent"></div>
@@ -174,7 +181,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-        <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
+        {regime_badge}
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
         <span class="live-dot"></span>Actualizado: {ts}
