@@ -2,7 +2,7 @@ name: Hourly Monitor
 
 on:
   schedule:
-    - cron: "0 * * * *"   # cada hora a X:00 UTC
+    - cron: "0 13-22 * * 1-5"   # seg-sex 13h-22h UTC (janela US+EU market hours)
   workflow_dispatch:
 
 concurrency:
@@ -12,6 +12,7 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
 
@@ -28,9 +29,6 @@ jobs:
 
       - name: Fetch intraday data
         run: python scripts/fetch_intraday.py
-
-      - name: Fetch daily data
-        run: python scripts/fetch_daily.py
 
       - name: Compute metrics
         run: python scripts/compute_metrics.py
@@ -55,7 +53,6 @@ jobs:
           git config --global user.email "bot@et-spotter.local"
           git add data/ docs/
           git diff --cached --quiet || git commit -m "chore: hourly data update $(date -u '+%Y-%m-%d %H:%M') UTC"
-          git pull --rebase origin ${{ github.ref_name }}
           attempts=0
           until git push; do
             attempts=$((attempts + 1))
@@ -64,4 +61,5 @@ jobs:
             fi
             echo "Push falhou (tentativa $attempts/5), aguardando $((2 ** attempts))s..."
             sleep $((2 ** attempts))
+            git pull --rebase origin ${{ github.ref_name }}
           done
