@@ -187,26 +187,67 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
 </header>"""
 
 
-def hero_bar_html(n_etfs: int = 97) -> str:
+def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     """Stat strip — visual branding bar with key project numbers."""
-    stats = [
-        (str(n_etfs),  "ETFs UCITS", "var(--green)"),
-        ("4",          "Factores",   "#7c83fd"),
-        ("22h",        "Diário",     "var(--yellow)"),
-        ("€0",         "Custo",      "var(--green)"),
-        ("~3min",      "Pipeline",   "oklch(70% 0.12 230)"),
-    ]
+    etf_label = "ETFs UCITS"
+    etf_sub   = f"de {n_total} no universo" if n_etfs != n_total else "ETFs UCITS"
     items = ""
-    for i, (val, label, color) in enumerate(stats):
+    stats = [
+        (str(n_etfs), etf_label, etf_sub, "var(--green)",        f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
+        ("4",         "Factores", "momentum·trend·risco·alpha", "#7c83fd", "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
+        ("22h",       "Diário",   "actualização EOD",  "var(--yellow)", "Dados de fecho actualizados todos os dias às 22h UTC"),
+        ("€0",        "Custo",    "infra-estrutura",   "var(--green)",  "GitHub Actions free tier · yfinance · zero servidores"),
+        ("~3min",     "Pipeline", "do fetch ao email", "oklch(70% 0.12 230)", "Pipeline completo em ~3 minutos por GitHub Actions"),
+    ]
+    for i, (val, label, sub, color, tip) in enumerate(stats):
         if i > 0:
             items += '<div class="stat-div"></div>'
         items += (
-            f'<div class="stat-item">'
+            f'<div class="stat-item" title="{tip}">'
             f'<span style="color:{color};font-size:22px;font-weight:700;font-family:\'Albert Sans\',sans-serif;line-height:1">{val}</span>'
-            f'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">{label}</span>'
+            f'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">{label}</span>'
+            f'<span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">{sub}</span>'
             f'</div>'
         )
     return f'<div class="stat-bar">{items}</div>'
+
+
+def cta_strip_html() -> str:
+    """Faixa de CTA — converte visitantes em utilizadores."""
+    return """
+<div class="cta-strip">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <span style="color:var(--green);font-size:14px">●</span>
+    <span style="color:var(--text);font-size:0.78rem;font-weight:500">Receber este relatório por email todos os dias às 22h</span>
+    <span style="color:var(--muted);font-size:0.72rem">— grátis, sem servidores, sem subscrição</span>
+  </div>
+  <a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener"
+     class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)">
+    🍴 Fork e configura em 3 minutos
+  </a>
+</div>"""
+
+
+def signal_legend_html(n_etfs: int = 0) -> str:
+    """Mini-legenda de sinais — sempre visível, dá contexto antes dos cards."""
+    ctx = f"de {n_etfs} ETFs analisados hoje:" if n_etfs else ""
+    return f"""
+<div class="signal-legend">
+  <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.75</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <span style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.55</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <span style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.40</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({{behavior:'smooth'}});return false;"
+       style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
+  </div>
+</div>"""
 
 
 def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
@@ -246,11 +287,11 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
 def explainer_section() -> str:
     """Painel colapsável 'Como ler este dashboard' para utilizadores sem experiência técnica."""
     return """
-<details style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
+<details id="explainer-details" style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
   <summary style="padding:10px 16px;cursor:pointer;list-style:none;display:flex;
                   justify-content:space-between;align-items:center;user-select:none">
     <span style="color:var(--text);font-size:0.75rem;font-weight:600;letter-spacing:0.04em">
-      📖 Novo aqui? Como ler este dashboard
+      📖 Novo aqui? Guia completo — o que é um ETF, como ler o score, glossário
     </span>
     <span style="color:var(--muted);font-size:0.70rem">clica para expandir</span>
   </summary>
@@ -581,6 +622,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:{'var(--green)' if r.get('sharpe_63',0)>=1 else 'var(--muted)'}">{r.get('sharpe_63',0):.1f}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if r.get('rs_positive') else 'var(--red)'}">{'✓' if r.get('rs_positive') else '✗'}</b></span>
           </div>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">{narrativa_advisor(r)}</p>
         </div>"""
 
@@ -637,7 +679,8 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
         </div>"""
 
     return f"""
@@ -1344,9 +1387,35 @@ footer {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 14px 12px;
+  padding: 12px 12px;
   flex: 1;
   background: var(--surface);
+  cursor: default;
+}
+
+/* CTA strip */
+.cta-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: oklch(9% 0.012 188);
+  border: 1px solid oklch(22% 0.06 188);
+  border-radius: 2px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+}
+
+/* Signal legend bar */
+.signal-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
 }
 .stat-div {
   width: 1px;
@@ -1498,10 +1567,19 @@ async function subscribePush() {{
 }}
 </script>"""
 
+    n_etfs_today = len(data["scores_df"])
+    n_total = sum(
+        len(cat.get("etfs", []))
+        for cat in cfg.get("categories", [])
+        if isinstance(cat, dict)
+    ) or 97
+
     sections = [
-        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
+        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
         '<div class="main">',
-        hero_bar_html(n_etfs=len(data["scores_df"])),
+        hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
+        cta_strip_html(),
+        signal_legend_html(n_etfs=n_etfs_today),
         summary_cards_html(signals_all, data["scores_df"]),
         explainer_section(),
         advisor_section(data["rows_raw"]),
@@ -1530,7 +1608,7 @@ async function subscribePush() {{
         f'<span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span>'
         f'<span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span>'
         f'</div>'
-        f'<span style="font-size:0.60rem;opacity:0.5">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros.</span>'
+        f'<span style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — <b>não constitui aconselhamento financeiro</b>. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span>'
         f'</div>'
         f'{push_btn}</footer>',
     ]
@@ -1542,7 +1620,16 @@ async function subscribePush() {{
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
   <meta name="theme-color" content="#080a10">
-  <title>ET-Spotter Dashboard</title>
+  <title>ET-Spotter — Análise Automática de ETFs UCITS</title>
+  <meta name="description" content="Análise técnica automática de {n_etfs_today} ETFs UCITS todos os dias. Score composto de momentum, tendência, risco e alpha. Grátis, open-source, sem servidores.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
+  <meta property="og:description" content="{n_etfs_today} ETFs europeus analisados diariamente. Recebe o sinal técnico por email — €0, open-source, GitHub Actions.">
+  <meta property="og:url" content="https://nunovinhas-creator.github.io/ET-spotter">
+  <meta property="og:image" content="https://raw.githubusercontent.com/nunovinhas-creator/ET-spotter/claude/youthful-euler-SKkX7/docs/assets/banner.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
+  <meta name="twitter:description" content="{n_etfs_today} ETFs UCITS analisados diariamente. Score de momentum, tendência, risco e alpha. Grátis.">
   <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
