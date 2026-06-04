@@ -1578,7 +1578,6 @@ async function subscribePush() {{
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
         '<div class="main">',
         hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
-        cta_strip_html(),
         signal_legend_html(n_etfs=n_etfs_today),
         summary_cards_html(signals_all, data["scores_df"]),
         explainer_section(),
