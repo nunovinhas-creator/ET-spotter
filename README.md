@@ -14,12 +14,33 @@
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![Visitors](https://hits.sh/github.com/nunovinhas-creator/ET-spotter.svg?style=flat-square&color=7c83fd&label=visitas)](https://hits.sh/github.com/nunovinhas-creator/ET-spotter/)
+[![Last Commit](https://img.shields.io/github/last-commit/nunovinhas-creator/ET-spotter?style=flat-square&color=4caf50&label=último+commit)](https://github.com/nunovinhas-creator/ET-spotter/commits)
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/nunovinhas-creator/ET-spotter?style=flat-square&color=7c83fd&label=commits%2Fmês)](https://github.com/nunovinhas-creator/ET-spotter/graphs/commit-activity)
+[![Repo Size](https://img.shields.io/github/repo-size/nunovinhas-creator/ET-spotter?style=flat-square&color=7c83fd)](https://github.com/nunovinhas-creator/ET-spotter)
+[![Open Issues](https://img.shields.io/github/issues/nunovinhas-creator/ET-spotter?style=flat-square&color=ffd54f&label=issues)](https://github.com/nunovinhas-creator/ET-spotter/issues)
 
 <br>
 
 <img src="https://skillicons.dev/icons?i=python,github,githubactions&theme=dark" height="36" alt="Python · GitHub · GitHub Actions">
 
 </div>
+
+<br>
+
+<details>
+<summary><b>📑 Índice rápido</b></summary>
+<br>
+
+- [📬 O que recebes](#-o-que-recebes)
+- [⚡ Quick Start — 4 passos](#-quick-start--4-passos-3-minutos)
+- [🔬 Como funciona](#-como-funciona)
+- [🧮 Score v3 — Metodologia](#-score-v3--metodologia)
+- [🗂️ Universo ETF](#️-universo--97-etfs-ucits-em-11-categorias)
+- [🏛️ Base Académica](#️-base-académica)
+- [🗺️ Roadmap](#️-roadmap)
+- [⭐ Contribuir e Partilhar](#-contribuir-e-partilhar)
+
+</details>
 
 <br>
 
@@ -54,6 +75,8 @@ Scores em tempo real para todos os 97 ETFs: sub-barras de momentum · tendência
 </td>
 </tr>
 </table>
+
+<img src="docs/assets/signal-card.svg" width="100%" alt="ET-Spotter — Níveis de Sinal: FORTE COMPRA ≥0.75 · COMPRA ≥0.55 · POTENCIAL ≥0.40">
 
 > **Zero custo de infra-estrutura.** Corre inteiramente no plano gratuito do GitHub Actions —
 > sem servidores, sem subscriptions, sem APIs pagas. O único requisito é uma conta Gmail.
@@ -240,6 +263,26 @@ Os factores do score v3 têm suporte em literatura peer-reviewed publicada em jo
 
 ---
 
+## 🗺️ Roadmap
+
+| Estado | Feature |
+|:------:|---------|
+| ✅ | Score v3 cross-sectional — 4 factores com pesos académicos |
+| ✅ | Dashboard GitHub Pages — PWA, offline, sparklines |
+| ✅ | Email diário + semanal com glossário e narrativa em PT-PT |
+| ✅ | Backtest automático de sinais (forward return 21d) |
+| ✅ | Portfólio tracker opcional (integração Alpaca) |
+| ✅ | GoatCounter analytics (privacy-first, sem cookies) |
+| 🔄 | Alertas push Web Push API (VAPID — infra pronta) |
+| 📋 | Subscrição sem fork — email externo serverless |
+| 📋 | Score v4 — factor ML com SHAP explainability |
+| 📋 | Backtesting visual interactivo no dashboard |
+| 📋 | Exportação CSV/PDF de relatórios históricos |
+
+<br>
+
+---
+
 ## ⭐ Contribuir e Partilhar
 
 Se o ET-Spotter te foi útil, uma estrela ajuda outros investidores a encontrá-lo.
@@ -247,6 +290,16 @@ Se o ET-Spotter te foi útil, uma estrela ajuda outros investidores a encontrá-
 [![Star](https://img.shields.io/github/stars/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=ffd700&label=⭐+Star)](https://github.com/nunovinhas-creator/ET-spotter/stargazers)
 [![Fork](https://img.shields.io/github/forks/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=7c83fd&label=🔱+Fork)](https://github.com/nunovinhas-creator/ET-spotter/fork)
 [![Issues](https://img.shields.io/github/issues/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=22c55e&label=💬+Issues)](https://github.com/nunovinhas-creator/ET-spotter/issues)
+
+<div align="center">
+
+<a href="https://github.com/nunovinhas-creator/ET-spotter">
+  <img src="https://github-readme-stats.vercel.app/api/pin/?username=nunovinhas-creator&repo=ET-spotter&theme=dark&bg_color=080a10&title_color=7c83fd&icon_color=4caf50&text_color=aaaaaa&border_color=1e2130&hide_border=false" alt="ET-Spotter — Repo Card">
+</a>
+
+</div>
+
+<br>
 
 Pull requests são bem-vindos. Para mudanças de fundo, abre primeiro uma issue.
 

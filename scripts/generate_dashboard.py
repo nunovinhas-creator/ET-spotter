@@ -117,6 +117,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
         f'border-radius:2px;font-size:11px;font-weight:bold">{spy_regime}</span>'
     )
     return f"""
+<div class="top-accent"></div>
 <header>
   <div class="header-inner">
     <div>
@@ -131,7 +132,9 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
         </a>
         <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
       </div>
-      <div style="color:var(--muted);font-size:11px">Actualizado: {ts}</div>
+      <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
+        <span class="live-dot"></span>Actualizado: {ts}
+      </div>
     </div>
   </div>
 </header>"""
@@ -504,8 +507,9 @@ def advisor_section(rows_raw: list[dict]) -> str:
         momentum = (ret_252d - float(r.get("ret_21d", 0) or 0)) if ret_252d != 0 else (ret_126d - float(r.get("ret_21d", 0) or 0))
         mom_label = "Mom.12-1M" if ret_252d != 0 else "Mom.6-1M"
 
+        advisor_forte = ' class="signal-forte"' if i == 0 and pts >= 70 else ""
         cards += f"""
-        <div style="background:var(--bg);border:1px solid {bar_border_clr};padding:14px 16px;
+        <div{advisor_forte} style="background:var(--bg);border:1px solid {bar_border_clr};padding:14px 16px;
                     margin:8px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
             <span style="font-size:18px">{medal}</span>
@@ -567,8 +571,9 @@ def buy_signals_section(signals: list[dict]) -> str:
         rsi = s.get("rsi", 50) or 50
         rsi_c = "var(--green)" if 40 <= rsi <= 65 else ("var(--yellow)" if rsi > 70 else "var(--red)" if rsi < 35 else "var(--muted)")
 
+        forte_class = ' class="signal-forte"' if s["level"] == "FORTE COMPRA" else ""
         cards += f"""
-        <div style="background:{bg};border:1px solid {border_clr};padding:12px 16px;margin:6px 0;border-radius:2px">
+        <div{forte_class} style="background:{bg};border:1px solid {border_clr};padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">{html_mod.escape(s['ticker'])}</span>
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
@@ -1343,8 +1348,44 @@ footer {
   .stat-div { display: none; }
 }
 
+/* Live pulse dot */
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.7); }
+}
+.live-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  animation: pulse-live 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* FORTE COMPRA glow pulse */
+@keyframes glow-forte {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
+  50%       { box-shadow: 0 0 14px 3px rgba(76,175,80,0.30); }
+}
+.signal-forte { animation: glow-forte 3s ease-in-out infinite; }
+
+/* Animated gradient top accent */
+@keyframes shift-accent {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.top-accent {
+  height: 2px;
+  background: linear-gradient(90deg, #080a10 0%, #4caf50 20%, #7c83fd 50%, #ffd54f 80%, #080a10 100%);
+  background-size: 200% 100%;
+  animation: shift-accent 6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  .live-dot, .signal-forte, .top-accent { animation: none !important; }
 }
 </style>"""
 
