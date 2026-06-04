@@ -228,7 +228,22 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
       </div>
     </div>
   </div>
-</header>"""
+  <nav class="nav-tab-bar" style="border-top:1px solid #1E2D4D22;margin-top:10px;padding-top:2px;max-width:1400px;margin-left:auto;margin-right:auto">
+    <button class="nav-tab active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="nav-tab" onclick="switchTab('signals',this)">Scores &amp; Alertas</button>
+    <button class="nav-tab" onclick="switchTab('reports',this)">Relatórios</button>
+  </nav>
+</header>
+<script>
+function switchTab(tab, btn) {{
+  ['overview','signals','reports'].forEach(function(t) {{
+    var el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  }});
+  document.querySelectorAll('.nav-tab').forEach(function(b) {{ b.classList.remove('active'); }});
+  if (btn) btn.classList.add('active');
+}}
+</script>"""
 
 
 def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
@@ -276,6 +291,254 @@ def cta_strip_html() -> str:
      class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)">
     🍴 Fork e configura em 3 minutos
   </a>
+</div>"""
+
+
+def _panel(title: str, body: str, badge: str = "") -> str:
+    badge_html = f'<span style="color:#4A6080;font-size:0.60rem">{badge}</span>' if badge else ""
+    return (f'<div class="panel"><div class="panel-hdr">'
+            f'<span class="panel-title">{title}</span>{badge_html}</div>'
+            f'<div class="panel-body">{body}</div></div>')
+
+
+def _score_pill(level: str | None) -> str:
+    if level == "FORTE COMPRA":
+        return '<span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>'
+    if level == "COMPRA":
+        return '<span class="score-pill" style="background:#00D4FF;color:#000">Compra</span>'
+    if level == "POTENCIAL":
+        return '<span class="score-pill" style="background:#FFB800;color:#000">Pot.</span>'
+    return '<span class="score-pill" style="background:#FF446655;color:#FF4466">Fraco</span>'
+
+
+def _score_color(s: float) -> str:
+    if s >= 0.62: return "#00FF9D"
+    if s >= 0.54: return "#00D4FF"
+    if s >= 0.48: return "#FFB800"
+    return "#FF4466"
+
+
+def overview_grid_html(rows_raw: list[dict], signals: list[dict],
+                       scores_df, spy_close, spy_sma200, spy_regime, hist_df) -> str:
+    """Two-column Bloomberg-style overview grid."""
+    from utils import compute_conviction
+
+    # ── Top ETF summary ──────────────────────────────────────────────────────
+    top = rows_raw[0] if rows_raw else {}
+    top_score = top.get("score", 0)
+    top_level = compute_conviction(
+        top_score, top.get("trend_sma",0), top.get("macd_bullish",0),
+        top.get("rsi",50), top.get("rs_positive",0), top.get("ret_63d",0),
+        top.get("delta_score",0), top.get("drawdown",-1),
+        top.get("ret_5d",0), top.get("vol_21",0)
+    )["level"]
+    top_color = _score_color(top_score)
+
+    summary_body = f"""
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+  <div>
+    <span style="color:{top_color};font-size:52px;font-weight:800;line-height:1;
+                 text-shadow:0 0 24px {top_color}88">{top_score:.2f}</span>
+  </div>
+  <div>
+    <div style="margin-bottom:6px">{_score_pill(top_level)}</div>
+    <div style="color:#E8F0FF;font-size:0.85rem;font-weight:700">{top.get("ticker","—")}</div>
+    <div style="color:#4A6080;font-size:0.62rem;margin-top:2px;max-width:180px;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{top.get("nome","")}</div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#7C83FD;font-size:1.3rem;font-weight:700">{top.get("ret_21d",0)*100:+.1f}%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Momentum</div>
+  </div>
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#FFB800;font-size:1.3rem;font-weight:700">{top.get("vol_21",0)*100:.1f}%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Volatilidade</div>
+  </div>
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#FF4466;font-size:1.3rem;font-weight:700">{top.get("drawdown",0)*100:.1f}%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Drawdown</div>
+  </div>
+</div>"""
+    left_summary = _panel("ETF Analysis Summary", summary_body,
+                           f"Top scorer · {len(rows_raw)} ETFs analisados")
+
+    # ── Score history mini-chart ──────────────────────────────────────────────
+    chart_labels, chart_datasets = [], []
+    top5_tickers = [r["ticker"] for r in rows_raw[:5]]
+    palette = ["#00D4FF","#7C83FD","#00FF9D","#FFB800","#FF4466"]
+    if not hist_df.empty and "etf" in hist_df.columns and "date" in hist_df.columns:
+        dates_all = sorted(hist_df["date"].unique())[-30:]
+        chart_labels = [str(d)[-5:] for d in dates_all]
+        for i, ticker in enumerate(top5_tickers):
+            sub = hist_df[hist_df["etf"]==ticker].sort_values("date")
+            sub = sub[sub["date"].isin(dates_all)]
+            date_score = dict(zip(sub["date"].astype(str), sub["score"].round(3)))
+            data = [date_score.get(str(d)) for d in dates_all]
+            chart_datasets.append({
+                "label": ticker,
+                "data": data,
+                "borderColor": palette[i],
+                "backgroundColor": "transparent",
+                "borderWidth": 1.5,
+                "pointRadius": 0,
+                "tension": 0.3,
+                "spanGaps": True,
+            })
+
+    chart_json_labels = json.dumps(chart_labels)
+    chart_json_datasets = json.dumps(chart_datasets)
+    chart_body = f"""
+<div style="position:relative;height:140px">
+  <canvas id="overviewChart"></canvas>
+</div>
+<script>
+(function(){{
+  var ctx = document.getElementById('overviewChart').getContext('2d');
+  new Chart(ctx, {{
+    type: 'line',
+    data: {{ labels: {chart_json_labels}, datasets: {chart_json_datasets} }},
+    options: {{
+      responsive: true, maintainAspectRatio: false,
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{
+        legend: {{ display: true, position: 'top',
+          labels: {{ color: '#4A6080', font: {{ size: 9 }}, boxWidth: 10, padding: 8 }} }},
+        tooltip: {{ backgroundColor: '#0D1525', borderColor: '#1E2D4D', borderWidth: 1,
+          titleColor: '#8BA4C8', bodyColor: '#E8F0FF', callbacks: {{
+            label: function(c){{ return ' ' + c.dataset.label + ': ' + (c.parsed.y??'—'); }}
+          }}}}
+      }},
+      scales: {{
+        x: {{ grid: {{ color: '#1E2D4D44' }}, ticks: {{ color: '#4A6080', font: {{ size: 9 }},
+               maxTicksLimit: 6 }} }},
+        y: {{ grid: {{ color: '#1E2D4D44' }}, ticks: {{ color: '#4A6080', font: {{ size: 9 }} }},
+              min: 0, max: 1 }}
+      }}
+    }}
+  }});
+}})();
+</script>"""
+    left_chart = _panel("Score Trend — Top 5 ETFs (30 dias)", chart_body)
+
+    # ── Key Indicators ────────────────────────────────────────────────────────
+    regime_color = "#00FF9D" if spy_regime == "BULL" else "#FF4466"
+    spy_p = f"{spy_close:.2f}" if spy_close else "—"
+    sma_p = f"{spy_sma200:.2f}" if spy_sma200 else "—"
+    avg_score = float(scores_df["score"].mean()) if "score" in scores_df.columns else 0
+    n_strong = int((scores_df["score"] >= 0.62).sum()) if "score" in scores_df.columns else 0
+
+    def kpi(label, value, color="#E8F0FF"):
+        return (f'<div style="background:#090E1A;border-radius:4px;padding:9px 12px;'
+                f'display:flex;flex-direction:column;gap:3px">'
+                f'<span style="color:{color};font-size:1.0rem;font-weight:700">{value}</span>'
+                f'<span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;'
+                f'letter-spacing:.06em">{label}</span></div>')
+
+    kpi_body = f"""<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+  {kpi("Regime SPY", spy_regime, regime_color)}
+  {kpi("SPY Close", spy_p, "#E8F0FF")}
+  {kpi("SMA 200", sma_p, "#8BA4C8")}
+  {kpi("Score Médio", f"{avg_score:.3f}", "#7C83FD")}
+  {kpi("Forte Compra", str(n_strong), "#00FF9D")}
+  {kpi("Score > 0.50", str(int((scores_df["score"]>=0.5).sum())), "#4D9FFF")}
+</div>"""
+    left_kpi = _panel("Key Indicators", kpi_body)
+
+    # ── Alertas Activos (right top) ───────────────────────────────────────────
+    alert_icons = {"FORTE COMPRA": ("🟢","#00FF9D"), "COMPRA": ("🔵","#00D4FF"),
+                   "POTENCIAL": ("🟡","#FFB800")}
+    alerts_html = ""
+    for s in signals[:6]:
+        icon, color = alert_icons.get(s["level"], ("⚪","#4A6080"))
+        ret5 = s.get("ret_5d", 0)
+        ret5_str = f'{ret5*100:+.1f}%'
+        alerts_html += f"""<div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">{icon}</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">{s["ticker"]}</span>
+          {_score_pill(s["level"])}
+          <span style="color:{_score_color(s["score"])};font-size:0.72rem;font-weight:700;margin-left:auto">{s["score"]:.3f}</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          {s.get("nome","")[:40]} · 5d: <span style="color:{'#00FF9D' if ret5>=0 else '#FF4466'}">{ret5_str}</span>
+        </div>
+      </div>
+    </div>"""
+    if not alerts_html:
+        alerts_html = '<div style="color:#4A6080;font-size:0.72rem">Sem sinais activos hoje.</div>'
+    right_alerts = _panel("Alertas Activos", alerts_html,
+                           f"{len(signals)} sinais")
+
+    # ── Scores Recentes table (right middle) ──────────────────────────────────
+    rows_sorted = sorted(rows_raw, key=lambda r: r["score"], reverse=True)[:10]
+    tbl_rows = ""
+    for r in rows_sorted:
+        s = r["score"]
+        color = _score_color(s)
+        trend_icon = "↑" if r.get("trend_sma") else "↓"
+        trend_color = "#00FF9D" if r.get("trend_sma") else "#FF4466"
+        risk_label = "Baixo" if r.get("drawdown",0) > -0.05 else ("Médio" if r.get("drawdown",0) > -0.10 else "Alto")
+        risk_color = "#00FF9D" if risk_label=="Baixo" else ("#FFB800" if risk_label=="Médio" else "#FF4466")
+        tbl_rows += f"""<tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">{r["ticker"]}</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:{color};font-weight:700;font-size:0.75rem">{s:.3f}</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < 0.48 else ("FORTE COMPRA" if s>=0.62 else ("COMPRA" if s>=0.54 else "POTENCIAL")))}</td>
+      <td style="padding:6px 4px;text-align:center;color:{trend_color};font-size:0.80rem">{trend_icon}</td>
+      <td style="padding:6px 4px;text-align:right;color:{risk_color};font-size:0.65rem">{risk_label}</td>
+    </tr>"""
+
+    scores_tbl = f"""<table style="width:100%;border-collapse:collapse">
+  <thead>
+    <tr style="border-bottom:1px solid #1E2D4D">
+      <th style="padding:4px 4px;text-align:left;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">ETF</th>
+      <th style="padding:4px 8px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Score</th>
+      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Sinal</th>
+      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Tend.</th>
+      <th style="padding:4px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Risco</th>
+    </tr>
+  </thead>
+  <tbody>{tbl_rows}</tbody>
+</table>"""
+    right_table = _panel("Scores Recentes", scores_tbl, "top 10")
+
+    # ── ETF Heatmap (right bottom) ────────────────────────────────────────────
+    top16 = rows_sorted[:16]
+    heat_tiles = ""
+    for r in top16:
+        s = r["score"]
+        # Map score 0-1 to green-yellow-red
+        if s >= 0.62:   bg, fg = "#00FF9D22", "#00FF9D"
+        elif s >= 0.54: bg, fg = "#00D4FF22", "#00D4FF"
+        elif s >= 0.48: bg, fg = "#FFB80022", "#FFB800"
+        elif s >= 0.35: bg, fg = "#4A608033", "#8BA4C8"
+        else:           bg, fg = "#FF446622", "#FF4466"
+        heat_tiles += (f'<div class="heat-tile" style="background:{bg};border:1px solid {fg}33" '
+                       f'title="{r["ticker"]} — {r["nome"][:40]}">'
+                       f'<div style="color:{fg};font-size:0.65rem;font-weight:800">{r["ticker"].replace(".L","").replace(".DE","")}</div>'
+                       f'<div style="color:{fg};font-size:0.72rem;font-weight:700;margin-top:3px">{s:.2f}</div>'
+                       f'</div>')
+    right_heat = _panel("Heatmap de ETFs",
+                        f'<div class="heat-grid">{heat_tiles}</div>',
+                        f"top 16")
+
+    # ── Assemble grid ─────────────────────────────────────────────────────────
+    return f"""
+<div class="db-grid">
+  <div class="db-col">
+    {left_summary}
+    {left_chart}
+    {left_kpi}
+  </div>
+  <div class="db-col">
+    {right_alerts}
+    {right_table}
+    {right_heat}
+  </div>
 </div>"""
 
 
@@ -1498,6 +1761,90 @@ footer {
 }
 .acad-badge:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
 
+/* ── Bloomberg layout ───────────────────────────── */
+.db-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.db-col { display: flex; flex-direction: column; gap: 12px; }
+.panel {
+  background: #0D1525;
+  border: 1px solid #1E2D4D;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.panel-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-bottom: 1px solid #1E2D4D;
+  background: #090E1A;
+}
+.panel-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #8BA4C8;
+}
+.panel-body { padding: 14px; }
+.score-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.heat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.heat-tile {
+  border-radius: 4px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: default;
+  transition: opacity 120ms;
+}
+.heat-tile:hover { opacity: 0.85; }
+.nav-tab-bar {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.nav-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #4A6080;
+  padding: 4px 14px 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: 'Albert Sans', sans-serif;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  letter-spacing: 0.02em;
+}
+.nav-tab:hover { color: #8BA4C8; }
+.nav-tab.active { color: #00D4FF; border-bottom-color: #00D4FF; }
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #1E2D4D11;
+}
+.alert-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+@media (max-width: 700px) {
+  .db-grid { grid-template-columns: 1fr; }
+  .heat-grid { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 600px) {
   .stat-bar { flex-wrap: wrap; }
   .stat-item { flex: 1 1 calc(33% - 2px); min-width: 80px; }
@@ -1617,9 +1964,19 @@ async function subscribePush() {{
     sections = [
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
         '<div class="main">',
+
+        # ── Tab: Overview ─────────────────────────────────────────────────────
+        '<div id="tab-overview">',
         hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
         signal_legend_html(n_etfs=n_etfs_today),
         summary_cards_html(signals_all, data["scores_df"]),
+        overview_grid_html(data["rows_raw"], signals_all, data["scores_df"],
+                           data["spy_close"], data["spy_sma200"], data["spy_regime"],
+                           data["hist_df"]),
+        '</div>',
+
+        # ── Tab: Scores & Alertas ─────────────────────────────────────────────
+        '<div id="tab-signals" style="display:none">',
         explainer_section(),
         _GLOW_DIVIDER,
         advisor_section(data["rows_raw"]),
@@ -1627,6 +1984,10 @@ async function subscribePush() {{
         buy_signals_section(signals),
         _GLOW_DIVIDER,
         category_heatmap_section(data["cats"]),
+        '</div>',
+
+        # ── Tab: Relatórios ───────────────────────────────────────────────────
+        '<div id="tab-reports" style="display:none">',
         _GLOW_DIVIDER,
         history_chart_section(data["hist_df"], data["scores_df"]),
         _GLOW_DIVIDER,
@@ -1634,6 +1995,8 @@ async function subscribePush() {{
         portfolio_section(PORTFOLIO, data["cmap"]),
         _GLOW_DIVIDER,
         etf_table_section(data["scores_df"], data["cmap"], metadata),
+        '</div>',
+
         brand_banner_section_html(),
         '</div>',
         f'<footer>'
