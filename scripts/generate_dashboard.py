@@ -1447,7 +1447,8 @@ def generate_dashboard(cfg: dict) -> None:
 
     ts       = datetime.now(timezone.utc).strftime("%d/%m/%Y  %H:%M UTC")
     ts_epoch = int(datetime.now(timezone.utc).timestamp())
-    signals  = build_buy_signals(data["rows_raw"], top_n=10)
+    signals      = build_buy_signals(data["rows_raw"], top_n=10)   # para display (secção sinais)
+    signals_all  = build_buy_signals(data["rows_raw"], top_n=200)  # para contagens nos cards
     metadata = get_etf_metadata(cfg)
     vapid_key = cfg.get("params", {}).get("vapid_public_key", "")
 
@@ -1501,7 +1502,7 @@ async function subscribePush() {{
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
         '<div class="main">',
         hero_bar_html(n_etfs=len(data["scores_df"])),
-        summary_cards_html(signals, data["scores_df"]),
+        summary_cards_html(signals_all, data["scores_df"]),
         explainer_section(),
         advisor_section(data["rows_raw"]),
         buy_signals_section(signals),
