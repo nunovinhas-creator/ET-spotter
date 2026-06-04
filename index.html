@@ -260,6 +260,90 @@ footer {
 }
 .acad-badge:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
 
+/* ── Bloomberg layout ───────────────────────────── */
+.db-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.db-col { display: flex; flex-direction: column; gap: 12px; }
+.panel {
+  background: #0D1525;
+  border: 1px solid #1E2D4D;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.panel-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-bottom: 1px solid #1E2D4D;
+  background: #090E1A;
+}
+.panel-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #8BA4C8;
+}
+.panel-body { padding: 14px; }
+.score-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.heat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.heat-tile {
+  border-radius: 4px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: default;
+  transition: opacity 120ms;
+}
+.heat-tile:hover { opacity: 0.85; }
+.nav-tab-bar {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.nav-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #4A6080;
+  padding: 4px 14px 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: 'Albert Sans', sans-serif;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  letter-spacing: 0.02em;
+}
+.nav-tab:hover { color: #8BA4C8; }
+.nav-tab.active { color: #00D4FF; border-bottom-color: #00D4FF; }
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #1E2D4D11;
+}
+.alert-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+@media (max-width: 700px) {
+  .db-grid { grid-template-columns: 1fr; }
+  .heat-grid { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 600px) {
   .stat-bar { flex-wrap: wrap; }
   .stat-item { flex: 1 1 calc(33% - 2px); min-width: 80px; }
@@ -322,11 +406,26 @@ footer {
         <span title="Regime de mercado americano: SPY 755.62 > SMA200 681.04. BULL = S&P 500 acima da média de 200 dias (tendência de alta). BEAR = abaixo (tendência de baixa). O dashboard usa isto para contextualizar os sinais." style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold;cursor:help">BULL</span>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span>Actualizado: 04/06/2026  18:45 UTC
+        <span class="live-dot"></span>Actualizado: 04/06/2026  18:54 UTC
       </div>
     </div>
   </div>
-</header><div class="main">
+  <nav class="nav-tab-bar" style="border-top:1px solid #1E2D4D22;margin-top:10px;padding-top:2px;max-width:1400px;margin-left:auto;margin-right:auto">
+    <button class="nav-tab active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="nav-tab" onclick="switchTab('signals',this)">Scores &amp; Alertas</button>
+    <button class="nav-tab" onclick="switchTab('reports',this)">Relatórios</button>
+  </nav>
+</header>
+<script>
+function switchTab(tab, btn) {
+  ['overview','signals','reports'].forEach(function(t) {
+    var el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+}
+</script><div class="main"><div id="tab-overview">
 <div style="margin:16px 0 0;padding:0">
   <div style="display:flex;gap:8px;flex-wrap:wrap"><div title="84 de 97 ETFs com dados suficientes hoje" style="
             flex:1;min-width:100px;padding:16px 12px;text-align:center;
@@ -438,6 +537,244 @@ footer {
           
         </div>
 </div>
+<div class="db-grid">
+  <div class="db-col">
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">ETF Analysis Summary</span><span style="color:#4A6080;font-size:0.60rem">Top scorer · 84 ETFs analisados</span></div><div class="panel-body">
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+  <div>
+    <span style="color:#00FF9D;font-size:52px;font-weight:800;line-height:1;
+                 text-shadow:0 0 24px #00FF9D88">0.87</span>
+  </div>
+  <div>
+    <div style="margin-bottom:6px"><span class="score-pill" style="background:#FFB800;color:#000">Pot.</span></div>
+    <div style="color:#E8F0FF;font-size:0.85rem;font-weight:700">WTAI.L</div>
+    <div style="color:#4A6080;font-size:0.62rem;margin-top:2px;max-width:180px;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Inteligência Artificial (WisdomTree UCITS Acc)</div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#7C83FD;font-size:1.3rem;font-weight:700">+18.8%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Momentum</div>
+  </div>
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#FFB800;font-size:1.3rem;font-weight:700">35.2%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Volatilidade</div>
+  </div>
+  <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
+    <div style="color:#FF4466;font-size:1.3rem;font-weight:700">-1.0%</div>
+    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Drawdown</div>
+  </div>
+</div></div></div>
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">Score Trend — Top 5 ETFs (30 dias)</span></div><div class="panel-body">
+<div style="position:relative;height:140px">
+  <canvas id="overviewChart"></canvas>
+</div>
+<script>
+(function(){
+  var ctx = document.getElementById('overviewChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: ["00:00", "00:00", "00:00", "00:00", "00:00", "00:00", "00:00", "00:00", "00:00", "00:00", "00:00"], datasets: [{"label": "WTAI.L", "data": [null, null, null, null, null, null, null, null, null, null, null], "borderColor": "#00D4FF", "backgroundColor": "transparent", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.3, "spanGaps": true}, {"label": "ECAR.L", "data": [null, null, null, null, null, null, null, null, null, null, null], "borderColor": "#7C83FD", "backgroundColor": "transparent", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.3, "spanGaps": true}, {"label": "XAIX.L", "data": [null, null, null, null, null, null, null, null, null, null, null], "borderColor": "#00FF9D", "backgroundColor": "transparent", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.3, "spanGaps": true}, {"label": "INRG.L", "data": [null, null, null, null, null, null, null, null, null, null, null], "borderColor": "#FFB800", "backgroundColor": "transparent", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.3, "spanGaps": true}, {"label": "CYBR.L", "data": [null, null, null, null, null, null, null, null, null, null, null], "borderColor": "#FF4466", "backgroundColor": "transparent", "borderWidth": 1.5, "pointRadius": 0, "tension": 0.3, "spanGaps": true}] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top',
+          labels: { color: '#4A6080', font: { size: 9 }, boxWidth: 10, padding: 8 } },
+        tooltip: { backgroundColor: '#0D1525', borderColor: '#1E2D4D', borderWidth: 1,
+          titleColor: '#8BA4C8', bodyColor: '#E8F0FF', callbacks: {
+            label: function(c){ return ' ' + c.dataset.label + ': ' + (c.parsed.y??'—'); }
+          }}
+      },
+      scales: {
+        x: { grid: { color: '#1E2D4D44' }, ticks: { color: '#4A6080', font: { size: 9 },
+               maxTicksLimit: 6 } },
+        y: { grid: { color: '#1E2D4D44' }, ticks: { color: '#4A6080', font: { size: 9 } },
+              min: 0, max: 1 }
+      }
+    }
+  });
+})();
+</script></div></div>
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">Key Indicators</span></div><div class="panel-body"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#00FF9D;font-size:1.0rem;font-weight:700">BULL</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">Regime SPY</span></div>
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#E8F0FF;font-size:1.0rem;font-weight:700">755.62</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">SPY Close</span></div>
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#8BA4C8;font-size:1.0rem;font-weight:700">681.04</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">SMA 200</span></div>
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#7C83FD;font-size:1.0rem;font-weight:700">0.554</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">Score Médio</span></div>
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#00FF9D;font-size:1.0rem;font-weight:700">25</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">Forte Compra</span></div>
+  <div style="background:#090E1A;border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:3px"><span style="color:#4D9FFF;font-size:1.0rem;font-weight:700">48</span><span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;letter-spacing:.06em">Score > 0.50</span></div>
+</div></div></div>
+  </div>
+  <div class="db-col">
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">Alertas Activos</span><span style="color:#4A6080;font-size:0.60rem">51 sinais</span></div><div class="panel-body"><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">INRG.L</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.860</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          Energias Limpas Globais (iShares UCITS A · 5d: <span style="color:#FF4466">-2.0%</span>
+        </div>
+      </div>
+    </div><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">VERX.L</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.633</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          FTSE Dev. Europe ex-UK (Vanguard UCITS A · 5d: <span style="color:#FF4466">-0.2%</span>
+        </div>
+      </div>
+    </div><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">EIMI.L</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.777</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          MSCI EM IMI (iShares Core UCITS Acc) · 5d: <span style="color:#00FF9D">+0.3%</span>
+        </div>
+      </div>
+    </div><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">WSML.L</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.621</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          MSCI World Small Cap (iShares UCITS Acc) · 5d: <span style="color:#00FF9D">+0.4%</span>
+        </div>
+      </div>
+    </div><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">XMEM.DE</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.787</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          MSCI Emerging Markets (Xtrackers UCITS A · 5d: <span style="color:#00FF9D">+0.8%</span>
+        </div>
+      </div>
+    </div><div class="alert-item">
+      <span style="font-size:14px;flex-shrink:0">🟢</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700">IEEM.L</span>
+          <span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>
+          <span style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-left:auto">0.767</span>
+        </div>
+        <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
+          MSCI EM (iShares UCITS Dist) · 5d: <span style="color:#00FF9D">+0.8%</span>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">Scores Recentes</span><span style="color:#4A6080;font-size:0.60rem">top 10</span></div><div class="panel-body"><table style="width:100%;border-collapse:collapse">
+  <thead>
+    <tr style="border-bottom:1px solid #1E2D4D">
+      <th style="padding:4px 4px;text-align:left;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">ETF</th>
+      <th style="padding:4px 8px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Score</th>
+      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Sinal</th>
+      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Tend.</th>
+      <th style="padding:4px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Risco</th>
+    </tr>
+  </thead>
+  <tbody><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">WTAI.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.872</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">ECAR.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.872</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">XAIX.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.868</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">INRG.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.860</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">CYBR.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.836</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">IWVL.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.834</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">XDWT.DE</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.818</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">IUIT.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.816</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">XMEM.DE</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.787</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr><tr style="border-bottom:1px solid #1E2D4D22">
+      <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">EIMI.L</td>
+      <td style="padding:6px 8px;text-align:right">
+        <span style="color:#00FF9D;font-weight:700;font-size:0.75rem">0.777</span>
+      </td>
+      <td style="padding:6px 4px;text-align:center"><span class="score-pill" style="background:#00FF9D;color:#000">Forte</span></td>
+      <td style="padding:6px 4px;text-align:center;color:#00FF9D;font-size:0.80rem">↑</td>
+      <td style="padding:6px 4px;text-align:right;color:#00FF9D;font-size:0.65rem">Baixo</td>
+    </tr></tbody>
+</table></div></div>
+    <div class="panel"><div class="panel-hdr"><span class="panel-title">Heatmap de ETFs</span><span style="color:#4A6080;font-size:0.60rem">top 16</span></div><div class="panel-body"><div class="heat-grid"><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="WTAI.L — Inteligência Artificial (WisdomTree UCIT"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">WTAI</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.87</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="ECAR.L — Veículos Elétricos & Condução (iShares U"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">ECAR</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.87</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="XAIX.L — AI & Big Data (Xtrackers UCITS Acc)"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">XAIX</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.87</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="INRG.L — Energias Limpas Globais (iShares UCITS A"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">INRG</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.86</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="CYBR.L — Cibersegurança (L&G UCITS Acc)"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">CYBR</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.84</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="IWVL.L — MSCI World Value (iShares Edge UCITS Acc"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">IWVL</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.83</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="XDWT.DE — MSCI World IT (Xtrackers UCITS Acc)"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">XDWT</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.82</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="IUIT.L — S&P 500 IT (iShares UCITS Acc)"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">IUIT</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.82</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="XMEM.DE — MSCI Emerging Markets (Xtrackers UCITS A"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">XMEM</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.79</div></div><div class="heat-tile" style="background:#00FF9D22;border:1px solid #00FF9D33" title="EIMI.L — MSCI EM IMI (iShares Core UCITS Acc)"><div style="color:#00FF9D;font-size:0.65rem;font-weight:800">EIMI</div><div style="color:#00FF9D;font-size:0.72rem;font-weight:700;margin-top:3px">0.78</div></div></div></div></div>
+  </div>
+</div></div><div id="tab-signals" style="display:none">
 <details id="explainer-details" style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
   <summary style="padding:10px 16px;cursor:pointer;list-style:none;display:flex;
                   justify-content:space-between;align-items:center;user-select:none">
@@ -970,7 +1307,7 @@ footer {
           <div style="font-size:20px;font-weight:bold;color:var(--red)">0.360</div>
           <div style="font-size:10px;color:var(--red);margin-top:2px">▼ 3 ETFs · top 0.439</div>
         </div></div>
-</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+</section></div><div id="tab-reports" style="display:none"><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
 <svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1311,7 +1648,7 @@ footer {
     });
     applyFilters();
   </script>
-</section>
+</section></div>
 <div style="margin:24px 0 0;border-top:1px solid var(--border);overflow:hidden;border-radius:0 0 2px 2px">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 160" width="100%" style="display:block">
   <defs>
