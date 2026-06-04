@@ -1594,7 +1594,6 @@ async function subscribePush() {{
         f'<div style="max-width:900px;margin:0 auto">'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">'
         f'<a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a>'
-        f'<a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener" class="gh-btn">🍴 Fork</a>'
         f'<a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a>'
         f'<span style="color:var(--border)">·</span>'
         f'<span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · {ts}</span>'
