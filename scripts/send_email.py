@@ -75,7 +75,7 @@ def send_email(
         )
         return
 
-    msg = _build_message(subject, body_html, from_addr, to_addrs, images)
+    msg = _build_message(subject, body_html, from_addr, to_addrs, images, attachments)
 
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
         server.login(from_addr, password)

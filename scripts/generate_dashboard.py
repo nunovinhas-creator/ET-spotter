@@ -7,6 +7,7 @@ Produz: HTML auto-suficiente com Chart.js (CDN), tabela ordenável/pesquisável,
 
 import html as html_mod
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -78,7 +79,7 @@ def load_data(cfg: dict) -> dict:
 
     df_for_cats = pd.DataFrame([{
         "etf": r["ticker"], "score": r["score"],
-        "ret_24h": r.get("ret_21d", 0) / 21,
+        "ret_24h": r.get("ret_24h", 0),
         "delta_score": r["delta_score"],
     } for r in rows_raw])
     cats = category_summary(df_for_cats, cfg)
@@ -240,13 +241,13 @@ def signal_legend_html(n_etfs: int = 0) -> str:
   <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.75 · percentil superior · todos os factores alinhados</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_STRONG_BUY_SCORE} · percentil superior · todos os factores alinhados</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <span style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.55 · sinal construtivo · maioria dos factores positivos</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_BUY_SCORE} · sinal construtivo · maioria dos factores positivos</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <span style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.40 · sinal incipiente · aguardar confirmação</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_POTENTIAL_SCORE} · sinal incipiente · aguardar confirmação</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({{behavior:'smooth'}});return false;"
        style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
@@ -270,9 +271,9 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
         </div>"""
 
     legend = (
-        '<span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;0.75 &nbsp;·&nbsp;'
-        '<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;0.55 &nbsp;·&nbsp;'
-        '<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;0.40 &nbsp;·&nbsp;'
+        f'<span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_STRONG_BUY_SCORE} &nbsp;·&nbsp;'
+        f'<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_BUY_SCORE} &nbsp;·&nbsp;'
+        f'<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_POTENTIAL_SCORE} &nbsp;·&nbsp;'
         'ranking cross-sectional · momentum multi-período · regime de tendência · risco ajustado (Sharpe/Calmar) · alpha relativo'
     )
     return f"""
@@ -320,7 +321,7 @@ def explainer_section() -> str:
                   text-transform:uppercase;margin-bottom:6px">Score Composto v3 — metodologia quantitativa</div>
       <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0 0 8px">
         Cada ETF recebe um score cross-sectional de 0 a 1, calculado diariamente como média ponderada
-        de 4 factores académicos. O ranking é relativo ao universo: um score de 0.75 significa
+        de 4 factores académicos. O ranking é relativo ao universo: um score de 0.62 significa
         que o ETF está no percentil superior do universo analisado nesse dia.
         <b style="color:var(--text)">Não é uma previsão de retorno</b> — é um snapshot quantitativo do alinhamento de factores no momento actual.
       </p>
@@ -328,17 +329,17 @@ def explainer_section() -> str:
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">FORTE COMPRA</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.75 — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.62 — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">COMPRA</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.55 — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.54 — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">POTENCIAL</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.40 — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.48 — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
         </div>
       </div>
     </div>
@@ -674,7 +675,7 @@ def buy_signals_section(signals: list[dict]) -> str:
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
           <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{narrativa_simples(s)}</p>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples(s))}</p>
         </div>"""
 
     return f"""
@@ -904,7 +905,7 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
           <td style="${{td}};color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${{r.nome}}</td>
           <td style="${{td}};color:${{r.cat_color}};white-space:nowrap">${{r.cat}}</td>
           <td style="${{td}};text-align:right" title="M:${{r.mom??'—'}} T:${{r.trd??'—'}} R:${{r.rsk??'—'}} α:${{r.alp??'—'}}">
-            <span style="color:${{r.score>=0.75?'var(--green)':r.score>=0.55?'var(--light-green)':r.score>=0.40?'var(--yellow)':'var(--red)'}};font-weight:bold">${{r.score.toFixed(3)}}</span>
+            <span style="color:${{r.score>={CONVICTION_STRONG_BUY_SCORE}?'var(--green)':r.score>={CONVICTION_BUY_SCORE}?'var(--light-green)':r.score>={CONVICTION_POTENTIAL_SCORE}?'var(--yellow)':'var(--red)'}};font-weight:bold">${{r.score.toFixed(3)}}</span>
             ${{r.mom!=null ? `<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:4px;align-items:center">
               <span style="color:var(--muted);font-size:9px;margin-right:1px">M</span>
               <span title="Momentum ${{r.mom}}" style="display:inline-block;width:${{Math.round(r.mom*28)}}px;height:4px;background:var(--green);border-radius:2px"></span>
@@ -1151,6 +1152,8 @@ def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
     if not required.issubset(df.columns):
         return ""
 
+    if "date" in df.columns:
+        df = df[df["date"] == df["date"].max()]
     df = df.sort_values("market_value", ascending=False)
     total_value = df["market_value"].sum()
     total_pl    = df["unrealized_pl"].sum()
@@ -1613,7 +1616,7 @@ async function subscribePush() {{
   <meta property="og:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
   <meta property="og:description" content="{n_etfs_today} ETFs europeus analisados diariamente. Recebe o sinal técnico por email — €0, open-source, GitHub Actions.">
   <meta property="og:url" content="https://nunovinhas-creator.github.io/ET-spotter">
-  <meta property="og:image" content="https://raw.githubusercontent.com/nunovinhas-creator/ET-spotter/claude/youthful-euler-SKkX7/docs/assets/banner.svg">
+  <meta property="og:image" content="https://raw.githubusercontent.com/nunovinhas-creator/ET-spotter/claude/youthful-euler-SKkX7/docs/assets/banner-minimal.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
   <meta name="twitter:description" content="{n_etfs_today} ETFs UCITS analisados diariamente. Score de momentum, tendência, risco e alpha. Grátis.">
@@ -1629,17 +1632,24 @@ async function subscribePush() {{
 </body>
 </html>"""
 
-    # Replace service worker cache-bust placeholder
+    # Replace service worker cache-bust placeholder in HTML
     html = html.replace("__BUILD_TS__", str(ts_epoch))
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out = REPORTS / "dashboard.html"
     out.write_text(html, encoding="utf-8")
 
-    # Copia para docs/index.html → servido via GitHub Pages
-    docs = Path("docs")
+    # Anchored to repo root regardless of CWD when script is invoked
+    docs = Path(__file__).parent.parent / "docs"
     docs.mkdir(parents=True, exist_ok=True)
     (docs / "index.html").write_text(html, encoding="utf-8")
+
+    # Update sw.js cache version so returning visitors always get the latest build
+    sw_path = docs / "sw.js"
+    if sw_path.exists():
+        sw_content = sw_path.read_text(encoding="utf-8")
+        sw_content = re.sub(r"et-spotter-[^\s'\"]+", f"et-spotter-{ts_epoch}", sw_content)
+        sw_path.write_text(sw_content, encoding="utf-8")
 
     print(f"[OK] Dashboard gerado: {out}  ({len(html)//1024} KB)")
     print(f"[OK] GitHub Pages:     docs/index.html")
