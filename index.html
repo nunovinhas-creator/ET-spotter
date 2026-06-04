@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
   <meta name="theme-color" content="#080a10">
-  <title>ET-Spotter Dashboard</title>
+  <title>ET-Spotter — Análise Automática de ETFs UCITS</title>
+  <meta name="description" content="Análise técnica automática de 84 ETFs UCITS todos os dias. Score composto de momentum, tendência, risco e alpha. Grátis, open-source, sem servidores.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
+  <meta property="og:description" content="84 ETFs europeus analisados diariamente. Recebe o sinal técnico por email — €0, open-source, GitHub Actions.">
+  <meta property="og:url" content="https://nunovinhas-creator.github.io/ET-spotter">
+  <meta property="og:image" content="https://raw.githubusercontent.com/nunovinhas-creator/ET-spotter/claude/youthful-euler-SKkX7/docs/assets/banner.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
+  <meta name="twitter:description" content="84 ETFs UCITS analisados diariamente. Score de momentum, tendência, risco e alpha. Grátis.">
   <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -177,9 +186,35 @@ footer {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 14px 12px;
+  padding: 12px 12px;
   flex: 1;
   background: var(--surface);
+  cursor: default;
+}
+
+/* CTA strip */
+.cta-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: oklch(9% 0.012 188);
+  border: 1px solid oklch(22% 0.06 188);
+  border-radius: 2px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+}
+
+/* Signal legend bar */
+.signal-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
 }
 .stat-div {
   width: 1px;
@@ -287,11 +322,38 @@ footer {
         <div style="color:var(--text);font-size:13px">SPY 754.24 &nbsp;·&nbsp; SMA200 680.45 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold">BULL</span></div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span>Actualizado: 04/06/2026  11:10 UTC
+        <span class="live-dot"></span>Actualizado: 04/06/2026  11:21 UTC
       </div>
     </div>
   </div>
-</header><div class="main"><div class="stat-bar"><div class="stat-item"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">84</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">ETFs UCITS</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:#7c83fd;font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">4</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Factores</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:var(--yellow);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">22h</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Diário</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">€0</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Custo</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:oklch(70% 0.12 230);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">~3min</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Pipeline</span></div></div>
+</header><div class="main"><div class="stat-bar"><div class="stat-item" title="84 de 97 ETFs com dados suficientes hoje"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">84</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">ETFs UCITS</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">de 97 no universo</span></div><div class="stat-div"></div><div class="stat-item" title="Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"><span style="color:#7c83fd;font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">4</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Factores</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">momentum·trend·risco·alpha</span></div><div class="stat-div"></div><div class="stat-item" title="Dados de fecho actualizados todos os dias às 22h UTC"><span style="color:var(--yellow);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">22h</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Diário</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">actualização EOD</span></div><div class="stat-div"></div><div class="stat-item" title="GitHub Actions free tier · yfinance · zero servidores"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">€0</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Custo</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">infra-estrutura</span></div><div class="stat-div"></div><div class="stat-item" title="Pipeline completo em ~3 minutos por GitHub Actions"><span style="color:oklch(70% 0.12 230);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">~3min</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Pipeline</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">do fetch ao email</span></div></div>
+<div class="cta-strip">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <span style="color:var(--green);font-size:14px">●</span>
+    <span style="color:var(--text);font-size:0.78rem;font-weight:500">Receber este relatório por email todos os dias às 22h</span>
+    <span style="color:var(--muted);font-size:0.72rem">— grátis, sem servidores, sem subscrição</span>
+  </div>
+  <a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener"
+     class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)">
+    🍴 Fork e configura em 3 minutos
+  </a>
+</div>
+<div class="signal-legend">
+  <span style="color:var(--muted);font-size:0.68rem">de 84 ETFs analisados hoje:</span>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.75</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <span style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.55</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <span style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.40</span>
+    <span style="color:var(--border);font-size:0.65rem">·</span>
+    <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({behavior:'smooth'});return false;"
+       style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
+  </div>
+</div>
 <section class="summary-grid">
   
         <div class="card" style="border-top:1px solid var(--green)">
@@ -327,11 +389,11 @@ footer {
 <div style="padding:6px 0 14px;color:var(--muted);font-size:0.62rem;letter-spacing:0.03em;opacity:0.7">
   <span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;0.75 &nbsp;·&nbsp;<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;0.55 &nbsp;·&nbsp;<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;0.40 &nbsp;·&nbsp;confluência de momentum, tendência e risco
 </div>
-<details style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
+<details id="explainer-details" style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
   <summary style="padding:10px 16px;cursor:pointer;list-style:none;display:flex;
                   justify-content:space-between;align-items:center;user-select:none">
     <span style="color:var(--text);font-size:0.75rem;font-weight:600;letter-spacing:0.04em">
-      📖 Novo aqui? Como ler este dashboard
+      📖 Novo aqui? Guia completo — o que é um ETF, como ler o score, glossário
     </span>
     <span style="color:var(--muted);font-size:0.70rem">clica para expandir</span>
   </summary>
@@ -493,6 +555,7 @@ footer {
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">3.5</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O Energias Limpas Globais tem um momentum de 12 meses excepcionalmente forte (+73.1% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (-1.3%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (41). sharpe de 3.5 — retorno consistente por unidade de risco. Score técnico composto: 95/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
         <div style="background:var(--bg);border:1px solid oklch(48% 0.09 188);padding:14px 16px;
@@ -520,6 +583,7 @@ footer {
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">2.8</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI Emerging Markets tem um momentum de 12 meses excepcionalmente forte (+46.1% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.7%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (28). sharpe de 2.8 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
         <div style="background:var(--bg);border:1px solid oklch(48% 0.09 188);padding:14px 16px;
@@ -547,6 +611,7 @@ footer {
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">2.4</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI EM IMI tem um momentum de 12 meses excepcionalmente forte (+43.4% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.2%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. sharpe de 2.4 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
         </div>
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
@@ -576,7 +641,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O Energias Limpas Globais está com uma força notável a médio prazo (+26.3% nos últimos 3 meses). A ligeira correção de -1.3% esta semana afastou o preço de zonas mais caras. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O Energias Limpas Globais está com uma força notável a médio prazo (+26.3% nos últimos 3 meses). A ligeira correção de -1.3% esta semana afastou o preço de zonas mais caras. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -595,7 +661,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. próximo de máximos — força estrutural.</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O FTSE Dev. Europe ex-UK regista uma valorização modesta nos últimos 3 meses (+1.6%). A ligeira correção de -0.4% esta semana afastou o preço de zonas mais caras. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Dev. Europe ex-UK regista uma valorização modesta nos últimos 3 meses (+1.6%). A ligeira correção de -0.4% esta semana afastou o preço de zonas mais caras. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -614,7 +681,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI EM IMI está com uma força notável a médio prazo (+18.0% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM IMI está com uma força notável a médio prazo (+18.0% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -633,7 +701,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI EM está com uma força notável a médio prazo (+11.7% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (62) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM está com uma força notável a médio prazo (+11.7% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (62) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -652,7 +721,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. momentum 3m sólido (9.3%).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Japan IMI tem vindo a ganhar terreno nos últimos 3 meses (+9.3%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (60) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Japan IMI tem vindo a ganhar terreno nos últimos 3 meses (+9.3%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (60) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -671,7 +741,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI Emerging Markets está com uma força notável a médio prazo (+18.7% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Emerging Markets está com uma força notável a médio prazo (+18.7% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -690,7 +761,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.3%). força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O Digitalização está com uma força notável a médio prazo (+14.1% nos últimos 3 meses). Subiu +1.3% esta semana, com o momentum a ganhar tração. O RSI (62) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O Digitalização está com uma força notável a médio prazo (+14.1% nos últimos 3 meses). Subiu +1.3% esta semana, com o momentum a ganhar tração. O RSI (62) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -709,7 +781,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.5%). força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+23.1% nos últimos 3 meses). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+23.1% nos últimos 3 meses). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -728,7 +801,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência ascendente confirmada (sma20&gt;sma50). entrada não comprometida (ret. semanal -0.3%). força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O S&P 500 está com uma força notável a médio prazo (+10.3% nos últimos 3 meses). A ligeira correção de -0.3% esta semana afastou o preço de zonas mais caras. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O S&P 500 está com uma força notável a médio prazo (+10.3% nos últimos 3 meses). A ligeira correção de -0.3% esta semana afastou o preço de zonas mais caras. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
         <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -747,7 +821,8 @@ footer {
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência ascendente confirmada (sma20&gt;sma50). entrada não comprometida (ret. semanal -0.3%). força relativa positiva vs spy (últimos 63 dias).</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;font-style:italic">O S&P 500 está com uma força notável a médio prazo (+11.5% nos últimos 3 meses). A ligeira correção de -0.3% esta semana afastou o preço de zonas mais caras. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O S&P 500 está com uma força notável a médio prazo (+11.5% nos últimos 3 meses). A ligeira correção de -0.3% esta semana afastou o preço de zonas mais caras. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
         </div>
 </section>
 <section class="section">
@@ -1137,7 +1212,7 @@ footer {
     97 ETFs UCITS · GITHUB ACTIONS · YFINANCE · MIT LICENSE
   </text>
 </svg>
-</div></div><footer><div style="max-width:900px;margin:0 auto"><div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px"><a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a><a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener" class="gh-btn">🍴 Fork</a><a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a><span style="color:var(--border)">·</span><span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · 04/06/2026  11:10 UTC</span></div><div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div><div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span><span class="acad-badge" title="Trend following SMA">Faber (2007)</span><span class="acad-badge" title="Dual momentum">Antonacci (2014)</span><span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span><span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span></div><span style="font-size:0.60rem;opacity:0.5">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros.</span></div></footer>
+</div></div><footer><div style="max-width:900px;margin:0 auto"><div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px"><a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a><a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener" class="gh-btn">🍴 Fork</a><a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a><span style="color:var(--border)">·</span><span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · 04/06/2026  11:21 UTC</span></div><div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div><div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span><span class="acad-badge" title="Trend following SMA">Faber (2007)</span><span class="acad-badge" title="Dual momentum">Antonacci (2014)</span><span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span><span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span></div><span style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — <b>não constitui aconselhamento financeiro</b>. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span></div></footer>
 
 <script>
   if ('serviceWorker' in navigator) {
