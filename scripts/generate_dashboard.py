@@ -1271,12 +1271,19 @@ def generate_dashboard(cfg: dict) -> None:
     vapid_key = cfg.get("params", {}).get("vapid_public_key", "")
 
     push_btn = ""
+    goatcounter_code = cfg.get("params", {}).get("goatcounter_code", "")
+    goatcounter_script = (
+        f'\n<script data-goatcounter="https://{goatcounter_code}.goatcounter.com/count"'
+        f' async src="//gc.zgo.at/count.js"></script>'
+        if goatcounter_code else
+        "\n<!-- GoatCounter: define params.goatcounter_code em config/etfs.json para activar analytics -->"
+    )
     sw_script = f"""
 <script>
   if ('serviceWorker' in navigator) {{
     navigator.serviceWorker.register('./sw.js').catch(function(){{}});
   }}
-</script>"""
+</script>{goatcounter_script}"""
 
     if vapid_key:
         push_btn = f"""
