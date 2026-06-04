@@ -1,207 +1,342 @@
+<img src="docs/assets/banner.svg" width="100%" alt="ET-Spotter — Quantitative ETF Analysis">
+
 <div align="center">
 
-# ET-Spotter 📡
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&weight=500&duration=3000&pause=1000&color=7C83FD&center=true&vCenter=true&repeat=true&width=700&height=40&lines=Email+diario+as+22h+%E2%80%94+zero+custos+de+infra-estrutura;97+ETFs+UCITS+analisados+automaticamente;Score+academico%3A+Jegadeesh+%2B+Ang+%2B+Kakushadze;Open+source+%C2%B7+GitHub+Actions+%C2%B7+sem+servidores" alt="Typing animation">
 
-**Análise quantitativa automática de 97 ETFs UCITS — gratuito, open-source, com base académica.**
+<br>
 
-Todos os dias às 22h um relatório chega ao teu email com os ETFs melhor posicionados,  
-baseado em 4 factores (momentum · tendência · risco · alpha) — sem custo de infra-estrutura.
-
-[![Dashboard Live](https://img.shields.io/badge/Dashboard-Live-7c83fd?style=for-the-badge&logo=github)](https://nunovinhas-creator.github.io/ET-spotter)
+[![Dashboard Live](https://img.shields.io/badge/🌐_Dashboard-Live-7c83fd?style=for-the-badge)](https://nunovinhas-creator.github.io/ET-spotter)
+&nbsp;
 [![Daily Report](https://github.com/nunovinhas-creator/ET-spotter/actions/workflows/daily.yml/badge.svg)](https://github.com/nunovinhas-creator/ET-spotter/actions/workflows/daily.yml)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Weekly Report](https://github.com/nunovinhas-creator/ET-spotter/actions/workflows/weekly.yml/badge.svg)](https://github.com/nunovinhas-creator/ET-spotter/actions/workflows/weekly.yml)
+&nbsp;
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
-[![Hits](https://hits.sh/github.com/nunovinhas-creator/ET-spotter.svg?style=flat-square&color=7c83fd&label=visitas)](https://hits.sh/github.com/nunovinhas-creator/ET-spotter/)
+[![Visitors](https://hits.sh/github.com/nunovinhas-creator/ET-spotter.svg?style=flat-square&color=7c83fd&label=visitas)](https://hits.sh/github.com/nunovinhas-creator/ET-spotter/)
+
+<br>
+
+<img src="https://skillicons.dev/icons?i=python,github,githubactions&theme=dark" height="36" alt="Python · GitHub · GitHub Actions">
 
 </div>
 
----
-
-## O que recebes
-
-| | |
-|:---:|:---|
-| **📧 Email diário** | Top ETFs por score técnico composto, com sinais de compra, rotação sectorial e análise em linguagem simples. Chega depois do fecho dos mercados. |
-| **📊 Dashboard interativo** | Scores em tempo real para todos os 97 ETFs: barras de momentum · tendência · risco · alpha, gráficos históricos, filtros por categoria. |
-| **📋 Relatório semanal** | Análise consolidada às sextas com os 3 ETFs mais bem posicionados e contexto de evolução semanal. |
-
-> **Zero custo de infra-estrutura.** Corre inteiramente no plano gratuito do GitHub Actions —  
-> sem servidores, sem subscriptions, sem APIs pagas.
+<br>
 
 ---
 
-## Dashboard
+## 📬 O que recebes
 
-🔴 **Live →** [nunovinhas-creator.github.io/ET-spotter](https://nunovinhas-creator.github.io/ET-spotter)
+<table>
+<tr>
+<td width="33%" align="center">
 
-Actualizado automaticamente todos os dias após o fecho do mercado americano (22h UTC).
+### 📧 Email Diário
 
----
+Todos os dias às 22h, após o fecho dos mercados, um relatório com os ETFs melhor posicionados, sinais de compra por nível de convicção, rotação sectorial e análise em linguagem simples — com glossário para quem começa.
 
-## Como funciona
+</td>
+<td width="33%" align="center">
 
-```mermaid
-graph LR
-    S[⏱️ GitHub Actions<br/>cron 22:00 UTC] --> F[📥 fetch_daily.py<br/>yfinance — dados EOD gratuitos]
-    F --> M[📐 compute_metrics.py<br/>SMA · MACD · RSI · ADX · Calmar]
-    M --> C[🧮 compute_score.py<br/>score v3 cross-sectional]
-    C --> D[🌐 Dashboard<br/>GitHub Pages]
-    C --> E[📧 Relatório diário<br/>email HTML]
-    C --> W[📋 Relatório semanal<br/>sextas-feiras]
+### 📊 Dashboard Live
 
-    style D fill:#7c83fd,color:#000
-    style E fill:#4caf50,color:#000
-    style W fill:#4caf50,color:#000
-```
+Scores em tempo real para todos os 97 ETFs: sub-barras de momentum · tendência · risco · alpha, filtros por categoria e histórico de scores.
 
-O pipeline completo corre em ~3 minutos, sem intervenção humana, 365 dias por ano.
+**[→ Abrir Dashboard](https://nunovinhas-creator.github.io/ET-spotter)**
 
----
+</td>
+<td width="33%" align="center">
 
-## Metodologia de Scoring (v3)
+### 📋 Relatório Semanal
 
-Cada ETF é avaliado **cross-sectionalmente** — em relação a todo o universo no mesmo instante, não em valor absoluto. Todos os factores passam por winsorização (±2.5σ) e z-score normalizado antes de serem combinados.
+Às sextas-feiras, análise consolidada com os 3 ETFs mais bem posicionados, narrativa de qualidade do sinal e evolução da semana — com PDF opcional.
 
-| Factor | Peso | Componentes | Base académica |
-|--------|------|-------------|----------------|
-| **Momentum** | 35% | Retorno normalizado a 21d, 63d e 126d via sigmoid cross-sectional | Jegadeesh & Titman (1993) |
-| **Tendência** | 25% | SMA cruzada · MACD bullish · RSI zone · força relativa contínua vs SPY | Faber (2007) |
-| **Risco** | 25% | Calmar ratio 63d · ADX · drawdown actual | Ang, Hodrick et al. (2006) |
-| **Alpha quality** | 15% | IR-momentum · aceleração de momentum · RS contínuo · momentum anual 12M | Kakushadze (2015) — alpha101 |
+</td>
+</tr>
+</table>
 
-**Limiares de sinal:** `FORTE COMPRA` ≥ 0.75 · `COMPRA` ≥ 0.55 · `POTENCIAL` ≥ 0.40
+> **Zero custo de infra-estrutura.** Corre inteiramente no plano gratuito do GitHub Actions —
+> sem servidores, sem subscriptions, sem APIs pagas. O único requisito é uma conta Gmail.
 
-O `score_pct` mede o percentil do score actual em relação aos últimos 252 dias históricos do mesmo ETF — permite contextualizar se o score é alto ou baixo para esse ETF em específico.
+<br>
 
 ---
 
-## Universo — 97 ETFs UCITS em 11 categorias
+## ⚡ Quick Start — 4 passos, ~3 minutos
 
-| Categoria | ETFs | Exemplos |
-|-----------|:----:|---------|
-| EUA – Mercado Largo | 8 | CSPX.L · VUAA.L · VUSA.L |
-| Global / MSCI World | 10 | IWDA.L · HMWO.L · SWRD.L |
-| EUA – Sectores UCITS | 11 | IUHC.L · IUFS.L · IUIT.L |
-| Internacional Desenvolvido | 10 | VEUR.L · VERX.L · EWJ.L |
-| Mercados Emergentes | 8 | EMIM.L · VFEM.L · HMEF.L |
-| Factor / Smart Beta | 8 | IWMO.L · IWVL.L · IQSA.L |
-| Temáticos / Inovação | 11 | EQQQ.L · IITU.L · HEAL.L |
-| Commodities | 8 | IGLN.L · SXLP.L · AIGA.L |
-| Obrigações / Fixed Income | 12 | AGGU.L · IBTS.L · IEMB.L |
-| Imobiliário / REITs | 5 | IWDP.L · XREA.L |
-| ESG / Sustentável | 6 | SUWS.L · MSEW.L |
+**`1`** — Fork este repositório (botão **Fork** no canto superior direito)
 
-Qualquer ETF com ticker disponível no Yahoo Finance pode ser adicionado em `config/etfs.json`.
-
----
-
-## Quick Start
-
-### 1. Fork o repositório
-
-Clica em **Fork** no canto superior direito desta página.
-
-### 2. Configura os Secrets
-
-No teu fork: **Settings → Secrets and variables → Actions → New repository secret**
+**`2`** — Adiciona 3 Secrets: **Settings → Secrets and variables → Actions → New repository secret**
 
 | Secret | Descrição |
 |--------|-----------|
 | `EMAIL_FROM` | Gmail de envio (ex: `meubot@gmail.com`) |
-| `EMAIL_PASSWORD` | [App Password](https://myaccount.google.com/apppasswords) do Gmail — não a password normal |
-| `EMAIL_TO` | Email(s) de destino, separados por vírgula |
+| `EMAIL_PASSWORD` | [App Password Gmail](https://myaccount.google.com/apppasswords) — não a tua password normal |
+| `EMAIL_TO` | Email de destino, ou lista separada por vírgulas |
 
-### 3. Activa permissões de escrita
+**`3`** — Activa permissões de escrita: **Settings → Actions → General → Workflow permissions → Read and write permissions**
 
-**Settings → Actions → General → Workflow permissions** → selecciona **Read and write permissions**
+**`4`** — Lança o primeiro relatório: **Actions → Daily Report → Run workflow**
 
-### 4. Testa
+Em ~3 minutos recebes o email e o dashboard publica-se em `https://<o-teu-username>.github.io/ET-spotter`
 
-No separador **Actions**, selecciona `Daily Report` → **Run workflow**. Em ~3 minutos recebes o primeiro email e o dashboard é publicado em `https://<o-teu-user>.github.io/ET-spotter`.
+<details>
+<summary><b>⚙️ Configuração local (desenvolvimento)</b></summary>
 
-### Uso local
+<br>
 
 ```bash
 git clone https://github.com/nunovinhas-creator/ET-spotter
 cd ET-spotter
 pip install -r requirements.txt
 
-python scripts/fetch_daily.py         # dados EOD via yfinance
-python scripts/compute_metrics.py     # SMA, MACD, RSI, ADX, drawdown, Calmar
-python scripts/compute_score.py       # score v3 cross-sectional
-python scripts/generate_dashboard.py  # gera docs/index.html
-python scripts/daily_report.py        # gera e envia email (requer EMAIL_* vars)
+# Pipeline completo
+python scripts/fetch_daily.py          # dados EOD via yfinance (gratuito)
+python scripts/compute_metrics.py      # SMA, MACD, RSI, ADX, drawdown, Calmar
+python scripts/compute_score.py        # score v3 cross-sectional
+python scripts/generate_dashboard.py   # gera docs/index.html
+
+# Relatórios (requer variáveis EMAIL_* no ambiente)
+python scripts/daily_report.py
+python scripts/weekly_report.py
 ```
+
+Para desenvolvimento sem enviar emails, omite o último passo — o HTML gerado fica em `data/reports/`.
+
+</details>
+
+<br>
 
 ---
 
-## Estrutura do Repositório
+## 🔬 Como funciona
+
+```mermaid
+graph TB
+    subgraph pipeline["⏱️  GitHub Actions — cron 22:00 UTC (diário)  ·  20:00 UTC sextas (semanal)"]
+        direction LR
+        F["📥 fetch_daily.py\nyfinance — gratuito"]
+        M["📐 compute_metrics.py\nSMA · MACD · RSI · ADX · Calmar · RS"]
+        C["🧮 compute_score.py\nscore v3 · cross-sectional · 4 factores"]
+        F --> M --> C
+    end
+
+    C --> D["🌐 Dashboard\nGitHub Pages — live"]
+    C --> E["📧 Email diário\nHTML · glossário · níveis de sinal"]
+    C --> W["📋 Email semanal\nnarração · PDF opcional"]
+
+    style pipeline fill:#080a10,stroke:#7c83fd,color:#7c83fd
+    style F  fill:#0f1117,stroke:#1e2130,color:#666
+    style M  fill:#0f1117,stroke:#1e2130,color:#666
+    style C  fill:#141626,stroke:#7c83fd,color:#e8eaf6,stroke-width:2px
+    style D  fill:#0d200f,stroke:#4caf50,color:#4caf50
+    style E  fill:#0d200f,stroke:#4caf50,color:#4caf50
+    style W  fill:#0d200f,stroke:#4caf50,color:#4caf50
+```
+
+O pipeline completo corre em **~3 minutos** sem intervenção humana, 365 dias por ano.  
+O branch `gh-pages` é actualizado por git plumbing — sem workflows adicionais, sem dependências.
+
+<br>
+
+---
+
+## 🧮 Score v3 — Metodologia
+
+Cada ETF é avaliado **cross-sectionalmente**: comparado com o universo completo no mesmo instante, não em valor absoluto. Todos os factores passam por **winsorização (±2.5σ)** e **z-score normalizado** antes de serem combinados.
+
+| Factor | Peso | Componentes | Referência académica |
+|--------|:----:|-------------|----------------------|
+| **Momentum** | **35%** | Retorno normalizado 21d · 63d · 126d via sigmoid cross-sectional | [![](https://img.shields.io/badge/Jegadeesh_%26_Titman-1993-7c83fd?style=flat-square)](https://doi.org/10.1111/j.1540-6261.1993.tb04702.x) |
+| **Tendência** | **25%** | SMA cruzada · MACD bullish · RSI zone (40–65) · RS contínuo vs SPY | [![](https://img.shields.io/badge/Faber-2007-7c83fd?style=flat-square)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461) |
+| **Risco** | **25%** | Calmar ratio 63d · ADX > 20 · drawdown actual | [![](https://img.shields.io/badge/Ang_et_al.-2006-7c83fd?style=flat-square)](https://doi.org/10.1111/j.1540-6261.2006.01054.x) |
+| **Alpha quality** | **15%** | IR-momentum · aceleração · RS contínuo · 12M annual | [![](https://img.shields.io/badge/Kakushadze-2015_alpha101-7c83fd?style=flat-square)](https://arxiv.org/abs/1601.00991) |
+
+**Níveis de sinal:**&nbsp;
+![FORTE COMPRA](https://img.shields.io/badge/FORTE_COMPRA-score_≥_0.75-4caf50?style=flat-square)
+![COMPRA](https://img.shields.io/badge/COMPRA-score_≥_0.55-8bc34a?style=flat-square)
+![POTENCIAL](https://img.shields.io/badge/POTENCIAL-score_≥_0.40-ffd54f?style=flat-square&labelColor=555555)
+
+O `score_pct` mede o **percentil histórico** do score nos últimos 252 dias desse ETF — um score de `0.85` significa que está nos 15% melhores da sua própria história recente.
+
+<br>
+
+---
+
+## 🗂️ Universo — 97 ETFs UCITS em 11 categorias
+
+| Categoria | ETFs | Exemplos |
+|-----------|:----:|----------|
+| 🇺🇸 EUA – Mercado Largo | 8 | CSPX.L · VUAA.L · VUSA.L |
+| 🌍 Global / MSCI World | 10 | IWDA.L · HMWO.L · SWRD.L |
+| 🏭 EUA – Sectores UCITS | 11 | IUHC.L · IUFS.L · IUIT.L |
+| 🌐 Internacional Desenvolvido | 10 | VEUR.L · VERX.L · HMCA.L |
+| 🌏 Mercados Emergentes | 8 | EMIM.L · VFEM.L · IEEM.L |
+| 📐 Factor / Smart Beta | 8 | IWMO.L · IWVL.L · IWQU.L |
+| 💡 Temáticos / Inovação | 11 | EQQQ.L · RBOT.L · HEAL.L |
+| 🥇 Commodities | 8 | IGLN.L · PHAU.L · PHAG.L |
+| 🏦 Obrigações / Fixed Income | 12 | AGGU.L · IBTS.L · IBTL.L |
+| 🏠 Imobiliário / REITs | 5 | IWDP.L · IPRP.L |
+| 🌱 ESG / Sustentável | 6 | SUSW.L · MVEW.L |
+
+<details>
+<summary><b>📋 Ver todos os tickers por categoria</b></summary>
+
+<br>
+
+**EUA – Mercado Largo (8)**  
+`CSPX.L` `VUAA.L` `VUSA.L` `IUSA.L` `XDEQ.L` `SPXS.L` `XDWD.DE` `VWCE.DE`
+
+**Global / MSCI World (10)**  
+`IWDA.L` `HMWO.L` `SWRD.L` `XMAW.L` `VWRL.L` `VWRP.L` `IWFM.L` `MVOL.L` `WSML.L` `XDWT.DE`
+
+**EUA – Sectores UCITS (11)**  
+`IUHC.L` `IUFS.L` `IUIT.L` `IUCS.L` `IUCD.L` `IUES.L` `IUCM.L` `IUMS.L` `IUIS.L` `IUUS.L` `FWRA.L`
+
+**Internacional Desenvolvido (10)**  
+`VEUR.L` `VERX.L` `HMCA.L` `SMEA.L` `HMJP.L` `IJPA.L` `IIND.L` `XAUS.L` `CUKX.L` `VUKE.L`
+
+**Mercados Emergentes (8)**  
+`EMIM.L` `VFEM.L` `IEEM.L` `EIMI.L` `XMEM.DE` `HMEF.L` `SEMB.L` `XNAS.L`
+
+**Factor / Smart Beta (8)**  
+`IWMO.L` `IWVL.L` `IWQU.L` `IWSZ.L` `IQSA.L` `IBZL.L` `IDTP.L` `GLRE.L`
+
+**Temáticos / Inovação (11)**  
+`EQQQ.L` `RBOT.L` `HEAL.L` `INRG.L` `CYBR.L` `BTEC.L` `DGTL.L` `WTAI.L` `CNDX.L` `XAIX.L` `ECAR.L`
+
+**Commodities (8)**  
+`IGLN.L` `PHAU.L` `PHAG.L` `PHPT.L` `SGLN.L` `AIGA.L` `CRUD.L` `SXLP.L`
+
+**Obrigações / Fixed Income (12)**  
+`AGGU.L` `IBTS.L` `IBTL.L` `IBTM.L` `IEAG.L` `IGLO.L` `IGLT.L` `IHYG.L` `LQDE.L` `SLXX.L` `IEMB.L` `VGOV.L`
+
+**Imobiliário / REITs (5)**  
+`IWDP.L` `IPRP.L` `IAPD.L` `XREA.L` `GLRE.L`
+
+**ESG / Sustentável (6)**  
+`SUSW.L` `MVEW.L` `SUWS.L` `MSEW.L` `MVOL.L` `IUUS.L`
+
+</details>
+
+Qualquer ticker disponível no **Yahoo Finance** pode ser adicionado em `config/etfs.json`.
+
+<br>
+
+---
+
+## 🏛️ Base Académica
+
+Os factores do score v3 têm suporte em literatura peer-reviewed publicada em journals de referência em finanças quantitativas:
+
+[![Jegadeesh & Titman 1993](https://img.shields.io/badge/Jegadeesh_%26_Titman-Returns_to_Buying_Winners_(1993)-7c83fd?style=flat-square&logo=academia)](https://doi.org/10.1111/j.1540-6261.1993.tb04702.x)
+[![Faber 2007](https://img.shields.io/badge/Faber-A_Quantitative_Approach_to_TAA_(2007)-7c83fd?style=flat-square&logo=academia)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461)
+[![Ang et al. 2006](https://img.shields.io/badge/Ang_et_al.-The_Cross--Section_of_Volatility_(2006)-7c83fd?style=flat-square&logo=academia)](https://doi.org/10.1111/j.1540-6261.2006.01054.x)
+[![Kakushadze 2015](https://img.shields.io/badge/Kakushadze-101_Formulaic_Alphas_(2015)-7c83fd?style=flat-square&logo=arxiv)](https://arxiv.org/abs/1601.00991)
+
+> Os sinais identificam convergência estatística de factores — **não constituem aconselhamento financeiro** e não predizem preços futuros. Consulta sempre um profissional antes de investir.
+
+<br>
+
+---
+
+## ⭐ Contribuir e Partilhar
+
+Se o ET-Spotter te foi útil, uma estrela ajuda outros investidores a encontrá-lo.
+
+[![Star](https://img.shields.io/github/stars/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=ffd700&label=⭐+Star)](https://github.com/nunovinhas-creator/ET-spotter/stargazers)
+[![Fork](https://img.shields.io/github/forks/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=7c83fd&label=🔱+Fork)](https://github.com/nunovinhas-creator/ET-spotter/fork)
+[![Issues](https://img.shields.io/github/issues/nunovinhas-creator/ET-spotter?style=for-the-badge&logo=github&color=22c55e&label=💬+Issues)](https://github.com/nunovinhas-creator/ET-spotter/issues)
+
+Pull requests são bem-vindos. Para mudanças de fundo, abre primeiro uma issue.
+
+```bash
+git checkout -b feature/nova-funcionalidade
+git commit -m "feat: descrição clara do que foi adicionado"
+git push origin feature/nova-funcionalidade
+# Abre Pull Request no GitHub
+```
+
+<br>
+
+---
+
+<details>
+<summary><b>❓ FAQ</b></summary>
+
+<br>
+
+**É realmente gratuito?**  
+Sim. yfinance usa dados públicos do Yahoo Finance (sem API key). O pipeline usa ~3 min/dia dos 2 000 min/mês do GitHub Actions free tier. Gmail SMTP é gratuito. Custo total: **€0**.
+
+**Os sinais são recomendações de investimento?**  
+Não. Os sinais identificam convergência estatística de factores técnicos históricos — não predizem preços futuros. Usa como input sistemático, não como recomendação isolada.
+
+**Posso adicionar ETFs fora do universo?**  
+Sim. Qualquer ticker no Yahoo Finance funciona — adiciona em `config/etfs.json` seguindo a estrutura existente.
+
+**Posso usar outros servidores de email além do Gmail?**  
+Sim. Configura `EMAIL_HOST` e `EMAIL_PORT` em `config/etfs.json`. Qualquer servidor SMTP funciona.
+
+**O que é o `score_pct`?**  
+O percentil histórico: `0.85` significa que o score actual está nos 15% melhores dos últimos 252 dias históricos desse ETF — contexto sobre se o sinal é forte ou fraco para esse activo específico.
+
+**Com que frequência são actualizados os dados?**  
+Dados EOD: uma vez por dia após 22h UTC. Dados intraday: de hora em hora durante o horário de mercado europeu/americano.
+
+**Posso receber os relatórios sem fazer fork?**  
+Actualmente, a subscrição externa está em roadmap. Por agora, o fork é o caminho recomendado.
+
+</details>
+
+<details>
+<summary><b>📁 Estrutura do repositório</b></summary>
+
+<br>
 
 ```
 ET-spotter/
 ├── config/
-│   └── etfs.json              # 97 ETFs, categorias, cores, parâmetros
+│   └── etfs.json                  # 97 ETFs, 11 categorias, parâmetros e pesos
 ├── data/
-│   ├── daily/                 # métricas diárias por ETF (CSV)
-│   └── reports/               # scores_latest.csv, scores_history.csv
-├── docs/                      # GitHub Pages — dashboard HTML
+│   ├── daily/                     # métricas diárias por ETF (CSV, um por ticker)
+│   └── reports/                   # scores_latest.csv · scores_history.csv
+├── docs/                          # GitHub Pages
+│   ├── assets/
+│   │   └── banner.svg             # banner do README
+│   ├── index.html                 # dashboard (gerado automaticamente)
+│   ├── manifest.json              # PWA manifest
+│   └── sw.js                      # Service Worker (cache offline)
 ├── scripts/
-│   ├── fetch_daily.py         # recolha EOD via yfinance (gratuito)
-│   ├── fetch_intraday.py      # dados intraday horários
-│   ├── compute_metrics.py     # SMA, MACD, RSI, ADX, drawdown, Calmar, RS
-│   ├── compute_score.py       # score v3 — 4 factores cross-sectionais
-│   ├── generate_dashboard.py  # dashboard HTML com gráficos interactivos
-│   ├── daily_report.py        # email diário com intro + glossário acessível
-│   ├── weekly_report.py       # relatório semanal + PDF opcional
-│   ├── email_helpers.py       # blocos HTML reutilizáveis para emails
-│   └── send_email.py          # envio SMTP genérico
+│   ├── fetch_daily.py             # dados EOD via yfinance
+│   ├── fetch_intraday.py          # dados intraday horários
+│   ├── compute_metrics.py         # SMA · MACD · RSI · ADX · drawdown · Calmar · RS
+│   ├── compute_score.py           # score v3 — 4 factores cross-sectionais
+│   ├── generate_dashboard.py      # dashboard HTML completo com gráficos
+│   ├── daily_report.py            # email diário com intro + glossário
+│   ├── weekly_report.py           # relatório semanal + PDF opcional
+│   ├── email_helpers.py           # blocos HTML reutilizáveis (intro, glossário)
+│   ├── generate_charts.py         # gráficos matplotlib (barras, tendência, heatmap)
+│   ├── portfolio_tracker.py       # integração Alpaca (opcional)
+│   ├── backtest_signals.py        # backtest de sinais históricos
+│   └── send_email.py              # envio SMTP genérico
 └── .github/workflows/
-    ├── daily.yml              # cron 22:00 UTC — pipeline completo diário
-    ├── hourly.yml             # cron horário — dados intraday
-    └── weekly.yml             # sextas 20:00 UTC — relatório semanal
+    ├── daily.yml                  # cron 22:00 UTC — pipeline completo
+    ├── hourly.yml                 # cron horário — dados intraday + dashboard
+    └── weekly.yml                 # sextas 20:00 UTC — relatório semanal
 ```
 
----
+</details>
 
-## FAQ
-
-**É realmente gratuito?**  
-Sim. yfinance usa dados públicos do Yahoo Finance. O pipeline usa ~3 min/dia dos 2 000 min/mês gratuitos do GitHub Actions. Gmail SMTP é gratuito. Custo total: €0.
-
-**Os sinais são recomendações de investimento?**  
-Não. Os sinais identificam convergência estatística de factores técnicos históricos — não prevêem preços futuros. Usa como input sistemático, não como recomendação isolada. Consulta sempre um profissional antes de investir.
-
-**Funciona para ETFs fora do universo incluído?**  
-Sim. Qualquer ticker disponível no Yahoo Finance pode ser adicionado em `config/etfs.json` seguindo a estrutura existente.
-
-**Posso adaptar para acções ou outros instrumentos?**  
-O scoring é agnóstico ao instrumento — qualquer activo com histórico de preços no Yahoo Finance funciona. A nomenclatura UCITS é apenas organizacional.
-
-**O que é o `score_pct`?**  
-O percentil histórico: `score_pct = 0.85` significa que o score actual está no top 15% dos scores históricos desse ETF nos últimos 252 dias — contexto sobre se o sinal é forte ou fraco para esse ETF em específico.
-
----
-
-## Contribuir
-
-Issues e pull requests são bem-vindos. Para mudanças de fundo, abre primeiro uma issue para alinhar a direcção.
-
-```bash
-git checkout -b feature/nova-funcionalidade
-# faz as alterações
-git commit -m "feat: descrição clara do que foi adicionado"
-git push origin feature/nova-funcionalidade
-# abre Pull Request
-```
-
----
-
-## Licença
-
-MIT © [Nuno Vinhas](https://github.com/nunovinhas-creator)
+<br>
 
 ---
 
 <div align="center">
-<sub>ET-Spotter não constitui aconselhamento financeiro.<br>Análise técnica baseada em evidência histórica — os sinais identificam convergência estatística de factores, não predizem preços futuros.</sub>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a1d2e,100:7c83fd&height=100&section=footer" width="100%" alt="">
+
+<sub>ET-Spotter · MIT License · Dados via yfinance · Automação via GitHub Actions</sub><br>
+<sub>Análise técnica baseada em evidência histórica — não constitui aconselhamento financeiro.</sub>
+
 </div>
