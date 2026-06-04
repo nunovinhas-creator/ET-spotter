@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#glow)" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Bell body: path forming a bell shape -->
+    <!-- Starts at left edge of flat bottom, curves up and over -->
+    <path d="M 8 24 C 8 24 7 23 7 21 C 7 14 10 10 16 9 C 22 10 25 14 25 21 C 25 23 24 24 24 24 Z"/>
+    <!-- Flat bottom bar -->
+    <line x1="6" y1="24" x2="26" y2="24"/>
+    <!-- Clapper: small circle at bottom center -->
+    <circle cx="16" cy="27" r="1.5"/>
+    <!-- Stem connecting bell bottom to clapper -->
+    <line x1="16" y1="24" x2="16" y2="25.5"/>
+  </g>
+  <!-- Notification dot: filled cyan circle top-right, outside main glow group for clean rendering -->
+  <circle cx="24" cy="9" r="3" fill="#00D4FF" stroke="none" filter="url(#glow)"/>
+</svg>
