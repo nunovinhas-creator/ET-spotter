@@ -232,52 +232,34 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
 
 
 def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
-    """Hero stat strip with fintech premium design."""
-    etf_sub = f"de {n_total} no universo" if n_etfs != n_total else "ETFs UCITS"
+    """Hero stat strip with fintech premium CSS design."""
+    etf_sub = f"de {n_total}" if n_etfs != n_total else str(n_total)
     stats = [
-        (str(n_etfs), "ETFs UCITS",  etf_sub,                    "#00D4FF", f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
-        ("4",         "Factores",    "M · T · R · α",             "#7C83FD", "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
-        ("22h",       "Diário",      "actualização EOD",          "#FFB800", "Dados de fecho actualizados todos os dias às 22h UTC"),
-        ("€0",        "Custo",       "infra-estrutura",           "#00FF9D", "GitHub Actions free tier · yfinance · zero servidores"),
-        ("~3min",     "Pipeline",    "fetch → score → email",     "#4D9FFF", "Pipeline completo em ~3 minutos por GitHub Actions"),
+        (str(n_etfs), "ETFs UCITS",  etf_sub + " no universo",   "#00D4FF", "#00D4FF33",
+         f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
+        ("4",         "Factores",    "M · T · R · α",             "#7C83FD", "#7C83FD33",
+         "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
+        ("22h",       "Diário",      "actualização EOD",          "#FFB800", "#FFB80033",
+         "Dados de fecho actualizados todos os dias às 22h UTC"),
+        ("€0",        "Custo",       "infra-estrutura",           "#00FF9D", "#00FF9D33",
+         "GitHub Actions free tier · yfinance · zero servidores"),
+        ("~3min",     "Pipeline",    "fetch → score → email",     "#4D9FFF", "#4D9FFF33",
+         "Pipeline completo em ~3 minutos por GitHub Actions"),
     ]
-    items = ""
-    for i, (val, label, sub, color, tip) in enumerate(stats):
-        if i > 0:
-            items += '<div class="stat-div"></div>'
-        items += (
-            f'<div class="stat-item" title="{tip}">'
-            f'<span style="color:{color};font-size:24px;font-weight:700;font-family:\'Albert Sans\',sans-serif;line-height:1;'
-            f'text-shadow:0 0 12px {color}44">{val}</span>'
-            f'<span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">{label}</span>'
-            f'<span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">{sub}</span>'
-            f'</div>'
-        )
+    cards = ""
+    for val, label, sub, color, glow, tip in stats:
+        cards += f"""<div title="{tip}" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid {color}33;border-top:2px solid {color};
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:{color};font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px {color},0 0 40px {color}88">{val}</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">{label}</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">{sub}</span>
+        </div>"""
     return f"""
-<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#06090F 0%,#0A0F1A 50%,#080C14 100%);
-            border:1px solid #1E2D4D;border-radius:6px;margin:12px 0 0">
-  <!-- dot grid overlay -->
-  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="xMidYMid slice">
-    <defs><pattern id="hb_dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="15" cy="15" r="0.8" fill="#4D9FFF" opacity="0.07"/>
-    </pattern>
-    <linearGradient id="hb_top" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#0A0F1A"/>
-      <stop offset="25%"  stop-color="#00D4FF" stop-opacity="0.9"/>
-      <stop offset="50%"  stop-color="#7C83FD" stop-opacity="1"/>
-      <stop offset="75%"  stop-color="#00D4FF" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#0A0F1A"/>
-    </linearGradient>
-    <linearGradient id="hb_diag" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#00D4FF" stop-opacity="0"/>
-      <stop offset="45%"  stop-color="#00D4FF" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#7C83FD" stop-opacity="0"/>
-    </linearGradient></defs>
-    <rect width="100%" height="100%" fill="url(#hb_dots)"/>
-    <line x1="-5%" y1="110%" x2="80%" y2="-10%" stroke="url(#hb_diag)" stroke-width="80"/>
-    <rect y="0" width="100%" height="2" fill="url(#hb_top)"/>
-  </svg>
-  <div class="stat-bar" style="position:relative;z-index:1">{items}</div>
+<div style="margin:16px 0 0;padding:0">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">{cards}</div>
 </div>"""
 
 
@@ -326,30 +308,27 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
     n_high = int((scores_df["score"] >= 0.50).sum()) if "score" in scores_df.columns else 0
     avg_score = scores_df["score"].mean() if "score" in scores_df.columns else 0
 
-    def card(label, value, color, sub=""):
-        return f"""
-        <div class="card" style="border-top:1px solid {color}">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:{color}">{value}</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">{label}</div>
-          {f'<div style="color:var(--muted);font-size:10px;margin-top:2px">{sub}</div>' if sub else ""}
+    def signal_card(label, value, color, bg, desc):
+        bar_w = min(100, int(float(str(value)) / max(n_fc + n_c + n_p, 1) * 100)) if str(value).isdigit() else 0
+        bar_html = f'<div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:{bar_w}%;height:3px;background:{color};border-radius:2px;box-shadow:0 0 6px {color}"></div></div>' if bar_w > 0 else ""
+        return f"""<div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid {color}44;border-left:3px solid {color};border-radius:6px">
+          <div style="color:{color};font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px {color}">{value}</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">{label}</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">{desc}</div>
+          {bar_html}
         </div>"""
 
-    legend = (
-        f'<span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_STRONG_BUY_SCORE} &nbsp;·&nbsp;'
-        f'<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_BUY_SCORE} &nbsp;·&nbsp;'
-        f'<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;{CONVICTION_POTENTIAL_SCORE} &nbsp;·&nbsp;'
-        'ranking cross-sectional · momentum multi-período · regime de tendência · risco ajustado (Sharpe/Calmar) · alpha relativo'
-    )
     return f"""
-<section class="summary-grid">
-  {card("FORTE COMPRA",   n_fc,  "var(--green)")}
-  {card("COMPRA",         n_c,   "var(--light-green)")}
-  {card("POTENCIAL",      n_p,   "var(--yellow)")}
-  {card("Score > 0.50",   n_high,"var(--blue)", f"de {len(scores_df)} ETFs")}
-  {card("Score médio",    f"{avg_score:.3f}", "var(--blue-light)")}
-</section>
-<div style="padding:6px 0 14px;color:var(--muted);font-size:0.62rem;letter-spacing:0.03em;opacity:0.7">
-  {legend}
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 8px">
+  {signal_card("Forte Compra", n_fc,  "#00FF9D", "#0D2318", f"score ≥ {CONVICTION_STRONG_BUY_SCORE} · todos factores alinhados")}
+  {signal_card("Compra",       n_c,   "#00D4FF", "#0A1A25", f"score ≥ {CONVICTION_BUY_SCORE} · sinal construtivo")}
+  {signal_card("Potencial",    n_p,   "#FFB800", "#1A1400", f"score ≥ {CONVICTION_POTENTIAL_SCORE} · aguardar confirmação")}
+  {signal_card("Score > 0.50", n_high,"#7C83FD", "#0F1020", f"de {len(scores_df)} ETFs analisados")}
+  {signal_card("Score Médio",  f"{avg_score:.3f}", "#4D9FFF", "#0A1020", "média cross-sectional")}
 </div>"""
 
 
@@ -1695,6 +1674,9 @@ async function subscribePush() {{
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
   <meta name="twitter:description" content="{n_etfs_today} ETFs UCITS analisados diariamente. Score de momentum, tendência, risco e alpha. Grátis.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
