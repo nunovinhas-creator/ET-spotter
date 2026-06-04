@@ -176,8 +176,8 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
   <div class="header-inner">
     <div>
       <div class="logo">ET-SPOTTER</div>
-      <div class="subtitle">Monitorização automática de ETFs UCITS · score técnico composto (0–1)</div>
-      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · momentum · tendência · risco · alpha</div>
+      <div class="subtitle">Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)</div>
+      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · Jegadeesh-Titman (1993) · Faber (2007) · Ang et al. (2006) · Kakushadze (2015)</div>
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
@@ -198,7 +198,7 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     items = ""
     stats = [
         (str(n_etfs), etf_label, etf_sub, "var(--green)",        f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
-        ("4",         "Factores", "momentum·trend·risco·alpha", "#7c83fd", "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
+        ("4",         "Factores", "momentum·trend·risco·alpha", "#7c83fd", "Momentum 35% (Jegadeesh-Titman 1993) · Tendência 25% (Faber 2007) · Risco 25% (Ang et al. 2006) · Alpha 15% (Kakushadze 2015)"),
         ("22h",       "Diário",   "actualização EOD",  "var(--yellow)", "Dados de fecho actualizados todos os dias às 22h UTC"),
         ("€0",        "Custo",    "infra-estrutura",   "var(--green)",  "GitHub Actions free tier · yfinance · zero servidores"),
         ("~3min",     "Pipeline", "do fetch ao email", "oklch(70% 0.12 230)", "Pipeline completo em ~3 minutos por GitHub Actions"),
@@ -240,13 +240,13 @@ def signal_legend_html(n_etfs: int = 0) -> str:
   <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.75</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.75 · percentil superior · todos os factores alinhados</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <span style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.55</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.55 · sinal construtivo · maioria dos factores positivos</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <span style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.40</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.40 · sinal incipiente · aguardar confirmação</span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({{behavior:'smooth'}});return false;"
        style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
@@ -273,7 +273,7 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
         '<span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;0.75 &nbsp;·&nbsp;'
         '<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;0.55 &nbsp;·&nbsp;'
         '<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;0.40 &nbsp;·&nbsp;'
-        'confluência de momentum, tendência e risco'
+        'ranking cross-sectional · momentum multi-período · regime de tendência · risco ajustado (Sharpe/Calmar) · alpha relativo'
     )
     return f"""
 <section class="summary-grid">
@@ -317,27 +317,28 @@ def explainer_section() -> str:
     <!-- Score técnico -->
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
-                  text-transform:uppercase;margin-bottom:6px">O que é o Score Técnico (0–1)?</div>
+                  text-transform:uppercase;margin-bottom:6px">Score Composto v3 — metodologia quantitativa</div>
       <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0 0 8px">
-        É um número calculado automaticamente que resume o estado técnico de cada ETF
-        numa escala de 0 a 1. Quanto mais próximo de 1, mais indicadores apontam para
-        uma fase positiva. <b style="color:var(--text)">Não é uma previsão</b> — é uma fotografia do momento actual.
+        Cada ETF recebe um score cross-sectional de 0 a 1, calculado diariamente como média ponderada
+        de 4 factores académicos. O ranking é relativo ao universo: um score de 0.75 significa
+        que o ETF está no percentil superior do universo analisado nesse dia.
+        <b style="color:var(--text)">Não é uma previsão de retorno</b> — é um snapshot quantitativo do alinhamento de factores no momento actual.
       </p>
       <div style="display:flex;flex-direction:column;gap:5px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">FORTE COMPRA</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.75 — vários indicadores alinhados, momentum forte</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.75 — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">COMPRA</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.55 — maioria dos indicadores positivos, fase construtiva</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.55 — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;
                        padding:2px 8px;border-radius:2px;white-space:nowrap">POTENCIAL</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.40 — alguns sinais positivos, aguardar confirmação</span>
+          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.40 — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
         </div>
       </div>
     </div>
@@ -345,38 +346,34 @@ def explainer_section() -> str:
     <!-- Sub-scores -->
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;
-                  text-transform:uppercase;margin-bottom:6px">Os 4 componentes do score</div>
+                  text-transform:uppercase;margin-bottom:6px">Os 4 factores do score composto (pesos fixos)</div>
       <div style="display:flex;flex-direction:column;gap:7px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <span style="color:var(--green);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">M</span>
           <div>
-            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Momentum</span>
-            <span style="color:var(--muted);font-size:0.70rem"> — O ETF tem estado a subir nos últimos 1, 3 e 6 meses?
-            Momentum forte significa que a tendência de alta se mantém no tempo.</span>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Momentum <span style="color:var(--muted);font-weight:400">35%</span></span>
+            <span style="color:var(--muted);font-size:0.70rem"> — Retorno 12-1M (Jegadeesh &amp; Titman, 1993): retorno dos últimos 12 meses excluindo o último (neutraliza reversão de curto prazo). Combinado com janelas de 6M e 3M para robustez multi-período. A anomalia de continuação de retornos é a mais replicada em finanças académicas.</span>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start">
           <span style="color:#7c83fd;font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">T</span>
           <div>
-            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Tendência</span>
-            <span style="color:var(--muted);font-size:0.70rem"> — O preço está acima das médias de curto e longo prazo?
-            O MACD (indicador de força da tendência) é positivo?</span>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Tendência <span style="color:var(--muted);font-weight:400">25%</span></span>
+            <span style="color:var(--muted);font-size:0.70rem"> — SMA50/200, MACD (Appel), ADX (Wilder, 1978), regime Faber (2007): posição do preço face às médias móveis, força direcional e cruzamentos de tendência. ADX &gt; 25 confirma tendência consolidada.</span>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start">
           <span style="color:var(--blue-light);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">R</span>
           <div>
-            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Risco</span>
-            <span style="color:var(--muted);font-size:0.70rem"> — A volatilidade está controlada? A queda face ao máximo
-            (drawdown) é pequena? O retorno compensa o risco assumido?</span>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Risco <span style="color:var(--muted);font-weight:400">25%</span></span>
+            <span style="color:var(--muted);font-size:0.70rem"> — Rácio de Sharpe (1966), Calmar Ratio, Maximum Drawdown, volatilidade 21d (Ang et al., 2006): retorno ajustado ao risco por unidade de desvio-padrão e por queda máxima do pico ao vale.</span>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start">
           <span style="color:var(--yellow);font-weight:bold;font-size:0.72rem;width:22px;flex-shrink:0">α</span>
           <div>
-            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Alpha</span>
-            <span style="color:var(--muted);font-size:0.70rem"> — O ETF está a superar o S&amp;P 500?
-            O momentum está a acelerar? Mede a qualidade e consistência do desempenho.</span>
+            <span style="color:var(--text);font-size:0.72rem;font-weight:600">Alpha <span style="color:var(--muted);font-weight:400">15%</span></span>
+            <span style="color:var(--muted);font-size:0.70rem"> — Força Relativa vs SPY (Antonacci, 2014) + alpha101 cross-sectional (Kakushadze, 2015) + aceleração de momentum: liderança sobre o benchmark e qualidade de alpha composta. Dual Momentum: combina momentum absoluto e relativo.</span>
           </div>
         </div>
       </div>
@@ -389,32 +386,25 @@ def explainer_section() -> str:
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline">
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">SMA200</span>
-          <span style="color:var(--muted);font-size:0.70rem">Média dos últimos 200 dias de fecho.
-            Acima = tendência de alta. Abaixo = tendência de baixa. Uma das linhas de referência mais usadas no mundo.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Simple Moving Average de 200 dias (Faber, 2007). Filtro de regime de tendência: preço &gt; SMA200 = regime BULL; abaixo = BEAR. O filtro de Faber demonstrou reduzir drawdowns em backtests de longo prazo sem sacrificar retorno.</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">RSI</span>
-          <span style="color:var(--muted);font-size:0.70rem">Mede se o ETF está "caro" tecnicamente (RSI &gt; 70, possível
-            pausa) ou "barato" (RSI &lt; 30, possível recuperação). Entre 40–65 é zona neutra saudável.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Relative Strength Index (Wilder, 1978). Oscilador de momentum 0–100: &gt;70 sobrecompra (possível pausa), &lt;30 sobrevenda (possível recuperação). No factor de tendência, é usado como complemento ao MACD para timing de entrada. Zona saudável: 40–65.</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">ADX</span>
-          <span style="color:var(--muted);font-size:0.70rem">Força da tendência. Acima de 25 significa que existe
-            uma tendência clara (para cima ou para baixo). Abaixo de 20 é mercado sem direcção.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Average Directional Index (Wilder, 1978). Mede a força da tendência independentemente da direcção: ADX &gt; 25 = tendência consolidada (mercado direcional); &lt; 20 = mercado lateral sem direcção. Componente do factor Tendência (T).</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">Drawdown</span>
-          <span style="color:var(--muted);font-size:0.70rem">Quanto o ETF caiu face ao seu máximo mais recente.
-            Ex: −8% significa que está 8% abaixo do pico. Drawdown pequeno = boa gestão do risco.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Maximum Drawdown — queda máxima do pico ao vale na série de preços. Componente do Calmar Ratio (retorno anualizado / max drawdown). Ex: −8% = está 8% abaixo do seu máximo histórico recente. Drawdown &lt; 10% indica gestão de risco adequada.</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">BULL / BEAR</span>
-          <span style="color:var(--muted);font-size:0.70rem">Indica se o mercado americano (SPY) está em fase de alta
-            (BULL, acima da SMA200) ou de baixa (BEAR, abaixo). Em regime BEAR os sinais são lidos com mais cautela.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Regime de mercado (Faber, 2007): SPY &gt; SMA200 = BULL; SPY &lt; SMA200 = BEAR. Filtro de regime macro aplicado ao score composto — em regime BEAR os thresholds de sinal são mais exigentes para reduzir falsos positivos.</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">RS/SPY</span>
-          <span style="color:var(--muted);font-size:0.70rem">Força Relativa face ao S&amp;P 500.
-            ✓ significa que o ETF está a superar o índice americano — sinal positivo de liderança.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Força Relativa vs S&amp;P 500 (Antonacci, 2014 — Dual Momentum). Combina momentum absoluto (retorno positivo) e relativo (superar o benchmark SPY). ✓ indica que o ETF está em modo de liderança: sobe mais ou cai menos que o índice americano.</span>
 
           <span style="color:var(--text);font-size:0.70rem;font-weight:600;white-space:nowrap">Sharpe</span>
-          <span style="color:var(--muted);font-size:0.70rem">Retorno dividido pelo risco. Um Sharpe de 1.0 ou mais
-            significa que o ETF está a gerar retorno razoável para o risco que implica.</span>
+          <span style="color:var(--muted);font-size:0.70rem">Rácio de Sharpe (Sharpe, 1966): (retorno − risk-free) / desvio-padrão anualizado. Normaliza o retorno pelo risco assumido. Sharpe &gt; 1.0 = bom; &gt; 2.0 = excelente. Componente principal do factor Risco (R) a 63 dias.</span>
         </div>
       </div>
     </div>
