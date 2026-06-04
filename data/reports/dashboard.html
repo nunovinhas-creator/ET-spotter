@@ -319,11 +319,36 @@ footer {
         <span title="Regime de mercado americano: SPY 755.62 > SMA200 681.04. BULL = S&P 500 acima da média de 200 dias (tendência de alta). BEAR = abaixo (tendência de baixa). O dashboard usa isto para contextualizar os sinais." style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold;cursor:help">BULL</span>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span>Actualizado: 04/06/2026  18:28 UTC
+        <span class="live-dot"></span>Actualizado: 04/06/2026  18:40 UTC
       </div>
     </div>
   </div>
-</header><div class="main"><div class="stat-bar"><div class="stat-item" title="84 de 97 ETFs com dados suficientes hoje"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">84</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">ETFs UCITS</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">de 97 no universo</span></div><div class="stat-div"></div><div class="stat-item" title="Momentum 35% (Jegadeesh-Titman 1993) · Tendência 25% (Faber 2007) · Risco 25% (Ang et al. 2006) · Alpha 15% (Kakushadze 2015)"><span style="color:#7c83fd;font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">4</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Factores</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">momentum·trend·risco·alpha</span></div><div class="stat-div"></div><div class="stat-item" title="Dados de fecho actualizados todos os dias às 22h UTC"><span style="color:var(--yellow);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">22h</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Diário</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">actualização EOD</span></div><div class="stat-div"></div><div class="stat-item" title="GitHub Actions free tier · yfinance · zero servidores"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">€0</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Custo</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">infra-estrutura</span></div><div class="stat-div"></div><div class="stat-item" title="Pipeline completo em ~3 minutos por GitHub Actions"><span style="color:oklch(70% 0.12 230);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">~3min</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">Pipeline</span><span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">do fetch ao email</span></div></div>
+</header><div class="main">
+<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#06090F 0%,#0A0F1A 50%,#080C14 100%);
+            border:1px solid #1E2D4D;border-radius:6px;margin:12px 0 0">
+  <!-- dot grid overlay -->
+  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="xMidYMid slice">
+    <defs><pattern id="hb_dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="0.8" fill="#4D9FFF" opacity="0.07"/>
+    </pattern>
+    <linearGradient id="hb_top" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="25%"  stop-color="#00D4FF" stop-opacity="0.9"/>
+      <stop offset="50%"  stop-color="#7C83FD" stop-opacity="1"/>
+      <stop offset="75%"  stop-color="#00D4FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <linearGradient id="hb_diag" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#00D4FF" stop-opacity="0"/>
+      <stop offset="45%"  stop-color="#00D4FF" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#7C83FD" stop-opacity="0"/>
+    </linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#hb_dots)"/>
+    <line x1="-5%" y1="110%" x2="80%" y2="-10%" stroke="url(#hb_diag)" stroke-width="80"/>
+    <rect y="0" width="100%" height="2" fill="url(#hb_top)"/>
+  </svg>
+  <div class="stat-bar" style="position:relative;z-index:1"><div class="stat-item" title="84 de 97 ETFs com dados suficientes hoje"><span style="color:#00D4FF;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #00D4FF44">84</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">ETFs UCITS</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">de 97 no universo</span></div><div class="stat-div"></div><div class="stat-item" title="Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"><span style="color:#7C83FD;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #7C83FD44">4</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Factores</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">M · T · R · α</span></div><div class="stat-div"></div><div class="stat-item" title="Dados de fecho actualizados todos os dias às 22h UTC"><span style="color:#FFB800;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #FFB80044">22h</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Diário</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">actualização EOD</span></div><div class="stat-div"></div><div class="stat-item" title="GitHub Actions free tier · yfinance · zero servidores"><span style="color:#00FF9D;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #00FF9D44">€0</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Custo</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">infra-estrutura</span></div><div class="stat-div"></div><div class="stat-item" title="Pipeline completo em ~3 minutos por GitHub Actions"><span style="color:#4D9FFF;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #4D9FFF44">~3min</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Pipeline</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">fetch → score → email</span></div></div>
+</div>
 <div class="signal-legend">
   <span style="color:var(--muted);font-size:0.68rem">de 84 ETFs analisados hoje:</span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -498,9 +523,25 @@ footer {
       Consulta sempre um profissional antes de investir.
     </p>
   </div>
-</details>
+</details><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Melhor Posicionados — Análise Técnica Consolidada</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></g></svg>Melhor Posicionados — Análise Técnica Consolidada</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
@@ -593,9 +634,25 @@ footer {
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
   </p>
-</section>
+</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Sinais de Compra</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" fill="none"><path d="M3 15 A8 8 0 0 1 17 15"/><line x1="4.5" y1="11.5" x2="6" y2="9.5"/><line x1="10" y1="7" x2="10" y2="9"/><line x1="15.5" y1="11.5" x2="14" y2="9.5"/><line x1="10" y1="14" x2="14" y2="8"/><circle cx="10" cy="14" r="1.5" fill="#00D4FF" stroke="none"/></g></svg>Sinais de Compra</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
@@ -800,9 +857,25 @@ footer {
           <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Developed Europe está a consolidar sem movimento expressivo nos últimos 3 meses. A ligeira correção de -0.2% esta semana afastou o preço de zonas mais caras. O RSI (58) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
         </div>
-</section>
+</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Rotação por Categoria</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke-linecap="round"><line x1="5" y1="3" x2="5" y2="17" stroke="#00FF9D" stroke-width="1.5"/><rect x="3" y="6" width="4" height="8" rx="0.5" fill="#00FF9D" stroke="none"/><line x1="10" y1="3" x2="10" y2="17" stroke="#FF4466" stroke-width="1.5"/><rect x="8" y="8" width="4" height="5" rx="0.5" fill="#FF4466" stroke="none"/><line x1="15" y1="3" x2="15" y2="17" stroke="#4D9FFF" stroke-width="1.5"/><rect x="13" y="5" width="4" height="9" rx="0.5" fill="#4D9FFF" stroke="none"/></g></svg>Rotação por Categoria</h2>
   <div class="cat-grid">
         <div class="cat-tile" style="background:oklch(13% 0.045 188);border:1px solid #ef5350">
           <div style="color:#ef5350;font-size:10px;font-weight:bold;margin-bottom:4px">Temáticos / Inovação</div>
@@ -859,9 +932,25 @@ footer {
           <div style="font-size:20px;font-weight:bold;color:var(--red)">0.360</div>
           <div style="font-size:10px;color:var(--red);margin-top:2px">▼ 3 ETFs · top 0.439</div>
         </div></div>
-</section>
+</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Evolução de Score — Top 5 ETFs (últimos 30 dias)</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#7C83FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,16 5,11 9,13 13,7 18,9"/><line x1="2" y1="18" x2="18" y2="18" stroke-width="1"/></g></svg>Evolução de Score — Top 5 ETFs (últimos 30 dias)</h2>
   <div style="position:relative;height:240px">
     <canvas id="scoreChart"></canvas>
   </div>
@@ -888,9 +977,25 @@ footer {
       });
     })();
   </script>
-</section>
+</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Backtest — Retorno Forward 21d por Sinal</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="2" width="16" height="16" rx="2" stroke="#FFB800" stroke-width="1.5"/><line x1="2" y1="8" x2="18" y2="8" stroke="#FFB800" stroke-width="0.8" opacity="0.5"/><polyline points="5,14 8,10 12,12 15,7" stroke="#00FF9D" stroke-width="1.5"/></g></svg>Backtest — Retorno Forward 21d por Sinal</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Retorno dos 21 dias seguintes a cada sinal · excesso vs SPY no mesmo período
   </p>
@@ -967,9 +1072,25 @@ footer {
       </p>
     </div>
   </div>
-</section>
+</section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>
 <section class="section">
-  <h2 class="section-title">Todos os ETFs</h2>
+  <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke-linecap="round"><line x1="5" y1="3" x2="5" y2="17" stroke="#00FF9D" stroke-width="1.5"/><rect x="3" y="6" width="4" height="8" rx="0.5" fill="#00FF9D" stroke="none"/><line x1="10" y1="3" x2="10" y2="17" stroke="#FF4466" stroke-width="1.5"/><rect x="8" y="8" width="4" height="5" rx="0.5" fill="#FF4466" stroke="none"/><line x1="15" y1="3" x2="15" y2="17" stroke="#4D9FFF" stroke-width="1.5"/><rect x="13" y="5" width="4" height="9" rx="0.5" fill="#4D9FFF" stroke="none"/></g></svg>Todos os ETFs</h2>
   <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
     <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
       style="width:220px">
@@ -1188,7 +1309,7 @@ footer {
     97 ETFs UCITS · GITHUB ACTIONS · YFINANCE · MIT LICENSE
   </text>
 </svg>
-</div></div><footer><div style="max-width:900px;margin:0 auto"><div style="margin-bottom:10px"></div><div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div><div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span><span class="acad-badge" title="Trend following SMA">Faber (2007)</span><span class="acad-badge" title="Dual momentum">Antonacci (2014)</span><span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span><span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span></div><span style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — <b>não constitui aconselhamento financeiro</b>. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span></div></footer>
+</div></div><footer><div style="max-width:900px;margin:0 auto"><div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px"><span style="background:#0F1629;border:1px solid #00D4FF44;color:#00D4FF;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⟳ AUTO-UPDATED</span><span style="background:#0F1629;border:1px solid #7C83FD44;color:#7C83FD;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⚙ QUANT ENGINE</span><span style="background:#0F1629;border:1px solid #00FF9D44;color:#00FF9D;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">◈ ETF SCANNER</span><span style="background:#0F1629;border:1px solid #FFB80044;color:#FFB800;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">✦ OPEN SOURCE</span></div><div style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div><div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span><span class="acad-badge" title="Trend following SMA">Faber (2007)</span><span class="acad-badge" title="Dual momentum">Antonacci (2014)</span><span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span><span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span></div><span style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — <b>não constitui aconselhamento financeiro</b>. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span></div></footer>
 
 <script>
   if ('serviceWorker' in navigator) {

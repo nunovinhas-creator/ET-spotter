@@ -107,6 +107,45 @@ def _num(v, digits=3) -> str:
     return f"{v:.{digits}f}" if pd.notna(v) else "—"
 
 
+# ── Inline SVG icons (24×24, no background, glow stroke) ─────────────────────
+
+_ICON = {
+    "dashboard": '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></g></svg>',
+    "scoring":   '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" fill="none"><path d="M3 15 A8 8 0 0 1 17 15"/><line x1="4.5" y1="11.5" x2="6" y2="9.5"/><line x1="10" y1="7" x2="10" y2="9"/><line x1="15.5" y1="11.5" x2="14" y2="9.5"/><line x1="10" y1="14" x2="14" y2="8"/><circle cx="10" cy="14" r="1.5" fill="#00D4FF" stroke="none"/></g></svg>',
+    "etfs":      '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke-linecap="round"><line x1="5" y1="3" x2="5" y2="17" stroke="#00FF9D" stroke-width="1.5"/><rect x="3" y="6" width="4" height="8" rx="0.5" fill="#00FF9D" stroke="none"/><line x1="10" y1="3" x2="10" y2="17" stroke="#FF4466" stroke-width="1.5"/><rect x="8" y="8" width="4" height="5" rx="0.5" fill="#FF4466" stroke="none"/><line x1="15" y1="3" x2="15" y2="17" stroke="#4D9FFF" stroke-width="1.5"/><rect x="13" y="5" width="4" height="9" rx="0.5" fill="#4D9FFF" stroke="none"/></g></svg>',
+    "data":      '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#4D9FFF" stroke-width="1.5" stroke-linecap="round" fill="none"><ellipse cx="10" cy="6" rx="7" ry="2.5"/><path d="M3 6v4c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V6"/><path d="M3 10v4c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-4"/></g></svg>',
+    "chart":     '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#7C83FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,16 5,11 9,13 13,7 18,9"/><line x1="2" y1="18" x2="18" y2="18" stroke-width="1"/></g></svg>',
+    "backtest":  '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="2" width="16" height="16" rx="2" stroke="#FFB800" stroke-width="1.5"/><line x1="2" y1="8" x2="18" y2="8" stroke="#FFB800" stroke-width="0.8" opacity="0.5"/><polyline points="5,14 8,10 12,12 15,7" stroke="#00FF9D" stroke-width="1.5"/></g></svg>',
+    "portfolio": '<svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#7C83FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="7" width="16" height="11" rx="2"/><path d="M7 7V5a3 3 0 0 1 6 0v2"/><line x1="10" y1="11" x2="10" y2="15"/><line x1="7" y1="13" x2="13" y2="13"/></g></svg>',
+}
+
+
+def _icon(name: str) -> str:
+    return _ICON.get(name, "")
+
+
+# ── Glow divider (slim, inline SVG) ──────────────────────────────────────────
+
+_GLOW_DIVIDER = """\
+<div style="margin:4px 0 8px;overflow:hidden;line-height:0">
+<svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="20%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7C83FD"/>
+      <stop offset="80%"  stop-color="#00D4FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="#00D4FF" stroke-width="4" opacity="0.18" filter="url(#gf)"/>
+  <line x1="0" y1="6" x2="1200" y2="6" stroke="url(#gd)" stroke-width="1"/>
+  <polygon points="600,3 604,6 600,9 596,6" fill="#7C83FD"/>
+</svg>
+</div>"""
+
+
 # ── Brand banner (inline SVG — self-contained, no external asset needed) ─────
 
 BRAND_BANNER_SVG = """\
@@ -193,28 +232,53 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
 
 
 def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
-    """Stat strip — visual branding bar with key project numbers."""
-    etf_label = "ETFs UCITS"
-    etf_sub   = f"de {n_total} no universo" if n_etfs != n_total else "ETFs UCITS"
-    items = ""
+    """Hero stat strip with fintech premium design."""
+    etf_sub = f"de {n_total} no universo" if n_etfs != n_total else "ETFs UCITS"
     stats = [
-        (str(n_etfs), etf_label, etf_sub, "var(--green)",        f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
-        ("4",         "Factores", "momentum·trend·risco·alpha", "#7c83fd", "Momentum 35% (Jegadeesh-Titman 1993) · Tendência 25% (Faber 2007) · Risco 25% (Ang et al. 2006) · Alpha 15% (Kakushadze 2015)"),
-        ("22h",       "Diário",   "actualização EOD",  "var(--yellow)", "Dados de fecho actualizados todos os dias às 22h UTC"),
-        ("€0",        "Custo",    "infra-estrutura",   "var(--green)",  "GitHub Actions free tier · yfinance · zero servidores"),
-        ("~3min",     "Pipeline", "do fetch ao email", "oklch(70% 0.12 230)", "Pipeline completo em ~3 minutos por GitHub Actions"),
+        (str(n_etfs), "ETFs UCITS",  etf_sub,                    "#00D4FF", f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
+        ("4",         "Factores",    "M · T · R · α",             "#7C83FD", "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
+        ("22h",       "Diário",      "actualização EOD",          "#FFB800", "Dados de fecho actualizados todos os dias às 22h UTC"),
+        ("€0",        "Custo",       "infra-estrutura",           "#00FF9D", "GitHub Actions free tier · yfinance · zero servidores"),
+        ("~3min",     "Pipeline",    "fetch → score → email",     "#4D9FFF", "Pipeline completo em ~3 minutos por GitHub Actions"),
     ]
+    items = ""
     for i, (val, label, sub, color, tip) in enumerate(stats):
         if i > 0:
             items += '<div class="stat-div"></div>'
         items += (
             f'<div class="stat-item" title="{tip}">'
-            f'<span style="color:{color};font-size:22px;font-weight:700;font-family:\'Albert Sans\',sans-serif;line-height:1">{val}</span>'
-            f'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:4px">{label}</span>'
-            f'<span style="color:var(--border);font-size:0.52rem;margin-top:1px;letter-spacing:0.04em">{sub}</span>'
+            f'<span style="color:{color};font-size:24px;font-weight:700;font-family:\'Albert Sans\',sans-serif;line-height:1;'
+            f'text-shadow:0 0 12px {color}44">{val}</span>'
+            f'<span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">{label}</span>'
+            f'<span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">{sub}</span>'
             f'</div>'
         )
-    return f'<div class="stat-bar">{items}</div>'
+    return f"""
+<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#06090F 0%,#0A0F1A 50%,#080C14 100%);
+            border:1px solid #1E2D4D;border-radius:6px;margin:12px 0 0">
+  <!-- dot grid overlay -->
+  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="xMidYMid slice">
+    <defs><pattern id="hb_dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="0.8" fill="#4D9FFF" opacity="0.07"/>
+    </pattern>
+    <linearGradient id="hb_top" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#0A0F1A"/>
+      <stop offset="25%"  stop-color="#00D4FF" stop-opacity="0.9"/>
+      <stop offset="50%"  stop-color="#7C83FD" stop-opacity="1"/>
+      <stop offset="75%"  stop-color="#00D4FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0A0F1A"/>
+    </linearGradient>
+    <linearGradient id="hb_diag" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#00D4FF" stop-opacity="0"/>
+      <stop offset="45%"  stop-color="#00D4FF" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#7C83FD" stop-opacity="0"/>
+    </linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#hb_dots)"/>
+    <line x1="-5%" y1="110%" x2="80%" y2="-10%" stroke="url(#hb_diag)" stroke-width="80"/>
+    <rect y="0" width="100%" height="2" fill="url(#hb_top)"/>
+  </svg>
+  <div class="stat-bar" style="position:relative;z-index:1">{items}</div>
+</div>"""
 
 
 def cta_strip_html() -> str:
@@ -623,7 +687,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title">Melhor Posicionados — Análise Técnica Consolidada</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("dashboard")}Melhor Posicionados — Análise Técnica Consolidada</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
@@ -680,7 +744,7 @@ def buy_signals_section(signals: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title">Sinais de Compra</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("scoring")}Sinais de Compra</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
@@ -709,7 +773,7 @@ def category_heatmap_section(cats: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title">Rotação por Categoria</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}Rotação por Categoria</h2>
   <div class="cat-grid">{items}</div>
 </section>"""
 
@@ -783,7 +847,7 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
     rows_json = json.dumps(rows_js, ensure_ascii=False)
     return f"""
 <section class="section">
-  <h2 class="section-title">Todos os ETFs</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}Todos os ETFs</h2>
   <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
     <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
       style="width:220px">
@@ -1008,7 +1072,7 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
     chart_data = json.dumps({"labels": date_labels, "datasets": datasets})
     return f"""
 <section class="section">
-  <h2 class="section-title">Evolução de Score — Top 5 ETFs (últimos 30 dias)</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("chart")}Evolução de Score — Top 5 ETFs (últimos 30 dias)</h2>
   <div style="position:relative;height:240px">
     <canvas id="scoreChart"></canvas>
   </div>
@@ -1076,7 +1140,7 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title">Backtest — Retorno Forward 21d por Sinal</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("backtest")}Backtest — Retorno Forward 21d por Sinal</h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Retorno dos 21 dias seguintes a cada sinal · excesso vs SPY no mesmo período
   </p>
@@ -1191,7 +1255,7 @@ def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title">Portfólio Alpaca</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}Portfólio Alpaca</h2>
   <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
     <div>
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Valor Total</div>
@@ -1578,19 +1642,30 @@ async function subscribePush() {{
         signal_legend_html(n_etfs=n_etfs_today),
         summary_cards_html(signals_all, data["scores_df"]),
         explainer_section(),
+        _GLOW_DIVIDER,
         advisor_section(data["rows_raw"]),
+        _GLOW_DIVIDER,
         buy_signals_section(signals),
+        _GLOW_DIVIDER,
         category_heatmap_section(data["cats"]),
+        _GLOW_DIVIDER,
         history_chart_section(data["hist_df"], data["scores_df"]),
+        _GLOW_DIVIDER,
         backtest_section(data["bt_df"]),
         portfolio_section(PORTFOLIO, data["cmap"]),
+        _GLOW_DIVIDER,
         etf_table_section(data["scores_df"], data["cmap"], metadata),
         brand_banner_section_html(),
         '</div>',
         f'<footer>'
         f'<div style="max-width:900px;margin:0 auto">'
-        f'<div style="margin-bottom:10px"></div>'
-        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
+        f'<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+        f'<span style="background:#0F1629;border:1px solid #00D4FF44;color:#00D4FF;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⟳ AUTO-UPDATED</span>'
+        f'<span style="background:#0F1629;border:1px solid #7C83FD44;color:#7C83FD;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⚙ QUANT ENGINE</span>'
+        f'<span style="background:#0F1629;border:1px solid #00FF9D44;color:#00FF9D;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">◈ ETF SCANNER</span>'
+        f'<span style="background:#0F1629;border:1px solid #FFB80044;color:#FFB800;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">✦ OPEN SOURCE</span>'
+        f'</div>'
+        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
         f'<span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span>'
         f'<span class="acad-badge" title="Trend following SMA">Faber (2007)</span>'
