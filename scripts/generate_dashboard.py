@@ -1901,7 +1901,8 @@ def generate_dashboard(cfg: dict) -> None:
         print("[SKIP] Sem dados para o dashboard.")
         return
 
-    ts       = datetime.now(timezone.utc).strftime("%d/%m/%Y  %H:%M UTC")
+    from zoneinfo import ZoneInfo
+    ts       = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%d/%m/%Y  %H:%M (Lisboa)")
     ts_epoch = int(datetime.now(timezone.utc).timestamp())
     signals      = build_buy_signals(data["rows_raw"], top_n=10)   # para display (secção sinais)
     signals_all  = build_buy_signals(data["rows_raw"], top_n=200)  # para contagens nos cards
