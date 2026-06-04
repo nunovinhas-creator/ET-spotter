@@ -174,9 +174,6 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-        <a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">
-          ⭐ Star no GitHub
-        </a>
         <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
@@ -1592,9 +1589,7 @@ async function subscribePush() {{
         '</div>',
         f'<footer>'
         f'<div style="max-width:900px;margin:0 auto">'
-        f'<div style="margin-bottom:10px">'
-        f'<a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.65rem;text-decoration:none">Open Source · MIT · GitHub</a>'
-        f'</div>'
+        f'<div style="margin-bottom:10px"></div>'
         f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
         f'<span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span>'
