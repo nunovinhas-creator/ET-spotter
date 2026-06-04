@@ -104,6 +104,60 @@ Scores em tempo real para todos os 97 ETFs: sub-barras de momentum · tendência
 Em ~3 minutos recebes o email e o dashboard publica-se em `https://<o-teu-username>.github.io/ET-spotter`
 
 <details>
+<summary><b>🎨 Variante de banner (minimalista)</b></summary>
+
+<br>
+
+<img src="docs/assets/banner-minimal.svg" width="100%" alt="ET-Spotter — Banner Minimal">
+
+Para usar este banner, substitui na primeira linha do README:
+```
+docs/assets/banner.svg  →  docs/assets/banner-minimal.svg
+```
+
+</details>
+
+<details>
+<summary><b>📊 Activar analytics GoatCounter (privacy-first)</b></summary>
+
+<br>
+
+1. Cria conta gratuita em [goatcounter.com](https://www.goatcounter.com/) — sem cookies, GDPR-compliant
+2. O teu código de conta é a parte antes de `.goatcounter.com` no URL do painel (ex: `meu-projeto`)
+3. Edita `config/etfs.json` → secção `"params"`:
+
+```json
+"goatcounter_code": "meu-projeto"
+```
+
+4. O dashboard inclui automaticamente o script de tracking na próxima geração.
+
+</details>
+
+<details>
+<summary><b>🔔 Activar alertas Push (Web Push API)</b></summary>
+
+<br>
+
+O dashboard já tem a infra implementada (service worker + subscribe button). Para activar:
+
+1. Gera um par de chaves VAPID:
+```bash
+npx web-push generate-vapid-keys
+```
+
+2. Adiciona a chave pública em `config/etfs.json` → secção `"params"`:
+```json
+"vapid_public_key": "BEL_a_tua_chave_publica_aqui"
+```
+
+3. O botão "🔔 Activar alertas" aparece automaticamente no dashboard após regeneração.
+
+> A chave privada deve ser configurada como secret `VAPID_PRIVATE_KEY` no GitHub Actions para envio de notificações.
+
+</details>
+
+<details>
 <summary><b>⚙️ Configuração local (desenvolvimento)</b></summary>
 
 <br>

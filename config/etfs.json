@@ -194,7 +194,8 @@
       "risk": 0.3
     },
     "backtest_horizons": [5, 10, 21, 42],
-    "vapid_public_key": ""
+    "vapid_public_key": "",
+    "goatcounter_code": ""
   },
   "email": {
     "top_n": 10
