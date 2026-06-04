@@ -15,6 +15,9 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ET-Spotter — Análise Automática de ETFs UCITS">
   <meta name="twitter:description" content="84 ETFs UCITS analisados diariamente. Score de momentum, tendência, risco e alpha. Grátis.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -319,35 +322,53 @@ footer {
         <span title="Regime de mercado americano: SPY 755.62 > SMA200 681.04. BULL = S&P 500 acima da média de 200 dias (tendência de alta). BEAR = abaixo (tendência de baixa). O dashboard usa isto para contextualizar os sinais." style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold;cursor:help">BULL</span>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span>Actualizado: 04/06/2026  18:40 UTC
+        <span class="live-dot"></span>Actualizado: 04/06/2026  18:45 UTC
       </div>
     </div>
   </div>
 </header><div class="main">
-<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#06090F 0%,#0A0F1A 50%,#080C14 100%);
-            border:1px solid #1E2D4D;border-radius:6px;margin:12px 0 0">
-  <!-- dot grid overlay -->
-  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="xMidYMid slice">
-    <defs><pattern id="hb_dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="15" cy="15" r="0.8" fill="#4D9FFF" opacity="0.07"/>
-    </pattern>
-    <linearGradient id="hb_top" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#0A0F1A"/>
-      <stop offset="25%"  stop-color="#00D4FF" stop-opacity="0.9"/>
-      <stop offset="50%"  stop-color="#7C83FD" stop-opacity="1"/>
-      <stop offset="75%"  stop-color="#00D4FF" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#0A0F1A"/>
-    </linearGradient>
-    <linearGradient id="hb_diag" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#00D4FF" stop-opacity="0"/>
-      <stop offset="45%"  stop-color="#00D4FF" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#7C83FD" stop-opacity="0"/>
-    </linearGradient></defs>
-    <rect width="100%" height="100%" fill="url(#hb_dots)"/>
-    <line x1="-5%" y1="110%" x2="80%" y2="-10%" stroke="url(#hb_diag)" stroke-width="80"/>
-    <rect y="0" width="100%" height="2" fill="url(#hb_top)"/>
-  </svg>
-  <div class="stat-bar" style="position:relative;z-index:1"><div class="stat-item" title="84 de 97 ETFs com dados suficientes hoje"><span style="color:#00D4FF;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #00D4FF44">84</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">ETFs UCITS</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">de 97 no universo</span></div><div class="stat-div"></div><div class="stat-item" title="Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"><span style="color:#7C83FD;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #7C83FD44">4</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Factores</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">M · T · R · α</span></div><div class="stat-div"></div><div class="stat-item" title="Dados de fecho actualizados todos os dias às 22h UTC"><span style="color:#FFB800;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #FFB80044">22h</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Diário</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">actualização EOD</span></div><div class="stat-div"></div><div class="stat-item" title="GitHub Actions free tier · yfinance · zero servidores"><span style="color:#00FF9D;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #00FF9D44">€0</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Custo</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">infra-estrutura</span></div><div class="stat-div"></div><div class="stat-item" title="Pipeline completo em ~3 minutos por GitHub Actions"><span style="color:#4D9FFF;font-size:24px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1;text-shadow:0 0 12px #4D9FFF44">~3min</span><span style="color:#8BA4C8;font-size:0.58rem;letter-spacing:0.10em;text-transform:uppercase;margin-top:5px">Pipeline</span><span style="color:#4A6080;font-size:0.50rem;margin-top:2px;letter-spacing:0.04em">fetch → score → email</span></div></div>
+<div style="margin:16px 0 0;padding:0">
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><div title="84 de 97 ETFs com dados suficientes hoje" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid #00D4FF33;border-top:2px solid #00D4FF;
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:#00D4FF;font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px #00D4FF,0 0 40px #00D4FF88">84</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">ETFs UCITS</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">de 97 no universo</span>
+        </div><div title="Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid #7C83FD33;border-top:2px solid #7C83FD;
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:#7C83FD;font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px #7C83FD,0 0 40px #7C83FD88">4</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">Factores</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">M · T · R · α</span>
+        </div><div title="Dados de fecho actualizados todos os dias às 22h UTC" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid #FFB80033;border-top:2px solid #FFB800;
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:#FFB800;font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px #FFB800,0 0 40px #FFB80088">22h</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">Diário</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">actualização EOD</span>
+        </div><div title="GitHub Actions free tier · yfinance · zero servidores" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid #00FF9D33;border-top:2px solid #00FF9D;
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:#00FF9D;font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px #00FF9D,0 0 40px #00FF9D88">€0</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">Custo</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">infra-estrutura</span>
+        </div><div title="Pipeline completo em ~3 minutos por GitHub Actions" style="
+            flex:1;min-width:100px;padding:16px 12px;text-align:center;
+            background:#0D1525;border:1px solid #4D9FFF33;border-top:2px solid #4D9FFF;
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:#4D9FFF;font-size:28px;font-weight:800;line-height:1;
+                       text-shadow:0 0 20px #4D9FFF,0 0 40px #4D9FFF88">~3min</span>
+          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">Pipeline</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">fetch → score → email</span>
+        </div></div>
 </div>
 <div class="signal-legend">
   <span style="color:var(--muted);font-size:0.68rem">de 84 ETFs analisados hoje:</span>
@@ -365,40 +386,57 @@ footer {
        style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
   </div>
 </div>
-<section class="summary-grid">
-  
-        <div class="card" style="border-top:1px solid var(--green)">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--green)">8</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">FORTE COMPRA</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 8px">
+  <div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid #00FF9D44;border-left:3px solid #00FF9D;border-radius:6px">
+          <div style="color:#00FF9D;font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px #00FF9D">8</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">Forte Compra</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.62 · todos factores alinhados</div>
+          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:15%;height:3px;background:#00FF9D;border-radius:2px;box-shadow:0 0 6px #00FF9D"></div></div>
+        </div>
+  <div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid #00D4FF44;border-left:3px solid #00D4FF;border-radius:6px">
+          <div style="color:#00D4FF;font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px #00D4FF">13</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">Compra</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.54 · sinal construtivo</div>
+          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:25%;height:3px;background:#00D4FF;border-radius:2px;box-shadow:0 0 6px #00D4FF"></div></div>
+        </div>
+  <div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid #FFB80044;border-left:3px solid #FFB800;border-radius:6px">
+          <div style="color:#FFB800;font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px #FFB800">30</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">Potencial</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.48 · aguardar confirmação</div>
+          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:58%;height:3px;background:#FFB800;border-radius:2px;box-shadow:0 0 6px #FFB800"></div></div>
+        </div>
+  <div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid #7C83FD44;border-left:3px solid #7C83FD;border-radius:6px">
+          <div style="color:#7C83FD;font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px #7C83FD">48</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">Score > 0.50</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">de 84 ETFs analisados</div>
+          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:94%;height:3px;background:#7C83FD;border-radius:2px;box-shadow:0 0 6px #7C83FD"></div></div>
+        </div>
+  <div style="flex:1;min-width:120px;padding:16px 14px;
+            background:linear-gradient(135deg,#0D1525,#0A0F1A);
+            border:1px solid #4D9FFF44;border-left:3px solid #4D9FFF;border-radius:6px">
+          <div style="color:#4D9FFF;font-size:36px;font-weight:800;line-height:1;
+                      text-shadow:0 0 16px #4D9FFF">0.554</div>
+          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-top:6px">Score Médio</div>
+          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">média cross-sectional</div>
           
         </div>
-  
-        <div class="card" style="border-top:1px solid var(--light-green)">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--light-green)">13</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">COMPRA</div>
-          
-        </div>
-  
-        <div class="card" style="border-top:1px solid var(--yellow)">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--yellow)">30</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">POTENCIAL</div>
-          
-        </div>
-  
-        <div class="card" style="border-top:1px solid var(--blue)">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--blue)">48</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">Score > 0.50</div>
-          <div style="color:var(--muted);font-size:10px;margin-top:2px">de 84 ETFs</div>
-        </div>
-  
-        <div class="card" style="border-top:1px solid var(--blue-light)">
-          <div style="font-size:26px;font-weight:600;font-family:'Albert Sans',sans-serif;color:var(--blue-light)">0.554</div>
-          <div style="font-family:'SFMono-Regular','Roboto Mono',Consolas,monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:6px">Score médio</div>
-          
-        </div>
-</section>
-<div style="padding:6px 0 14px;color:var(--muted);font-size:0.62rem;letter-spacing:0.03em;opacity:0.7">
-  <span style="color:var(--green)">&#9679;</span> score&nbsp;≥&nbsp;0.62 &nbsp;·&nbsp;<span style="color:var(--light-green)">&#9679;</span> score&nbsp;≥&nbsp;0.54 &nbsp;·&nbsp;<span style="color:var(--yellow)">&#9679;</span> score&nbsp;≥&nbsp;0.48 &nbsp;·&nbsp;ranking cross-sectional · momentum multi-período · regime de tendência · risco ajustado (Sharpe/Calmar) · alpha relativo
 </div>
 <details id="explainer-details" style="margin-bottom:16px;border:1px solid var(--border);border-radius:2px;background:var(--surface)">
   <summary style="padding:10px 16px;cursor:pointer;list-style:none;display:flex;
