@@ -122,14 +122,41 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <div>
       <div class="logo">ET-SPOTTER</div>
       <div class="subtitle">Monitorização automática de ETFs UCITS · score técnico composto (0–1)</div>
-      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · momentum · tendência · risco</div>
+      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · momentum · tendência · risco · alpha</div>
     </div>
-    <div style="text-align:right">
-      <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
-      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: {ts}</div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">
+          ⭐ Star no GitHub
+        </a>
+        <div style="color:var(--text);font-size:13px">{spy_str} &nbsp;·&nbsp; {sma_str} &nbsp; {regime_badge}</div>
+      </div>
+      <div style="color:var(--muted);font-size:11px">Actualizado: {ts}</div>
     </div>
   </div>
 </header>"""
+
+
+def hero_bar_html(n_etfs: int = 97) -> str:
+    """Stat strip — visual branding bar with key project numbers."""
+    stats = [
+        (str(n_etfs),  "ETFs UCITS", "var(--green)"),
+        ("4",          "Factores",   "#7c83fd"),
+        ("22h",        "Diário",     "var(--yellow)"),
+        ("€0",         "Custo",      "var(--green)"),
+        ("~3min",      "Pipeline",   "oklch(70% 0.12 230)"),
+    ]
+    items = ""
+    for i, (val, label, color) in enumerate(stats):
+        if i > 0:
+            items += '<div class="stat-div"></div>'
+        items += (
+            f'<div class="stat-item">'
+            f'<span style="color:{color};font-size:22px;font-weight:700;font-family:\'Albert Sans\',sans-serif;line-height:1">{val}</span>'
+            f'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">{label}</span>'
+            f'</div>'
+        )
+    return f'<div class="stat-bar">{items}</div>'
 
 
 def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
@@ -1250,6 +1277,72 @@ footer {
   margin-top: 8px;
 }
 
+/* Hero stat bar */
+.stat-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+  flex: 1;
+  background: var(--surface);
+}
+.stat-div {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* GitHub link button */
+.gh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-family: 'Albert Sans', sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gh-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Academic badges */
+.acad-badge {
+  display: inline-block;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.60rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: color 140ms, border-color 140ms;
+}
+.acad-badge:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
+
+@media (max-width: 600px) {
+  .stat-bar { flex-wrap: wrap; }
+  .stat-item { flex: 1 1 calc(33% - 2px); min-width: 80px; }
+  .stat-div { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
@@ -1319,6 +1412,7 @@ async function subscribePush() {{
     sections = [
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=len(data["scores_df"])),
         '<div class="main">',
+        hero_bar_html(n_etfs=len(data["scores_df"])),
         summary_cards_html(signals, data["scores_df"]),
         explainer_section(),
         advisor_section(data["rows_raw"]),
@@ -1329,7 +1423,26 @@ async function subscribePush() {{
         portfolio_section(PORTFOLIO, data["cmap"]),
         etf_table_section(data["scores_df"], data["cmap"], metadata),
         '</div>',
-        f'<footer><div style="max-width:800px;margin:0 auto">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária<br><span style="font-size:0.62rem;opacity:0.6">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Use como input sistemático, não como recomendação isolada.</span></div>{push_btn}</footer>',
+        f'<footer>'
+        f'<div style="max-width:900px;margin:0 auto">'
+        f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">'
+        f'<a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a>'
+        f'<a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener" class="gh-btn">🍴 Fork</a>'
+        f'<a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a>'
+        f'<span style="color:var(--border)">·</span>'
+        f'<span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · {ts}</span>'
+        f'</div>'
+        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
+        f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
+        f'<span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span>'
+        f'<span class="acad-badge" title="Trend following SMA">Faber (2007)</span>'
+        f'<span class="acad-badge" title="Dual momentum">Antonacci (2014)</span>'
+        f'<span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span>'
+        f'<span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span>'
+        f'</div>'
+        f'<span style="font-size:0.60rem;opacity:0.5">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros.</span>'
+        f'</div>'
+        f'{push_btn}</footer>',
     ]
 
     html = f"""<!DOCTYPE html>

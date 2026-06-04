@@ -162,6 +162,72 @@ footer {
   margin-top: 8px;
 }
 
+/* Hero stat bar */
+.stat-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+  flex: 1;
+  background: var(--surface);
+}
+.stat-div {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* GitHub link button */
+.gh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-family: 'Albert Sans', sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gh-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Academic badges */
+.acad-badge {
+  display: inline-block;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.60rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: color 140ms, border-color 140ms;
+}
+.acad-badge:hover { color: var(--champagne); border-color: oklch(40% 0.012 82); }
+
+@media (max-width: 600px) {
+  .stat-bar { flex-wrap: wrap; }
+  .stat-item { flex: 1 1 calc(33% - 2px); min-width: 80px; }
+  .stat-div { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
@@ -174,14 +240,19 @@ footer {
     <div>
       <div class="logo">ET-SPOTTER</div>
       <div class="subtitle">Monitorização automática de ETFs UCITS · score técnico composto (0–1)</div>
-      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">84 ETFs · momentum · tendência · risco</div>
+      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">84 ETFs · momentum · tendência · risco · alpha</div>
     </div>
-    <div style="text-align:right">
-      <div style="color:var(--text);font-size:13px">SPY 754.24 &nbsp;·&nbsp; SMA200 680.45 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold">BULL</span></div>
-      <div style="color:var(--muted);font-size:11px;margin-top:3px">Actualizado: 04/06/2026  09:20 UTC</div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">
+          ⭐ Star no GitHub
+        </a>
+        <div style="color:var(--text);font-size:13px">SPY 754.24 &nbsp;·&nbsp; SMA200 680.45 &nbsp; <span style="background:var(--green);color:#000;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold">BULL</span></div>
+      </div>
+      <div style="color:var(--muted);font-size:11px">Actualizado: 04/06/2026  09:48 UTC</div>
     </div>
   </div>
-</header><div class="main">
+</header><div class="main"><div class="stat-bar"><div class="stat-item"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">84</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">ETFs UCITS</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:#7c83fd;font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">4</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Factores</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:var(--yellow);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">22h</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Diário</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:var(--green);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">€0</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Custo</span></div><div class="stat-div"></div><div class="stat-item"><span style="color:oklch(70% 0.12 230);font-size:22px;font-weight:700;font-family:'Albert Sans',sans-serif;line-height:1">~3min</span><span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px">Pipeline</span></div></div>
 <section class="summary-grid">
   
         <div class="card" style="border-top:1px solid var(--green)">
@@ -991,7 +1062,7 @@ footer {
     });
     applyFilters();
   </script>
-</section></div><footer><div style="max-width:800px;margin:0 auto">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária<br><span style="font-size:0.62rem;opacity:0.6">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Use como input sistemático, não como recomendação isolada.</span></div></footer>
+</section></div><footer><div style="max-width:900px;margin:0 auto"><div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px"><a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a><a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener" class="gh-btn">🍴 Fork</a><a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a><span style="color:var(--border)">·</span><span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · 04/06/2026  09:48 UTC</span></div><div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div><div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span><span class="acad-badge" title="Trend following SMA">Faber (2007)</span><span class="acad-badge" title="Dual momentum">Antonacci (2014)</span><span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span><span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span></div><span style="font-size:0.60rem;opacity:0.5">Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros.</span></div></footer>
 
 <script>
   if ('serviceWorker' in navigator) {
