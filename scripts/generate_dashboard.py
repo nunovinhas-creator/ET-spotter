@@ -217,7 +217,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <div>
       <div class="logo">ET-SPOTTER</div>
       <div class="subtitle">Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)</div>
-      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · Jegadeesh-Titman (1993) · Faber (2007) · Ang et al. (2006) · Kakushadze (2015)</div>
+      <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · Jegadeesh &amp; Titman (1993) · Faber (2007) · Antonacci (2014) · Ang et al. (2006) · Kakushadze (2015) · AQR · Sharpe</div>
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
