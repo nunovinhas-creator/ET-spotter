@@ -397,6 +397,45 @@ Actualmente, a subscrição externa está em roadmap. Por agora, o fork é o cam
 </details>
 
 <details>
+<summary><b>🎨 Assets visuais — Design System</b></summary>
+
+<br>
+
+<img src="docs/assets/components/stats-block.svg" width="100%" alt="ET-Spotter Stats Block">
+
+<br>
+
+<img src="docs/assets/components/highlight-box.svg" width="100%" alt="ET-Spotter Highlight Box">
+
+<br>
+
+**Badges:**
+
+<img src="docs/assets/badges/badge-auto-updated.svg" alt="Auto Updated"> &nbsp;
+<img src="docs/assets/badges/badge-quant-engine.svg" alt="Quant Engine"> &nbsp;
+<img src="docs/assets/badges/badge-etfs-scanner.svg" alt="ETF Scanner"> &nbsp;
+<img src="docs/assets/badges/badge-fintech.svg" alt="Fintech Quant ETF">
+
+<br><br>
+
+**Icons:**
+
+<img src="docs/assets/icons/icon-dashboard.svg" width="48" alt="Dashboard"> &nbsp;
+<img src="docs/assets/icons/icon-scoring.svg" width="48" alt="Scoring"> &nbsp;
+<img src="docs/assets/icons/icon-alerts.svg" width="48" alt="Alerts"> &nbsp;
+<img src="docs/assets/icons/icon-etfs.svg" width="48" alt="ETFs"> &nbsp;
+<img src="docs/assets/icons/icon-data.svg" width="48" alt="Data"> &nbsp;
+<img src="docs/assets/icons/icon-reports.svg" width="48" alt="Reports">
+
+<br><br>
+
+**Palette:**
+
+<img src="docs/assets/components/color-palette.svg" width="100%" alt="ET-Spotter Color Palette">
+
+</details>
+
+<details>
 <summary><b>📁 Estrutura do repositório</b></summary>
 
 <br>
@@ -410,7 +449,12 @@ ET-spotter/
 │   └── reports/                   # scores_latest.csv · scores_history.csv
 ├── docs/                          # GitHub Pages
 │   ├── assets/
-│   │   └── banner.svg             # banner do README
+│   │   ├── banners/               # banner-1920x480.svg · banner-1200x300.svg
+│   │   ├── icons/                 # 6 ícones SVG (dashboard, scoring, alerts, etfs, data, reports)
+│   │   ├── badges/                # 4 badges SVG personalizados
+│   │   ├── dividers/              # 3 dividers SVG (simple, double, glow)
+│   │   ├── components/            # card-signal · stats-block · highlight-box · color-palette
+│   │   └── banner.svg             # banner principal do README
 │   ├── index.html                 # dashboard (gerado automaticamente)
 │   ├── manifest.json              # PWA manifest
 │   └── sw.js                      # Service Worker (cache offline)

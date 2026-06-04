@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160" width="480" height="160">
+  <defs>
+    <!-- Top glow filter for border line -->
+    <filter id="topGlow" x="-20%" y="-200%" width="140%" height="500%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Subtle card shadow -->
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#00FF9D" flood-opacity="0.08"/>
+    </filter>
+    <!-- Bar glow -->
+    <filter id="barGlow" x="-20%" y="-100%" width="140%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Score text glow -->
+    <filter id="scoreGlow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Card background -->
+  <rect x="0" y="0" width="480" height="160" rx="6" ry="6" fill="#0F1629" filter="url(#cardShadow)"/>
+
+  <!-- Card border -->
+  <rect x="0.5" y="0.5" width="479" height="159" rx="6" ry="6" fill="none" stroke="#1E2D4D" stroke-width="1"/>
+
+  <!-- Top accent border line (green glow) -->
+  <rect x="0" y="0" width="480" height="3" rx="1" fill="#00FF9D" filter="url(#topGlow)"/>
+
+  <!-- Subtle top glow area beneath border -->
+  <rect x="0" y="0" width="480" height="30" rx="6" fill="url(#topFade)" opacity="0.3"/>
+  <defs>
+    <linearGradient id="topFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00FF9D" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#00FF9D" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left section: Score + badge + ETF name -->
+
+  <!-- Score value -->
+  <text x="24" y="56" font-family="'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif"
+        font-size="28" font-weight="700" fill="#E8F0FF" filter="url(#scoreGlow)">0.847</text>
+
+  <!-- FORTE COMPRA badge -->
+  <rect x="24" y="65" width="88" height="18" rx="3" fill="#00FF9D"/>
+  <text x="68" y="77.5" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif"
+        font-size="10" font-weight="700" fill="#0A0F1A" text-anchor="middle"
+        letter-spacing="0.5">FORTE COMPRA</text>
+
+  <!-- ETF name bottom -->
+  <text x="24" y="140" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif"
+        font-size="11" fill="#4A6080">CSPX.L</text>
+  <text x="67" y="140" font-family="'Inter', 'SF Pro Display', system-ui, sans-serif"
+        font-size="11" fill="#8BA4C8"> — iShares Core S&amp;P 500</text>
+
+  <!-- Separator line -->
+  <line x1="24" y1="148" x2="456" y2="148" stroke="#1E2D4D" stroke-width="1"/>
+
+  <!-- Last updated micro text -->
+  <text x="24" y="156" font-family="'Inter', system-ui, sans-serif" font-size="9" fill="#4A6080">actualizado hoje às 22h UTC</text>
+
+  <!-- Vertical separator -->
+  <line x1="200" y1="16" x2="200" y2="140" stroke="#1E2D4D" stroke-width="1"/>
+
+  <!-- Right section: Sub-score bars -->
+  <!-- M — Momentum: 0.91 / cyan -->
+  <text x="220" y="42" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#8BA4C8" font-weight="500">M  Momentum</text>
+  <!-- Track -->
+  <rect x="220" y="47" width="200" height="6" rx="3" fill="#1E2D4D"/>
+  <!-- Fill 91% -->
+  <rect x="220" y="47" width="182" height="6" rx="3" fill="#00D4FF" filter="url(#barGlow)"/>
+  <text x="427" y="54" font-family="'Inter', system-ui, sans-serif" font-size="10" font-weight="600" fill="#00D4FF" text-anchor="end">0.91</text>
+
+  <!-- T — Tendência: 0.82 / blue -->
+  <text x="220" y="72" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#8BA4C8" font-weight="500">T  Tendência</text>
+  <rect x="220" y="77" width="200" height="6" rx="3" fill="#1E2D4D"/>
+  <rect x="220" y="77" width="164" height="6" rx="3" fill="#4D9FFF" filter="url(#barGlow)"/>
+  <text x="427" y="84" font-family="'Inter', system-ui, sans-serif" font-size="10" font-weight="600" fill="#4D9FFF" text-anchor="end">0.82</text>
+
+  <!-- R — Risco: 0.79 / purple -->
+  <text x="220" y="102" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#8BA4C8" font-weight="500">R  Risco</text>
+  <rect x="220" y="107" width="200" height="6" rx="3" fill="#1E2D4D"/>
+  <rect x="220" y="107" width="158" height="6" rx="3" fill="#7C83FD" filter="url(#barGlow)"/>
+  <text x="427" y="114" font-family="'Inter', system-ui, sans-serif" font-size="10" font-weight="600" fill="#7C83FD" text-anchor="end">0.79</text>
+
+  <!-- α — Alpha: 0.88 / green -->
+  <text x="220" y="132" font-family="'Inter', system-ui, sans-serif" font-size="10" fill="#8BA4C8" font-weight="500">α  Alpha</text>
+  <rect x="220" y="137" width="200" height="6" rx="3" fill="#1E2D4D"/>
+  <rect x="220" y="137" width="176" height="6" rx="3" fill="#00FF9D" filter="url(#barGlow)"/>
+  <text x="427" y="144" font-family="'Inter', system-ui, sans-serif" font-size="10" font-weight="600" fill="#00FF9D" text-anchor="end">0.88</text>
+</svg>
