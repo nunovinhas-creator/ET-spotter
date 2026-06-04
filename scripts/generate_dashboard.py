@@ -1592,11 +1592,8 @@ async function subscribePush() {{
         '</div>',
         f'<footer>'
         f'<div style="max-width:900px;margin:0 auto">'
-        f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">'
-        f'<a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" class="gh-btn">⭐ Star</a>'
-        f'<a href="https://github.com/nunovinhas-creator/ET-spotter/issues" target="_blank" rel="noopener" class="gh-btn">🐛 Issues</a>'
-        f'<span style="color:var(--border)">·</span>'
-        f'<span style="color:var(--muted);font-size:0.65rem">Open Source · MIT · {ts}</span>'
+        f'<div style="margin-bottom:10px">'
+        f'<a href="https://github.com/nunovinhas-creator/ET-spotter" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.65rem;text-decoration:none">Open Source · MIT · GitHub</a>'
         f'</div>'
         f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:6px">ET-Spotter · dados via yfinance · GitHub Actions · actualização diária às 22h UTC</div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
