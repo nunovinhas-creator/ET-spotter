@@ -66,9 +66,9 @@
     }
     /* JS-rendered table: inject translated strings for badge rendering */
     window._ET_SIGNAL_LABELS = {
-      'FORTE COMPRA': i18n.t('signal.strong_buy'),
-      'COMPRA':       i18n.t('signal.buy'),
-      'POTENCIAL':    i18n.t('signal.potential')
+      'STRONG_BUY': i18n.t('signal.strong_buy'),
+      'BUY':        i18n.t('signal.buy'),
+      'POTENTIAL':  i18n.t('signal.potential')
     };
     /* re-render ETF table if already on screen */
     if (typeof applyFilters === 'function') {
@@ -88,12 +88,14 @@
     }, function (err) {
       if (!err) {
         applyTranslations(i18next);
+        /* re-apply on every language change (covers programmatic changes too) */
+        i18next.on('languageChanged', function () {
+          applyTranslations(i18next);
+        });
         /* public API */
         window.setLanguage = function (lang) {
           try { localStorage.setItem('et_lang', lang); } catch (e) {}
-          i18next.changeLanguage(lang, function () {
-            applyTranslations(i18next);
-          });
+          i18next.changeLanguage(lang);
         };
         window.toggleLang = function () {
           var cur = i18next.language || 'pt';

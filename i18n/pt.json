@@ -27,7 +27,9 @@
   "metric": {
     "momentum": "Momentum",
     "volatility": "Volatilidade",
-    "drawdown": "Drawdown"
+    "drawdown": "Drawdown",
+    "trend": "Tendência",
+    "risk": "Risco"
   },
   "signal": {
     "strong_buy": "FORTE COMPRA",
@@ -83,7 +85,21 @@
     "strong_buy_desc": "percentil superior · todos os factores alinhados",
     "buy_desc": "sinal construtivo · maioria dos factores positivos",
     "potential_desc": "sinal incipiente · aguardar confirmação",
-    "guide": "guia completo ↓"
+    "guide": "guia completo ↓",
+    "of": "de",
+    "etfs_analyzed": "ETFs analisados hoje:"
+  },
+  "advisor": {
+    "tech_score": "Score técnico",
+    "ret3m": "Ret.3M",
+    "ret5d": "Ret.5d",
+    "disclaimer": "ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO",
+    "section_desc": "Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa. Baseado em critérios académicos: Jegadeesh & Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.",
+    "legal": "Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno."
+  },
+  "buy": {
+    "no_signals": "Sem confluência de sinais suficiente.",
+    "section_desc": "Confluência de indicadores técnicos · entrada não comprometida"
   },
   "section": {
     "best_positioned": "Melhor Posicionados — Análise Técnica Consolidada",

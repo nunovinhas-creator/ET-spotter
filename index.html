@@ -389,6 +389,10 @@ footer {
   * { transition: none !important; }
   .live-dot, .signal-forte, .top-accent { animation: none !important; }
 }
+
+/* i18n: hide lang-specific content via html[lang] set by i18next */
+html[lang="en"] .lang-pt-only { display: none !important; }
+html[lang="pt"] .lang-en-only { display: none !important; }
 </style>
 </head>
 <body>
@@ -416,7 +420,7 @@ footer {
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 05/06/2026  15:55 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 05/06/2026  16:13 (Lisboa)
       </div>
     </div>
   </div>
@@ -480,7 +484,7 @@ function switchTab(tab, btn) {
         </div></div>
 </div>
 <div class="signal-legend">
-  <span style="color:var(--muted);font-size:0.68rem">de 84 ETFs analisados hoje:</span>
+  <span style="color:var(--muted);font-size:0.68rem"><span data-i18n="legend.of">de</span> 84 <span data-i18n="legend.etfs_analyzed">ETFs analisados hoje:</span></span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span data-i18n="signal.strong_buy" style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
     <span style="color:var(--muted);font-size:0.65rem">score ≥ 0.62 · <span data-i18n="legend.strong_buy_desc">percentil superior · todos os factores alinhados</span></span>
@@ -927,7 +931,7 @@ function switchTab(tab, btn) {
 </div>
 <section class="section">
   <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></g></svg><span data-i18n="section.best_positioned">Melhor Posicionados — Análise Técnica Consolidada</span></h2>
-  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px" data-i18n="advisor.section_desc">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
   </p>
@@ -941,24 +945,25 @@ function switchTab(tab, btn) {
             <span style="color:#ef5350;font-size:10px">● Temáticos / Inovação</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <span style="color:var(--muted);font-size:11px">Score técnico</span>
+            <span style="color:var(--muted);font-size:11px" data-i18n="advisor.tech_score">Score técnico</span>
             <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:95%;background:var(--green);border-radius:4px;height:7px"></div>
             </div>
             <span style="color:var(--green);font-weight:bold;font-size:13px">95/100</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:81%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.81</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:95%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.95</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:94%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.94</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:70%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.70</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal" data-i18n="metric.momentum">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:81%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.81</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal" data-i18n="metric.trend">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:95%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.95</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal" data-i18n="metric.risk">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:94%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.94</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:70%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.70</span></div></div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
             <span><span style="color:var(--muted)">Mom.12-1M</span> <b style="color:var(--green)">+72.6%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+25.5%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-2.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+25.5%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--red)">-2.0%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">61</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">40</b></span>
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">3.4</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O Energias Limpas Globais tem um momentum de 12 meses excepcionalmente forte (+72.6% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (-2.0%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (40). sharpe de 3.4 — retorno consistente por unidade de risco. Score técnico composto: 95/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O Energias Limpas Globais tem um momentum de 12 meses excepcionalmente forte (+72.6% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (-2.0%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (40). sharpe de 3.4 — retorno consistente por unidade de risco. Score técnico composto: 95/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">Quantitative technical analysis — multi-period momentum, trend regime, relative strength and entry quality. Score: 95/100.</p>
         </div>
         <div style="background:var(--bg);border:1px solid oklch(48% 0.09 188);padding:14px 16px;
                     margin:8px 0;border-radius:2px">
@@ -969,24 +974,25 @@ function switchTab(tab, btn) {
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <span style="color:var(--muted);font-size:11px">Score técnico</span>
+            <span style="color:var(--muted);font-size:11px" data-i18n="advisor.tech_score">Score técnico</span>
             <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:93%;background:var(--green);border-radius:4px;height:7px"></div>
             </div>
             <span style="color:var(--green);font-weight:bold;font-size:13px">93/100</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:71%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.71</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:92%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.92</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:89%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.89</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:56%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.56</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal" data-i18n="metric.momentum">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:71%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.71</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal" data-i18n="metric.trend">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:92%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.92</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal" data-i18n="metric.risk">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:89%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.89</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:56%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.56</span></div></div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
             <span><span style="color:var(--muted)">Mom.12-1M</span> <b style="color:var(--green)">+46.1%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+18.8%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+18.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">61</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">27</b></span>
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">2.8</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI Emerging Markets tem um momentum de 12 meses excepcionalmente forte (+46.1% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.8%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (27). sharpe de 2.8 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI Emerging Markets tem um momentum de 12 meses excepcionalmente forte (+46.1% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.8%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. tendência confirmada pelo adx (27). sharpe de 2.8 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">Quantitative technical analysis — multi-period momentum, trend regime, relative strength and entry quality. Score: 93/100.</p>
         </div>
         <div style="background:var(--bg);border:1px solid oklch(48% 0.09 188);padding:14px 16px;
                     margin:8px 0;border-radius:2px">
@@ -997,26 +1003,27 @@ function switchTab(tab, btn) {
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <span style="color:var(--muted);font-size:11px">Score técnico</span>
+            <span style="color:var(--muted);font-size:11px" data-i18n="advisor.tech_score">Score técnico</span>
             <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:93%;background:var(--green);border-radius:4px;height:7px"></div>
             </div>
             <span style="color:var(--green);font-weight:bold;font-size:13px">93/100</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:70%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.70</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:92%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.92</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:87%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.87</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:57%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.57</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--green);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">M <span style="color:var(--muted);font-weight:normal" data-i18n="metric.momentum">Momentum</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:70%;background:var(--green);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.70</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:#7c83fd;font-size:10px;font-weight:bold;width:80px;flex-shrink:0">T <span style="color:var(--muted);font-weight:normal" data-i18n="metric.trend">Tendência</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:92%;background:#7c83fd;border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.92</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--blue-light);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">R <span style="color:var(--muted);font-weight:normal" data-i18n="metric.risk">Risco</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:87%;background:var(--blue-light);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.87</span></div><div style="display:flex;align-items:center;gap:7px"><span style="color:var(--yellow);font-size:10px;font-weight:bold;width:80px;flex-shrink:0">α <span style="color:var(--muted);font-weight:normal">Alpha</span></span><div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden"><div style="width:57%;background:var(--yellow);border-radius:3px;height:5px"></div></div><span style="color:var(--muted);font-size:10px;width:30px;text-align:right;flex-shrink:0">0.57</span></div></div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
             <span><span style="color:var(--muted)">Mom.12-1M</span> <b style="color:var(--green)">+43.5%</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+18.2%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.3%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+18.2%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.3%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">59</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">23</b></span>
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:var(--green)">2.5</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI EM IMI tem um momentum de 12 meses excepcionalmente forte (+43.5% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.3%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. sharpe de 2.5 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">O MSCI EM IMI tem um momentum de 12 meses excepcionalmente forte (+43.5% excluindo o ruído do último mês) — o tipo de força continuada que os estudos académicos identificam como o preditor técnico mais robusto. Está a consolidar esta semana (+0.3%), o que é normal após um período de força. A ausência de pressão vendedora nesta fase é um sinal de acumulação. Supera o s&p 500 em força relativa. sharpe de 2.5 — retorno consistente por unidade de risco. Score técnico composto: 93/100 (alinhamento elevado) — baseado em momentum multi-período, regime de tendência, força relativa e qualidade de entrada.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">Quantitative technical analysis — multi-period momentum, trend regime, relative strength and entry quality. Score: 93/100.</p>
         </div>
-  <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
+  <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic" data-i18n="advisor.legal">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
   </p>
 </section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
@@ -1038,7 +1045,7 @@ function switchTab(tab, btn) {
 </div>
 <section class="section">
   <h2 class="section-title" style="display:flex;align-items:center"><svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" fill="none"><path d="M3 15 A8 8 0 0 1 17 15"/><line x1="4.5" y1="11.5" x2="6" y2="9.5"/><line x1="10" y1="7" x2="10" y2="9"/><line x1="15.5" y1="11.5" x2="14" y2="9.5"/><line x1="10" y1="14" x2="14" y2="8"/><circle cx="10" cy="14" r="1.5" fill="#00D4FF" stroke="none"/></g></svg><span data-i18n="section.buy_signals">Sinais de Compra</span></h2>
-  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px" data-i18n="buy.section_desc">
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
   
@@ -1046,201 +1053,211 @@ function switchTab(tab, btn) {
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">INRG.L</span>
             <span style="color:var(--muted);font-size:11px">Energias Limpas Globais (iShares UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ef5350;font-size:10px">● Temáticos / Inovação</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.860</b> </span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+25.5%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-2.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+25.5%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--red)">-2.0%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">61</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">40</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-2.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-2.8%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O Energias Limpas Globais está com uma força notável a médio prazo (+25.5% nos últimos 3 meses). A ligeira correção de -2.0% esta semana afastou o preço de zonas mais caras. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O Energias Limpas Globais está com uma força notável a médio prazo (+25.5% nos últimos 3 meses). A ligeira correção de -2.0% esta semana afastou o preço de zonas mais caras. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.860 · RSI: 61 · Drawdown: -2.8% · RS/SPY: ✓</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">VERX.L</span>
             <span style="color:var(--muted);font-size:11px">FTSE Dev. Europe ex-UK (Vanguard UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ab47bc;font-size:10px">● Internacional Desenvolvido</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.633</b> </span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+1.8%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-0.2%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+1.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--red)">-0.2%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">60</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">21</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-0.7%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-0.7%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. próximo de máximos — força estrutural.</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Dev. Europe ex-UK regista uma valorização modesta nos últimos 3 meses (+1.8%). A ligeira correção de -0.2% esta semana afastou o preço de zonas mais caras. O RSI (60) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Dev. Europe ex-UK regista uma valorização modesta nos últimos 3 meses (+1.8%). A ligeira correção de -0.2% esta semana afastou o preço de zonas mais caras. O RSI (60) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.633 · RSI: 60 · Drawdown: -0.7% · RS/SPY: ✗</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">EIMI.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI EM IMI (iShares Core UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.777</b> <span style="color:var(--muted);font-size:10px">P100</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+18.2%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.3%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+18.2%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.3%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">59</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">23</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-2.7%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-2.7%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM IMI está com uma força notável a médio prazo (+18.2% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM IMI está com uma força notável a médio prazo (+18.2% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (59) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.777 · RSI: 59 · Drawdown: -2.7% · RS/SPY: ✓</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">WSML.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World Small Cap (iShares UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#4caf50;font-size:10px">● Global / MSCI World</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.621</b> <span style="color:var(--muted);font-size:10px">P100</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+8.0%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.4%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+8.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.4%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">64</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">16</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">+0.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">+0.0%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. momentum 3m sólido (8.0%).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI World Small Cap tem vindo a ganhar terreno nos últimos 3 meses (+8.0%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI World Small Cap tem vindo a ganhar terreno nos últimos 3 meses (+8.0%). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (64) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.621 · RSI: 64 · Drawdown: +0.0% · RS/SPY: ✗</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">XMEM.DE</span>
             <span style="color:var(--muted);font-size:11px">MSCI Emerging Markets (Xtrackers UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.787</b> <span style="color:var(--muted);font-size:10px">P100</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+18.8%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+18.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">61</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">27</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-2.7%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-2.7%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Emerging Markets está com uma força notável a médio prazo (+18.8% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Emerging Markets está com uma força notável a médio prazo (+18.8% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (61) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.787 · RSI: 61 · Drawdown: -2.7% · RS/SPY: ✓</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IEEM.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI EM (iShares UCITS Dist)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ff7043;font-size:10px">● Mercados Emergentes</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.767</b> </span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+11.9%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+11.9%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+0.8%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">63</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">25</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-2.4%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-2.4%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. força relativa positiva vs spy (últimos 63 dias).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM está com uma força notável a médio prazo (+11.9% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI EM está com uma força notável a médio prazo (+11.9% nos últimos 3 meses). Esta semana manteve-se estável, a consolidar ganhos sem pressão de venda. O RSI (63) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.767 · RSI: 63 · Drawdown: -2.4% · RS/SPY: ✓</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IJPA.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI Japan IMI (iShares Core UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#ab47bc;font-size:10px">● Internacional Desenvolvido</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.644</b> <span style="color:var(--muted);font-size:10px">P89</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+9.7%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+1.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+9.7%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+1.0%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">62</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">14</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">+0.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">+0.0%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.0%). momentum 3m sólido (9.7%).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Japan IMI tem vindo a ganhar terreno nos últimos 3 meses (+9.7%). Subiu +1.0% esta semana, com o momentum a ganhar tração. O RSI (62) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Japan IMI tem vindo a ganhar terreno nos últimos 3 meses (+9.7%). Subiu +1.0% esta semana, com o momentum a ganhar tração. O RSI (62) está a aquecer, mas ainda dentro de margens aceitáveis.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.644 · RSI: 62 · Drawdown: +0.0% · RS/SPY: ✗</p>
         </div>
         <div class="signal-forte" style="background:oklch(13% 0.045 188);border:1px solid oklch(48% 0.09 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">IWMO.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI World Momentum (iShares Edge UCITS Acc)</span>
-            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">FORTE COMPRA</span>
+            <span style="background:var(--green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.strong_buy">FORTE COMPRA</span>
             <span style="color:#66bb6a;font-size:10px">● Factor / Smart Beta</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--green)">0.755</b> <span style="color:var(--muted);font-size:10px">P89</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+23.0%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--green)">+1.5%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+23.0%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--green)">+1.5%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--muted)">67</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--green)">31</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-0.9%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-0.9%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--green)">✓</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal 1.5%). força relativa positiva vs spy (últimos 63 dias).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+23.0% nos últimos 3 meses). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI World Momentum está com uma força notável a médio prazo (+23.0% nos últimos 3 meses). Subiu +1.5% esta semana, com o momentum a ganhar tração. O RSI (67) está a aquecer, mas ainda dentro de margens aceitáveis, estando inclusivamente a superar o mercado americano em geral no mesmo período.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.755 · RSI: 67 · Drawdown: -0.9% · RS/SPY: ✓</p>
         </div>
         <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">SMEA.L</span>
             <span style="color:var(--muted);font-size:11px">MSCI Europe (iShares Core UCITS Acc)</span>
-            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">COMPRA</span>
+            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.buy">COMPRA</span>
             <span style="color:#ab47bc;font-size:10px">● Internacional Desenvolvido</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--light-green)">0.545</b> <span style="color:var(--muted);font-size:10px">P100</span></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+0.8%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-0.4%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+0.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--red)">-0.4%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">58</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">10</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-4.2%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-4.2%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). entrada não comprometida (ret. semanal -0.4%). rsi em zona óptima de entrada (58).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Europe está a consolidar sem movimento expressivo nos últimos 3 meses. A ligeira correção de -0.4% esta semana afastou o preço de zonas mais caras. O RSI (58) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O MSCI Europe está a consolidar sem movimento expressivo nos últimos 3 meses. A ligeira correção de -0.4% esta semana afastou o preço de zonas mais caras. O RSI (58) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.545 · RSI: 58 · Drawdown: -4.2% · RS/SPY: ✗</p>
         </div>
         <div style="background:oklch(12% 0.025 188);border:1px solid oklch(38% 0.08 188);padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">VEUR.L</span>
             <span style="color:var(--muted);font-size:11px">FTSE Developed Europe (Vanguard UCITS Acc)</span>
-            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">COMPRA</span>
+            <span style="background:var(--light-green);color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="signal.buy">COMPRA</span>
             <span style="color:#ab47bc;font-size:10px">● Internacional Desenvolvido</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:var(--light-green)">0.547</b> </span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:var(--green)">+0.8%</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:var(--red)">-0.2%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:var(--green)">+0.8%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:var(--red)">-0.2%</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:var(--green)">58</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:var(--muted)">12</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:var(--green)">-1.5%</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:var(--green)">-1.5%</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:var(--red)">✗</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">Tendência e momentum alinhados (sma20&gt;sma50, macd+). janela de entrada favorável — movimento ainda no início. rsi em zona óptima de entrada (58).</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Developed Europe está a consolidar sem movimento expressivo nos últimos 3 meses. A ligeira correção de -0.2% esta semana afastou o preço de zonas mais caras. O RSI (58) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">O FTSE Developed Europe está a consolidar sem movimento expressivo nos últimos 3 meses. A ligeira correção de -0.2% esta semana afastou o preço de zonas mais caras. O RSI (58) mantém-se em zona equilibrada, sem sinais de sobrecompra excessiva.</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: 0.547 · RSI: 58 · Drawdown: -1.5% · RS/SPY: ✗</p>
         </div>
 </section><div style="margin:4px 0 8px;overflow:hidden;line-height:0">
 <svg viewBox="0 0 1200 12" width="100%" height="12" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -1481,9 +1498,9 @@ function switchTab(tab, btn) {
       style="width:220px">
     <select id="tbl-filter">
       <option value="" data-i18n="search.all">Todos</option>
-      <option value="FORTE COMPRA" data-i18n="signal.strong_buy">FORTE COMPRA</option>
-      <option value="COMPRA" data-i18n="signal.buy">COMPRA</option>
-      <option value="POTENCIAL" data-i18n="signal.potential">POTENCIAL</option>
+      <option value="STRONG_BUY" data-i18n="signal.strong_buy">FORTE COMPRA</option>
+      <option value="BUY" data-i18n="signal.buy">COMPRA</option>
+      <option value="POTENTIAL" data-i18n="signal.potential">POTENCIAL</option>
       <option value="score_high">Score ≥ 0.60</option>
     </select>
     <button id="wl-toggle" onclick="toggleWatchlist()"
@@ -1549,7 +1566,9 @@ function switchTab(tab, btn) {
       const btn = document.getElementById("wl-toggle");
       btn.style.color = wlOnly ? "var(--gold)" : "var(--muted)";
       btn.style.borderColor = wlOnly ? "var(--gold)" : "var(--border)";
-      btn.textContent = wlOnly ? "★ Watchlist" : "☆ Watchlist";
+      btn.textContent = wlOnly
+        ? (typeof i18next !== 'undefined' ? i18next.t('search.watchlist_on') : '★ Watchlist')
+        : (typeof i18next !== 'undefined' ? i18next.t('search.watchlist')    : '☆ Watchlist');
       applyFilters();
     }
 
@@ -1559,9 +1578,9 @@ function switchTab(tab, btn) {
       const vol_thresh = 0.07;
       const late = rsi > 68 || r5d > vol_thresh;
       let sigs = (trend?1:0)+(macd?1:0)+(rsi>=40&&rsi<=65?1:0)+(rs?1:0)+(r5d<0.04?1:0)+(dd>-0.08?1:0);
-      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "FORTE COMPRA";
-      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "COMPRA";
-      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENCIAL";
+      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "STRONG_BUY";
+      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "BUY";
+      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENTIAL";
       return null;
     }
 
@@ -1580,8 +1599,8 @@ function switchTab(tab, btn) {
         const lvl = convictionLevel(r);
         const starred = wl.has(r.ticker);
         const lvlBadge = lvl ? `<span style="background:${
-          lvl==='FORTE COMPRA'?'var(--green)':lvl==='COMPRA'?'var(--light-green)':'var(--yellow)'
-        };color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${lvl}</span>` : "";
+          lvl==='STRONG_BUY'?'var(--green)':lvl==='BUY'?'var(--light-green)':'var(--yellow)'
+        };color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${(window._ET_SIGNAL_LABELS||{})[lvl]||lvl}</span>` : "";
         const terStr = r.ter !== null ? (r.ter*100).toFixed(2)+"%" : "—";
         const aumStr = r.aum !== null ? r.aum.toFixed(1)+"B" : "—";
         const repColor = r.replica === "fisica" ? "var(--green)" : r.replica === "sintetica" ? "var(--yellow)" : "var(--muted)";
