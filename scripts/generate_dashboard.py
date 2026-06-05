@@ -1945,7 +1945,9 @@ footer {
   .live-dot, .signal-forte, .top-accent { animation: none !important; }
 }
 
-/* i18n: hide lang-specific content via html[lang] set by i18next */
+/* i18n: lang-specific content — JS toggles .lang-hidden */
+.lang-hidden { display: none !important; }
+/* CSS fallback for pre-JS load: html starts with lang="pt" */
 html[lang="en"] .lang-pt-only { display: none !important; }
 html[lang="pt"] .lang-en-only { display: none !important; }
 </style>"""
