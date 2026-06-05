@@ -27,7 +27,9 @@
   "metric": {
     "momentum": "Momentum",
     "volatility": "Volatility",
-    "drawdown": "Drawdown"
+    "drawdown": "Drawdown",
+    "trend": "Trend",
+    "risk": "Risk"
   },
   "signal": {
     "strong_buy": "STRONG BUY",
@@ -83,7 +85,21 @@
     "strong_buy_desc": "top percentile · all factors aligned",
     "buy_desc": "constructive signal · majority of factors positive",
     "potential_desc": "nascent signal · await confirmation",
-    "guide": "full guide ↓"
+    "guide": "full guide ↓",
+    "of": "of",
+    "etfs_analyzed": "ETFs analysed today:"
+  },
+  "advisor": {
+    "tech_score": "Technical score",
+    "ret3m": "Ret.3M",
+    "ret5d": "Ret.5d",
+    "disclaimer": "AUTO-GENERATED ANALYSIS · DOES NOT CONSTITUTE FINANCIAL ADVICE",
+    "section_desc": "Top 3 ETFs with highest multi-period momentum alignment, trend and relative strength. Based on academic criteria: Jegadeesh & Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.",
+    "legal": "Technical analysis based on historical evidence. Does not constitute financial advice or guarantee of return."
+  },
+  "buy": {
+    "no_signals": "No sufficient signal confluence.",
+    "section_desc": "Technical indicator confluence · uncommitted entry"
   },
   "section": {
     "best_positioned": "Best Positioned — Consolidated Technical Analysis",

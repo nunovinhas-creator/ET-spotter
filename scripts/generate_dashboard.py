@@ -572,7 +572,8 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
 
 def signal_legend_html(n_etfs: int = 0) -> str:
     """Mini-legenda de sinais — sempre visível, dá contexto antes dos cards."""
-    ctx = f"de {n_etfs} ETFs analisados hoje:" if n_etfs else ""
+    ctx = (f'<span data-i18n="legend.of">de</span> {n_etfs} '
+           f'<span data-i18n="legend.etfs_analyzed">ETFs analisados hoje:</span>') if n_etfs else ""
     return f"""
 <div class="signal-legend">
   <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
@@ -593,9 +594,9 @@ def signal_legend_html(n_etfs: int = 0) -> str:
 
 
 def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
-    n_fc  = sum(1 for s in signals if s["level"] == "FORTE COMPRA")
-    n_c   = sum(1 for s in signals if s["level"] == "COMPRA")
-    n_p   = sum(1 for s in signals if s["level"] == "POTENCIAL")
+    n_fc  = sum(1 for s in signals if s["level"] in ("FORTE COMPRA", "STRONG_BUY"))
+    n_c   = sum(1 for s in signals if s["level"] in ("COMPRA", "BUY"))
+    n_p   = sum(1 for s in signals if s["level"] in ("POTENCIAL", "POTENTIAL"))
     n_high = int((scores_df["score"] >= 0.50).sum()) if "score" in scores_df.columns else 0
     avg_score = scores_df["score"].mean() if "score" in scores_df.columns else 0
 
@@ -824,12 +825,14 @@ def _sub_bars_html(r: dict) -> str:
     if None in (mom, trd, rsk, alp):
         return ""
 
-    def bar(label, name, val, color):
+    def bar(label, name, i18n_key, val, color):
         pct = round(val * 100)
+        name_span = (f'<span style="color:var(--muted);font-weight:normal" data-i18n="{i18n_key}">{name}</span>'
+                     if i18n_key else f'<span style="color:var(--muted);font-weight:normal">{name}</span>')
         return (
             f'<div style="display:flex;align-items:center;gap:7px">'
             f'<span style="color:{color};font-size:10px;font-weight:bold;width:80px;flex-shrink:0">'
-            f'{label} <span style="color:var(--muted);font-weight:normal">{name}</span></span>'
+            f'{label} {name_span}</span>'
             f'<div style="flex:1;background:var(--border);border-radius:3px;height:5px;overflow:hidden">'
             f'<div style="width:{pct}%;background:{color};border-radius:3px;height:5px"></div>'
             f'</div>'
@@ -839,10 +842,10 @@ def _sub_bars_html(r: dict) -> str:
 
     return (
         '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'
-        + bar("M", "Momentum",   mom, "var(--green)")
-        + bar("T", "Tendência",  trd, "#7c83fd")
-        + bar("R", "Risco",      rsk, "var(--blue-light)")
-        + bar("α", "Alpha",      alp, "var(--yellow)")
+        + bar("M", "Momentum",  "metric.momentum", mom, "var(--green)")
+        + bar("T", "Tendência", "metric.trend",    trd, "#7c83fd")
+        + bar("R", "Risco",     "metric.risk",     rsk, "var(--blue-light)")
+        + bar("α", "Alpha",     "",                alp, "var(--yellow)")
         + '</div>'
     )
 
@@ -936,7 +939,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
             <span style="color:{r['cor']};font-size:10px">● {html_mod.escape(r['categoria'])}</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <span style="color:var(--muted);font-size:11px">Score técnico</span>
+            <span style="color:var(--muted);font-size:11px" data-i18n="advisor.tech_score">Score técnico</span>
             <div style="flex:1;background:var(--border);border-radius:4px;height:7px;max-width:200px">
               <div style="width:{pts}%;background:{bar_color};border-radius:4px;height:7px"></div>
             </div>
@@ -945,26 +948,27 @@ def advisor_section(rows_raw: list[dict]) -> str:
           {_sub_bars_html(r)}
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
             <span><span style="color:var(--muted)">{mom_label}</span> <b style="color:{'var(--green)' if momentum>=0 else 'var(--red)'}">{_pct(momentum)}</b></span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:{'var(--green)' if r.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_63d',0))}</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:{'var(--green)' if r.get('ret_5d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_5d',0))}</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:{'var(--green)' if r.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_63d',0))}</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:{'var(--green)' if r.get('ret_5d',0)>=0 else 'var(--red)'}">{_pct(r.get('ret_5d',0))}</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:{'var(--green)' if 35<=rsi<=65 else 'var(--yellow)'}">{rsi:.0f}</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:{'var(--green)' if r.get('adx',0)>=25 else 'var(--muted)'}">{r.get('adx',0):.0f}</b></span>
             <span><span style="color:var(--muted)">Sharpe</span> <b style="color:{'var(--green)' if r.get('sharpe_63',0)>=1 else 'var(--muted)'}">{r.get('sharpe_63',0):.1f}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if r.get('rs_positive') else 'var(--red)'}">{'✓' if r.get('rs_positive') else '✗'}</b></span>
           </div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">{narrativa_advisor(r)}</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">{narrativa_advisor(r)}</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;line-height:1.7;font-style:italic">Quantitative technical analysis — multi-period momentum, trend regime, relative strength and entry quality. Score: {pts}/100.</p>
         </div>"""
 
     return f"""
 <section class="section">
   <h2 class="section-title" style="display:flex;align-items:center">{_icon("dashboard")}<span data-i18n="section.best_positioned">Melhor Posicionados — Análise Técnica Consolidada</span></h2>
-  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px" data-i18n="advisor.section_desc">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
   </p>
   {cards}
-  <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic">
+  <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic" data-i18n="advisor.legal">
     Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno.
   </p>
 </section>"""
@@ -972,7 +976,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
 
 def buy_signals_section(signals: list[dict]) -> str:
     if not signals:
-        return '<section class="section"><p style="color:var(--muted)">Sem confluência de sinais suficiente.</p></section>'
+        return '<section class="section"><p style="color:var(--muted)" data-i18n="buy.no_signals">Sem confluência de sinais suficiente.</p></section>'
 
     cards = ""
     for s in signals:
@@ -991,32 +995,34 @@ def buy_signals_section(signals: list[dict]) -> str:
         rsi_c = "var(--green)" if 40 <= rsi <= 65 else ("var(--yellow)" if rsi > 70 else "var(--red)" if rsi < 35 else "var(--muted)")
 
         forte_class = ' class="signal-forte"' if s["level"] == "FORTE COMPRA" else ""
+        level_label_key = {"FORTE COMPRA": "signal.strong_buy", "COMPRA": "signal.buy", "POTENCIAL": "signal.potential"}.get(s["level"], "signal.potential")
         cards += f"""
         <div{forte_class} style="background:{bg};border:1px solid {border_clr};padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">{html_mod.escape(s['ticker'])}</span>
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
-            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold">{s['level']}</span>
+            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="{level_label_key}">{s['level']}</span>
             <span style="color:{s['cor']};font-size:10px">● {html_mod.escape(s['categoria'])}</span>
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:{clr}">{s['score']:.3f}</b> {pct_html}</span>
-            <span><span style="color:var(--muted)">Ret.3M</span> <b style="color:{'var(--green)' if s.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(s.get('ret_63d',0))}</b></span>
-            <span><span style="color:var(--muted)">Ret.5d</span> <b style="color:{'var(--green)' if s.get('ret_5d',0)>=0 else 'var(--red)'}">{_pct(s.get('ret_5d',0))}</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret3m">Ret.3M</span> <b style="color:{'var(--green)' if s.get('ret_63d',0)>=0 else 'var(--red)'}">{_pct(s.get('ret_63d',0))}</b></span>
+            <span><span style="color:var(--muted)" data-i18n="advisor.ret5d">Ret.5d</span> <b style="color:{'var(--green)' if s.get('ret_5d',0)>=0 else 'var(--red)'}">{_pct(s.get('ret_5d',0))}</b></span>
             <span><span style="color:var(--muted)">RSI</span> <b style="color:{rsi_c}">{rsi:.0f}</b></span>
             <span><span style="color:var(--muted)">ADX</span> <b style="color:{'var(--green)' if s.get('adx',0)>25 else 'var(--muted)'}">{s.get('adx',0):.0f}</b></span>
-            <span><span style="color:var(--muted)">Drawdown</span> <b style="color:{'var(--green)' if s.get('drawdown',0)>-0.05 else 'var(--red)'}">{_pct(s.get('drawdown',0))}</b></span>
+            <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:{'var(--green)' if s.get('drawdown',0)>-0.05 else 'var(--red)'}">{_pct(s.get('drawdown',0))}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
           <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
-          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
-          <p style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples(s))}</p>
+          <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
+          <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples(s))}</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: {s['score']:.3f} · RSI: {rsi:.0f} · Drawdown: {_pct(s.get('drawdown',0))} · RS/SPY: {'✓' if s.get('rs_positive') else '✗'}</p>
         </div>"""
 
     return f"""
 <section class="section">
   <h2 class="section-title" style="display:flex;align-items:center">{_icon("scoring")}<span data-i18n="section.buy_signals">Sinais de Compra</span></h2>
-  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px" data-i18n="buy.section_desc">
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
   {cards}
@@ -1124,9 +1130,9 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
       style="width:220px">
     <select id="tbl-filter">
       <option value="" data-i18n="search.all">Todos</option>
-      <option value="FORTE COMPRA" data-i18n="signal.strong_buy">FORTE COMPRA</option>
-      <option value="COMPRA" data-i18n="signal.buy">COMPRA</option>
-      <option value="POTENCIAL" data-i18n="signal.potential">POTENCIAL</option>
+      <option value="STRONG_BUY" data-i18n="signal.strong_buy">FORTE COMPRA</option>
+      <option value="BUY" data-i18n="signal.buy">COMPRA</option>
+      <option value="POTENTIAL" data-i18n="signal.potential">POTENCIAL</option>
       <option value="score_high">Score ≥ 0.60</option>
     </select>
     <button id="wl-toggle" onclick="toggleWatchlist()"
@@ -1192,7 +1198,9 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
       const btn = document.getElementById("wl-toggle");
       btn.style.color = wlOnly ? "var(--gold)" : "var(--muted)";
       btn.style.borderColor = wlOnly ? "var(--gold)" : "var(--border)";
-      btn.textContent = wlOnly ? "★ Watchlist" : "☆ Watchlist";
+      btn.textContent = wlOnly
+        ? (typeof i18next !== 'undefined' ? i18next.t('search.watchlist_on') : '★ Watchlist')
+        : (typeof i18next !== 'undefined' ? i18next.t('search.watchlist')    : '☆ Watchlist');
       applyFilters();
     }}
 
@@ -1202,9 +1210,9 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
       const vol_thresh = 0.07;
       const late = rsi > 68 || r5d > vol_thresh;
       let sigs = (trend?1:0)+(macd?1:0)+(rsi>=40&&rsi<=65?1:0)+(rs?1:0)+(r5d<0.04?1:0)+(dd>-0.08?1:0);
-      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "FORTE COMPRA";
-      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "COMPRA";
-      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENCIAL";
+      if (!late && s >= CONV_STRONG_SCORE && sigs >= CONV_STRONG_SIGS) return "STRONG_BUY";
+      if (!late && s >= CONV_BUY_SCORE    && sigs >= CONV_BUY_SIGS)    return "BUY";
+      if (s >= CONV_POT_SCORE             && sigs >= CONV_POT_SIGS)    return "POTENTIAL";
       return null;
     }}
 
@@ -1223,8 +1231,8 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
         const lvl = convictionLevel(r);
         const starred = wl.has(r.ticker);
         const lvlBadge = lvl ? `<span style="background:${{
-          lvl==='FORTE COMPRA'?'var(--green)':lvl==='COMPRA'?'var(--light-green)':'var(--yellow)'
-        }};color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${{lvl}}</span>` : "";
+          lvl==='STRONG_BUY'?'var(--green)':lvl==='BUY'?'var(--light-green)':'var(--yellow)'
+        }};color:#000;padding:1px 6px;border-radius:2px;font-size:9px;font-weight:bold">${{(window._ET_SIGNAL_LABELS||{{}})[lvl]||lvl}}</span>` : "";
         const terStr = r.ter !== null ? (r.ter*100).toFixed(2)+"%" : "—";
         const aumStr = r.aum !== null ? r.aum.toFixed(1)+"B" : "—";
         const repColor = r.replica === "fisica" ? "var(--green)" : r.replica === "sintetica" ? "var(--yellow)" : "var(--muted)";
@@ -1920,6 +1928,10 @@ footer {
   * { transition: none !important; }
   .live-dot, .signal-forte, .top-accent { animation: none !important; }
 }
+
+/* i18n: hide lang-specific content via html[lang] set by i18next */
+html[lang="en"] .lang-pt-only { display: none !important; }
+html[lang="pt"] .lang-en-only { display: none !important; }
 </style>"""
 
 
