@@ -390,7 +390,9 @@ footer {
   .live-dot, .signal-forte, .top-accent { animation: none !important; }
 }
 
-/* i18n: hide lang-specific content via html[lang] set by i18next */
+/* i18n: lang-specific content — JS toggles .lang-hidden */
+.lang-hidden { display: none !important; }
+/* CSS fallback for pre-JS load: html starts with lang="pt" */
 html[lang="en"] .lang-pt-only { display: none !important; }
 html[lang="pt"] .lang-en-only { display: none !important; }
 </style>
@@ -420,7 +422,7 @@ html[lang="pt"] .lang-en-only { display: none !important; }
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 05/06/2026  16:31 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 05/06/2026  16:37 (Lisboa)
       </div>
     </div>
   </div>

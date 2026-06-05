@@ -63,7 +63,13 @@
       if (tv && tv !== tk) tls[k].title = tv;
     }
     /* html lang attribute */
-    document.documentElement.lang = i18n.language === 'en' ? 'en' : 'pt';
+    var isEn = i18n.language === 'en';
+    document.documentElement.lang = isEn ? 'en' : 'pt';
+    /* show/hide lang-specific blocks — class toggle beats any inline display */
+    var ptEls = document.querySelectorAll('.lang-pt-only');
+    var enEls = document.querySelectorAll('.lang-en-only');
+    for (var lp = 0; lp < ptEls.length; lp++) { ptEls[lp].classList.toggle('lang-hidden', isEn); }
+    for (var le = 0; le < enEls.length; le++) { enEls[le].classList.toggle('lang-hidden', !isEn); }
     /* PT | EN split toggle — highlight active language */
     var ptBtn = document.getElementById('lang-pt');
     var enBtn = document.getElementById('lang-en');
