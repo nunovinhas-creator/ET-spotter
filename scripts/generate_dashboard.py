@@ -222,12 +222,16 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
         {regime_badge}
-        <button id="lang-toggle" onclick="window.toggleLang&&window.toggleLang()"
-          style="background:transparent;border:1px solid #1E2D4D;color:#4A6080;padding:2px 10px;
-                 border-radius:3px;cursor:pointer;font-size:0.68rem;font-family:inherit;
-                 letter-spacing:0.08em;transition:color 150ms,border-color 150ms"
-          onmouseover="this.style.color='#00D4FF';this.style.borderColor='#00D4FF'"
-          onmouseout="this.style.color='#4A6080';this.style.borderColor='#1E2D4D'">EN</button>
+        <div style="display:flex;align-items:center;border:1px solid #1E2D4D;border-radius:3px;overflow:hidden;font-size:0.68rem;font-family:inherit;letter-spacing:0.08em">
+          <button id="lang-pt" onclick="window.setLanguage&&window.setLanguage('pt')"
+            style="background:transparent;border:none;border-right:1px solid #1E2D4D;
+                   color:#00D4FF;padding:3px 9px;cursor:pointer;font-size:inherit;
+                   font-family:inherit;letter-spacing:inherit;font-weight:700">PT</button>
+          <button id="lang-en" onclick="window.setLanguage&&window.setLanguage('en')"
+            style="background:transparent;border:none;
+                   color:#4A6080;padding:3px 9px;cursor:pointer;font-size:inherit;
+                   font-family:inherit;letter-spacing:inherit">EN</button>
+        </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
         <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> {ts}

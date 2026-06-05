@@ -53,9 +53,17 @@
     }
     /* html lang attribute */
     document.documentElement.lang = i18n.language === 'en' ? 'en' : 'pt';
-    /* toggle button label */
-    var btn = document.getElementById('lang-toggle');
-    if (btn) btn.textContent = i18n.language === 'pt' ? 'EN' : 'PT';
+    /* PT | EN split toggle — highlight active language */
+    var ptBtn = document.getElementById('lang-pt');
+    var enBtn = document.getElementById('lang-en');
+    if (ptBtn) {
+      ptBtn.style.color      = i18n.language === 'pt' ? '#00D4FF' : '#4A6080';
+      ptBtn.style.fontWeight = i18n.language === 'pt' ? '700' : '400';
+    }
+    if (enBtn) {
+      enBtn.style.color      = i18n.language === 'en' ? '#00D4FF' : '#4A6080';
+      enBtn.style.fontWeight = i18n.language === 'en' ? '700' : '400';
+    }
     /* JS-rendered table: inject translated strings for badge rendering */
     window._ET_SIGNAL_LABELS = {
       'FORTE COMPRA': i18n.t('signal.strong_buy'),
