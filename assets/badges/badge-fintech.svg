@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 28" width="140" height="28">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0A0F1A"/>
+      <stop offset="100%" stop-color="#141E35"/>
+    </linearGradient>
+  </defs>
+  <rect width="140" height="28" rx="4" fill="url(#bg)"/>
+  <rect width="140" height="28" rx="4" fill="none" stroke="#7C83FD" stroke-width="1"/>
+  <!-- Left label -->
+  <rect width="58" height="28" rx="4" fill="#7C83FD" opacity="0.15"/>
+  <text x="9" y="18" font-family="monospace,sans-serif" font-size="9" font-weight="600" fill="#7C83FD" letter-spacing="0.5">FINTECH</text>
+  <!-- Right value -->
+  <text x="70" y="18" font-family="monospace,sans-serif" font-size="9" font-weight="700" fill="#E8F0FF" letter-spacing="0.3">QUANT ETF</text>
+  <!-- Separator -->
+  <line x1="60" y1="6" x2="60" y2="22" stroke="#1E2D4D" stroke-width="1"/>
+  <!-- Star icon -->
+  <text x="124" y="19" font-family="sans-serif" font-size="10" fill="#FFB800">★</text>
+</svg>
