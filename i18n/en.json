@@ -6,7 +6,8 @@
   },
   "header": {
     "subtitle": "Quantitative cross-sectional UCITS ETF analysis · composite score v3 (0–1)",
-    "updated": "Updated:"
+    "updated": "Updated:",
+    "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY above 200-day SMA (uptrend). BEAR = below (downtrend)."
   },
   "panel": {
     "etf_summary": "ETF Analysis Summary",
@@ -14,7 +15,8 @@
     "key_indicators": "Key Indicators",
     "alerts": "Active Alerts",
     "recent_scores": "Recent Scores",
-    "heatmap": "ETF Heatmap"
+    "heatmap": "ETF Heatmap",
+    "signals": "signals"
   },
   "kpi": {
     "spy_regime": "SPY Regime",
@@ -79,7 +81,9 @@
     "strong_buy_desc": "all factors aligned",
     "buy_desc": "constructive signal",
     "potential_desc": "await confirmation",
-    "avg_score_desc": "cross-sectional average"
+    "avg_score_desc": "cross-sectional average",
+    "of": "of",
+    "etfs_analyzed": "ETFs analysed"
   },
   "legend": {
     "strong_buy_desc": "top percentile · all factors aligned",
@@ -88,6 +92,10 @@
     "guide": "full guide ↓",
     "of": "of",
     "etfs_analyzed": "ETFs analysed today:"
+  },
+  "explainer": {
+    "title": "📖 New here? Complete guide — what is an ETF, how to read the score, glossary",
+    "expand": "click to expand"
   },
   "advisor": {
     "tech_score": "Technical score",
@@ -100,6 +108,17 @@
   "buy": {
     "no_signals": "No sufficient signal confluence.",
     "section_desc": "Technical indicator confluence · uncommitted entry"
+  },
+  "backtest": {
+    "desc": "21-day forward return following each signal · excess vs SPY over the same period",
+    "all_tab": "All",
+    "avg_ret": "Avg. ret. 21d",
+    "win_rate": "Win rate",
+    "excess_spy": "SPY Excess",
+    "no_data": "Insufficient data.",
+    "academic_basis": "Academic Basis",
+    "for_whom": "For whom",
+    "for_whom_desc": "European investors following quantitative strategies based on academic evidence who want transparent, reproducible and auditable technical signals."
   },
   "section": {
     "best_positioned": "Best Positioned — Consolidated Technical Analysis",
