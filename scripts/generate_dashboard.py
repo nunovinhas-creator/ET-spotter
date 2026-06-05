@@ -828,6 +828,57 @@ def narrativa_simples(s: dict) -> str:
     return f"{p1}. {p2}. {p3}{fecho}"
 
 
+def narrativa_simples_en(s: dict) -> str:
+    """English mirror of narrativa_simples() — humanised buy-signal paragraph."""
+    nome    = _nome_curto(s)
+    ret_63d = float(s.get("ret_63d", 0) or 0)
+    ret_5d  = float(s.get("ret_5d",  0) or 0)
+    rsi     = float(s.get("rsi",    50) or 50)
+    rs_pos  = bool(s.get("rs_positive", 0))
+
+    if abs(ret_63d) < 0.01:
+        p1 = f"{nome} is consolidating without significant movement over the past 3 months"
+    elif ret_63d >= 0.10:
+        p1 = f"{nome} is showing notable medium-term strength ({ret_63d:+.1%} over the past 3 months)"
+    elif ret_63d >= 0.03:
+        p1 = f"{nome} has been gaining ground over the past 3 months ({ret_63d:+.1%})"
+    elif ret_63d >= 0:
+        p1 = f"{nome} records a modest gain over the past 3 months ({ret_63d:+.1%})"
+    else:
+        p1 = f"{nome} is in recovery mode after a weaker period ({ret_63d:+.1%} over the past 3 months)"
+
+    if ret_5d <= -0.05:
+        p2 = f"However, it pulled back {ret_5d:+.1%} this week — a drop that created a meaningful technical discount from recent highs"
+    elif ret_5d <= -0.02:
+        p2 = f"However, it stepped back {ret_5d:+.1%} this week — a healthy pause that opens an entry window"
+    elif ret_5d < 0:
+        p2 = f"The slight correction of {ret_5d:+.1%} this week moved the price away from more expensive zones"
+    elif ret_5d <= 0.01:
+        p2 = f"This week it held steady, consolidating gains without selling pressure"
+    elif ret_5d <= 0.04:
+        p2 = f"It rose {ret_5d:+.1%} this week, with momentum gaining traction"
+    else:
+        p2 = f"It accelerated {ret_5d:+.1%} this week — note that entries after rapid rallies warrant extra caution"
+
+    if rsi < 35:
+        p3 = f"The RSI ({rsi:.0f}) is in oversold territory, which may signal an imminent reversal"
+    elif rsi <= 50:
+        p3 = f"The RSI ({rsi:.0f}) shows the price has pulled back from expensive zones to a technically ideal entry point — essentially 'on sale'"
+    elif rsi <= 62:
+        p3 = f"The RSI ({rsi:.0f}) remains in a balanced zone, with no signs of excessive overbought conditions"
+    elif rsi <= 68:
+        p3 = f"The RSI ({rsi:.0f}) is warming up, but still within acceptable bounds"
+    else:
+        p3 = f"The RSI ({rsi:.0f}) is already in hot territory — the remaining indicators support the thesis, but a brief wait may improve the entry point"
+
+    if rs_pos:
+        closing = ", and it is also outperforming the broad US market over the same period."
+    else:
+        closing = "."
+
+    return f"{p1}. {p2}. {p3}{closing}"
+
+
 def _sub_bars_html(r: dict) -> str:
     """Breakdown visual dos 4 sub-scores: M / T / R / α."""
     mom = r.get("_momentum")
@@ -1029,7 +1080,7 @@ def buy_signals_section(signals: list[dict]) -> str:
           <div class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale_en',''))}</div>
           <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples(s))}</p>
-          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: {s['score']:.3f} · RSI: {rsi:.0f} · Drawdown: {_pct(s.get('drawdown',0))} · RS/SPY: {'✓' if s.get('rs_positive') else '✗'}</p>
+          <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples_en(s))}</p>
         </div>"""
 
     return f"""
