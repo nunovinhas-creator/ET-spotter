@@ -1028,7 +1028,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
   <h2 class="section-title" style="display:flex;align-items:center">{_icon("dashboard")}<span data-i18n="section.best_positioned">Melhor Posicionados — Análise Técnica Consolidada</span></h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px" data-i18n="advisor.section_desc">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
-    Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
+    Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze (2015), AQR, Sharpe.
   </p>
   {cards}
   <p style="color:var(--muted);font-size:10px;margin-top:12px;font-style:italic" data-i18n="advisor.legal">
@@ -2126,6 +2126,8 @@ async function subscribePush() {{
         f'<span class="acad-badge" title="Dual momentum">Antonacci (2014)</span>'
         f'<span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span>'
         f'<span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span>'
+        f'<span class="acad-badge" title="Value &amp; Momentum Everywhere">AQR</span>'
+        f'<span class="acad-badge" title="Risk-adjusted return">Sharpe</span>'
         f'</div>'
         f'<span data-i18n="footer.disclaimer" style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span>'
         f'</div>'
