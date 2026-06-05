@@ -51,6 +51,17 @@
       var pv = i18n.t(pk);
       if (pv && pv !== pk) pls[j].placeholder = pv;
     }
+    /* title attributes */
+    var tls = document.querySelectorAll('[data-i18n-title]');
+    for (var k = 0; k < tls.length; k++) {
+      var tk = tls[k].getAttribute('data-i18n-title');
+      var tv = i18n.t(tk, {
+        spy:   tls[k].dataset.spy   || '',
+        sma:   tls[k].dataset.sma   || '',
+        arrow: tls[k].dataset.arrow || '>'
+      });
+      if (tv && tv !== tk) tls[k].title = tv;
+    }
     /* html lang attribute */
     document.documentElement.lang = i18n.language === 'en' ? 'en' : 'pt';
     /* PT | EN split toggle — highlight active language */
