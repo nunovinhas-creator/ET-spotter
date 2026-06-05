@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "signals": "Scores & Alerts",
+    "reports": "Reports"
+  },
+  "header": {
+    "subtitle": "Quantitative cross-sectional UCITS ETF analysis · composite score v3 (0–1)",
+    "updated": "Updated:"
+  },
+  "panel": {
+    "etf_summary": "ETF Analysis Summary",
+    "score_trend": "Score Trend — Top 5 ETFs (30 days)",
+    "key_indicators": "Key Indicators",
+    "alerts": "Active Alerts",
+    "recent_scores": "Recent Scores",
+    "heatmap": "ETF Heatmap"
+  },
+  "kpi": {
+    "spy_regime": "SPY Regime",
+    "spy_close": "SPY Close",
+    "sma200": "SMA 200",
+    "avg_score": "Average Score",
+    "strong_buy": "Strong Buy",
+    "score_above": "Score > 0.50"
+  },
+  "metric": {
+    "momentum": "Momentum",
+    "volatility": "Volatility",
+    "drawdown": "Drawdown"
+  },
+  "signal": {
+    "strong_buy": "STRONG BUY",
+    "buy": "BUY",
+    "potential": "POTENTIAL",
+    "strong_short": "Strong",
+    "buy_short": "Buy",
+    "pot": "Pot.",
+    "weak": "Weak",
+    "no_signals": "No active signals today."
+  },
+  "table": {
+    "etf": "ETF",
+    "name": "Name",
+    "category": "Cat.",
+    "score": "Score",
+    "pct": "Pct.",
+    "day": "Day",
+    "signal": "Signal",
+    "trend": "Trend",
+    "risk": "Risk",
+    "risk_low": "Low",
+    "risk_med": "Med",
+    "risk_high": "High",
+    "drawdown": "Drawdown",
+    "replica": "Replica",
+    "esg": "ESG"
+  },
+  "hero": {
+    "etfs_ucits": "ETFs UCITS",
+    "factors": "Factors",
+    "daily": "Daily",
+    "cost": "Cost",
+    "pipeline": "Pipeline",
+    "universe": "in universe",
+    "factors_desc": "M · T · R · α",
+    "daily_desc": "EOD update",
+    "cost_desc": "infrastructure",
+    "pipeline_desc": "fetch → score → email"
+  },
+  "summary": {
+    "strong_buy": "Strong Buy",
+    "buy": "Buy",
+    "potential": "Potential",
+    "score_above": "Score > 0.50",
+    "avg_score": "Average Score",
+    "strong_buy_desc": "all factors aligned",
+    "buy_desc": "constructive signal",
+    "potential_desc": "await confirmation",
+    "avg_score_desc": "cross-sectional average"
+  },
+  "legend": {
+    "strong_buy_desc": "top percentile · all factors aligned",
+    "buy_desc": "constructive signal · majority of factors positive",
+    "potential_desc": "nascent signal · await confirmation",
+    "guide": "full guide ↓"
+  },
+  "section": {
+    "best_positioned": "Best Positioned — Consolidated Technical Analysis",
+    "buy_signals": "Buy Signals",
+    "category_rotation": "Category Rotation",
+    "all_etfs": "All ETFs",
+    "score_history": "Score History — Top 5",
+    "backtest": "Backtest — Historical Validation",
+    "portfolio": "Alpaca Portfolio"
+  },
+  "search": {
+    "placeholder": "Search ETF or category…",
+    "all": "All",
+    "watchlist": "☆ Watchlist",
+    "watchlist_on": "★ Watchlist"
+  },
+  "alert": {
+    "no_signals": "No active signals today.",
+    "days5": "5d:"
+  },
+  "cta": {
+    "email": "Receive this report by email every day at 10pm",
+    "free": "— free, no servers, no subscription",
+    "fork": "🍴 Fork and set up in 3 minutes"
+  },
+  "footer": {
+    "auto_updated": "⟳ AUTO-UPDATED",
+    "quant_engine": "⚙ QUANT ENGINE",
+    "etf_scanner": "◈ ETF SCANNER",
+    "open_source": "✦ OPEN SOURCE",
+    "data_source": "ET-Spotter · data via yfinance · daily update",
+    "disclaimer": "Technical information and backtest results — does not constitute financial advice. Signals identify periods of statistical convergence of multiple factors; they do not predict future prices. Always consult a professional before investing."
+  }
+}
