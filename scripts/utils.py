@@ -245,6 +245,60 @@ def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
     return ". ".join(parts[:3]).capitalize() + "." if parts else "Confluência de sinais técnicos favoráveis."
 
 
+def analyst_rationale_en(trend_sma: int, macd_bullish: int, ret_5d: float,
+                         ret_63d: float, delta_score: float, drawdown: float,
+                         rsi: float, rs_positive: int, adx: float) -> str:
+    parts = []
+    rsi_val = rsi or 0
+    ret5    = ret_5d or 0
+
+    if trend_sma and macd_bullish:
+        parts.append("trend and momentum aligned (SMA20>SMA50, MACD+)")
+    elif trend_sma:
+        parts.append("confirmed uptrend (SMA20>SMA50)")
+    elif macd_bullish:
+        parts.append("MACD crossed into positive territory")
+
+    if ret5 < 0.01 and delta_score > 0.01:
+        parts.append("favourable entry window — move still in early stages")
+    elif ret5 < 0.03:
+        parts.append(f"entry not compromised (weekly ret. {ret5:.1%})")
+    elif ret5 > 0.07:
+        parts.append(f"caution: already up {ret5:.1%} this week — wait for pullback")
+    elif ret5 > 0.04:
+        parts.append(f"advanced weekly move ({ret5:.1%}) — enter with caution")
+
+    if rsi_val > 68:
+        parts.append(f"RSI overbought ({rsi_val:.0f}) — wait for correction")
+    elif 40 <= rsi_val <= 58:
+        parts.append(f"RSI in optimal entry zone ({rsi_val:.0f})")
+    elif rsi_val < 40:
+        parts.append(f"weak RSI ({rsi_val:.0f}) — confirm reversal before entry")
+
+    if rs_positive:
+        parts.append("positive relative strength vs SPY (last 63 days)")
+
+    if (ret_63d or 0) > 0.08:
+        parts.append(f"solid 3M momentum ({ret_63d:.1%})")
+    elif (ret_63d or 0) > 0.03:
+        parts.append(f"positive 3M return ({ret_63d:.1%})")
+
+    if (adx or 0) > 25:
+        parts.append(f"strong trend (ADX {adx:.0f})")
+
+    if delta_score > 0.06:
+        parts.append("score accelerating strongly")
+    elif delta_score > 0.02:
+        parts.append("score on an upward trajectory")
+
+    if drawdown > -0.03:
+        parts.append("near highs — structural strength")
+    elif drawdown > -0.08:
+        parts.append(f"contained drawdown ({drawdown:.1%})")
+
+    return ". ".join(parts[:3]).capitalize() + "." if parts else "Favourable technical signal confluence."
+
+
 def _safe_finite(v, default: float = 0.0) -> float:
     """Float seguro: NaN/inf/None → default. Preserva 0.0."""
     try:
@@ -344,7 +398,12 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
             r.get("ret_63d", 0), r.get("delta_score", 0), r.get("drawdown", -0.5),
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("adx", 0),
         )
-        signals.append({**r, **conv, "rationale": rationale})
+        rationale_en = analyst_rationale_en(
+            r["trend_sma"], r["macd_bullish"], r.get("ret_5d", 0),
+            r.get("ret_63d", 0), r.get("delta_score", 0), r.get("drawdown", -0.5),
+            r.get("rsi", 50), r.get("rs_positive", 0), r.get("adx", 0),
+        )
+        signals.append({**r, **conv, "rationale": rationale, "rationale_en": rationale_en})
 
     # Ordena: nível de convicção → dentro do mesmo nível prioriza ret_5d baixo
     # (entrada mais cedo = movimento ainda não comprometido)

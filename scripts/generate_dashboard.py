@@ -1025,7 +1025,8 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span><span style="color:var(--muted)" data-i18n="table.drawdown">Drawdown</span> <b style="color:{'var(--green)' if s.get('drawdown',0)>-0.05 else 'var(--red)'}">{_pct(s.get('drawdown',0))}</b></span>
             <span><span style="color:var(--muted)">RS/SPY</span> <b style="color:{'var(--green)' if s.get('rs_positive') else 'var(--red)'}">{'✓' if s.get('rs_positive') else '✗'}</b></span>
           </div>
-          <div style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
+          <div class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale',''))}</div>
+          <div class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:6px;font-style:italic">{html_mod.escape(s.get('rationale_en',''))}</div>
           <div style="color:var(--border);font-size:0.58rem;letter-spacing:0.08em;margin-top:6px;margin-bottom:2px" data-i18n="advisor.disclaimer">ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO</div>
           <p class="lang-pt-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">{html_mod.escape(narrativa_simples(s))}</p>
           <p class="lang-en-only" style="color:var(--muted);font-size:11px;margin-top:0;line-height:1.6;font-style:italic">Score: {s['score']:.3f} · RSI: {rsi:.0f} · Drawdown: {_pct(s.get('drawdown',0))} · RS/SPY: {'✓' if s.get('rs_positive') else '✗'}</p>
