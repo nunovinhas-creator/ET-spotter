@@ -216,22 +216,28 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
   <div class="header-inner">
     <div>
       <div class="logo">ET-SPOTTER</div>
-      <div class="subtitle">Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)</div>
+      <div class="subtitle" data-i18n="header.subtitle">Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)</div>
       <div style="color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:0.04em">{n_etfs} ETFs · Jegadeesh &amp; Titman (1993) · Faber (2007) · Antonacci (2014) · Ang et al. (2006) · Kakushadze (2015) · AQR · Sharpe</div>
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
         {regime_badge}
+        <button id="lang-toggle" onclick="window.toggleLang&&window.toggleLang()"
+          style="background:transparent;border:1px solid #1E2D4D;color:#4A6080;padding:2px 10px;
+                 border-radius:3px;cursor:pointer;font-size:0.68rem;font-family:inherit;
+                 letter-spacing:0.08em;transition:color 150ms,border-color 150ms"
+          onmouseover="this.style.color='#00D4FF';this.style.borderColor='#00D4FF'"
+          onmouseout="this.style.color='#4A6080';this.style.borderColor='#1E2D4D'">EN</button>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span>Actualizado: {ts}
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> {ts}
       </div>
     </div>
   </div>
   <nav class="nav-tab-bar" style="border-top:1px solid #1E2D4D22;margin-top:10px;padding-top:2px;max-width:1400px;margin-left:auto;margin-right:auto">
-    <button class="nav-tab active" onclick="switchTab('overview',this)">Overview</button>
-    <button class="nav-tab" onclick="switchTab('signals',this)">Scores &amp; Alertas</button>
-    <button class="nav-tab" onclick="switchTab('reports',this)">Relatórios</button>
+    <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
+    <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
+    <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
   </nav>
 </header>
 <script>
@@ -250,27 +256,36 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     """Hero stat strip with fintech premium CSS design."""
     etf_sub = f"de {n_total}" if n_etfs != n_total else str(n_total)
     stats = [
-        (str(n_etfs), "ETFs UCITS",  etf_sub + " no universo",   "#00D4FF", "#00D4FF33",
-         f"{n_etfs} de {n_total} ETFs com dados suficientes hoje"),
-        ("4",         "Factores",    "M · T · R · α",             "#7C83FD", "#7C83FD33",
-         "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%"),
-        ("22h",       "Diário",      "actualização EOD",          "#FFB800", "#FFB80033",
-         "Dados de fecho actualizados todos os dias às 22h UTC"),
-        ("€0",        "Custo",       "infra-estrutura",           "#00FF9D", "#00FF9D33",
-         "GitHub Actions free tier · yfinance · zero servidores"),
-        ("~3min",     "Pipeline",    "fetch → score → email",     "#4D9FFF", "#4D9FFF33",
-         "Pipeline completo em ~3 minutos por GitHub Actions"),
+        (str(n_etfs), "ETFs UCITS",       etf_sub, "hero.universe",     "#00D4FF", "#00D4FF33",
+         f"{n_etfs} de {n_total} ETFs com dados suficientes hoje",
+         "hero.etfs_ucits"),
+        ("4",         "Factores",         "M · T · R · α",    "hero.factors_desc", "#7C83FD", "#7C83FD33",
+         "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%",
+         "hero.factors"),
+        ("22h",       "Diário",           "actualização EOD", "hero.daily_desc",   "#FFB800", "#FFB80033",
+         "Dados de fecho actualizados todos os dias às 22h UTC",
+         "hero.daily"),
+        ("€0",        "Custo",            "infra-estrutura",  "hero.cost_desc",    "#00FF9D", "#00FF9D33",
+         "GitHub Actions free tier · yfinance · zero servidores",
+         "hero.cost"),
+        ("~3min",     "Pipeline",         "fetch → score → email", "hero.pipeline_desc", "#4D9FFF", "#4D9FFF33",
+         "Pipeline completo em ~3 minutos por GitHub Actions",
+         "hero.pipeline"),
     ]
     cards = ""
-    for val, label, sub, color, glow, tip in stats:
+    for val, label, sub, sub_key, color, glow, tip, label_key in stats:
+        if sub_key == "hero.universe":
+            sub_html = f'{etf_sub} <span data-i18n="hero.universe">no universo</span>'
+        else:
+            sub_html = f'<span data-i18n="{sub_key}">{sub}</span>'
         cards += f"""<div title="{tip}" style="
             flex:1;min-width:100px;padding:16px 12px;text-align:center;
             background:#0D1525;border:1px solid {color}33;border-top:2px solid {color};
             border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
           <span style="color:{color};font-size:28px;font-weight:800;line-height:1;
                        text-shadow:0 0 20px {color},0 0 40px {color}88">{val}</span>
-          <span style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">{label}</span>
-          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">{sub}</span>
+          <span data-i18n="{label_key}" style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">{label}</span>
+          <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">{sub_html}</span>
         </div>"""
     return f"""
 <div style="margin:16px 0 0;padding:0">
@@ -284,31 +299,33 @@ def cta_strip_html() -> str:
 <div class="cta-strip">
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
     <span style="color:var(--green);font-size:14px">●</span>
-    <span style="color:var(--text);font-size:0.78rem;font-weight:500">Receber este relatório por email todos os dias às 22h</span>
-    <span style="color:var(--muted);font-size:0.72rem">— grátis, sem servidores, sem subscrição</span>
+    <span data-i18n="cta.email" style="color:var(--text);font-size:0.78rem;font-weight:500">Receber este relatório por email todos os dias às 22h</span>
+    <span data-i18n="cta.free" style="color:var(--muted);font-size:0.72rem">— grátis, sem servidores, sem subscrição</span>
   </div>
   <a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener"
-     class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)">
+     class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)"
+     data-i18n="cta.fork">
     🍴 Fork e configura em 3 minutos
   </a>
 </div>"""
 
 
-def _panel(title: str, body: str, badge: str = "") -> str:
+def _panel(title: str, body: str, badge: str = "", title_key: str = "") -> str:
+    k = f' data-i18n="{title_key}"' if title_key else ""
     badge_html = f'<span style="color:#4A6080;font-size:0.60rem">{badge}</span>' if badge else ""
     return (f'<div class="panel"><div class="panel-hdr">'
-            f'<span class="panel-title">{title}</span>{badge_html}</div>'
+            f'<span class="panel-title"{k}>{title}</span>{badge_html}</div>'
             f'<div class="panel-body">{body}</div></div>')
 
 
 def _score_pill(level: str | None) -> str:
     if level == "FORTE COMPRA":
-        return '<span class="score-pill" style="background:#00FF9D;color:#000">Forte</span>'
+        return '<span class="score-pill" style="background:#00FF9D;color:#000" data-i18n="signal.strong_short">Forte</span>'
     if level == "COMPRA":
-        return '<span class="score-pill" style="background:#00D4FF;color:#000">Compra</span>'
+        return '<span class="score-pill" style="background:#00D4FF;color:#000" data-i18n="signal.buy_short">Compra</span>'
     if level == "POTENCIAL":
-        return '<span class="score-pill" style="background:#FFB800;color:#000">Pot.</span>'
-    return '<span class="score-pill" style="background:#FF446655;color:#FF4466">Fraco</span>'
+        return '<span class="score-pill" style="background:#FFB800;color:#000" data-i18n="signal.pot">Pot.</span>'
+    return '<span class="score-pill" style="background:#FF446655;color:#FF4466" data-i18n="signal.weak">Fraco</span>'
 
 
 def _score_color(s: float) -> str:
@@ -350,19 +367,20 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
   <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
     <div style="color:#7C83FD;font-size:1.3rem;font-weight:700">{top.get("ret_21d",0)*100:+.1f}%</div>
-    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Momentum</div>
+    <div data-i18n="metric.momentum" style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Momentum</div>
   </div>
   <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
     <div style="color:#FFB800;font-size:1.3rem;font-weight:700">{top.get("vol_21",0)*100:.1f}%</div>
-    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Volatilidade</div>
+    <div data-i18n="metric.volatility" style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Volatilidade</div>
   </div>
   <div style="background:#090E1A;border-radius:4px;padding:10px;text-align:center">
     <div style="color:#FF4466;font-size:1.3rem;font-weight:700">{top.get("drawdown",0)*100:.1f}%</div>
-    <div style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Drawdown</div>
+    <div data-i18n="metric.drawdown" style="color:#4A6080;font-size:0.58rem;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Drawdown</div>
   </div>
 </div>"""
     left_summary = _panel("ETF Analysis Summary", summary_body,
-                           f"Top scorer · {len(rows_raw)} ETFs analisados")
+                           f"Top scorer · {len(rows_raw)} ETFs analisados",
+                           title_key="panel.etf_summary")
 
     # ── Score history mini-chart ──────────────────────────────────────────────
     chart_labels, chart_datasets = [], []
@@ -420,7 +438,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
   }});
 }})();
 </script>"""
-    left_chart = _panel("Score Trend — Top 5 ETFs (30 dias)", chart_body)
+    left_chart = _panel("Score Trend — Top 5 ETFs (30 dias)", chart_body, title_key="panel.score_trend")
 
     # ── Key Indicators ────────────────────────────────────────────────────────
     regime_color = "#00FF9D" if spy_regime == "BULL" else "#FF4466"
@@ -429,22 +447,23 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
     avg_score = float(scores_df["score"].mean()) if "score" in scores_df.columns else 0
     n_strong = int((scores_df["score"] >= 0.62).sum()) if "score" in scores_df.columns else 0
 
-    def kpi(label, value, color="#E8F0FF"):
+    def kpi(label, value, color="#E8F0FF", lkey=""):
+        k = f' data-i18n="{lkey}"' if lkey else ""
         return (f'<div style="background:#090E1A;border-radius:4px;padding:9px 12px;'
                 f'display:flex;flex-direction:column;gap:3px">'
                 f'<span style="color:{color};font-size:1.0rem;font-weight:700">{value}</span>'
-                f'<span style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;'
+                f'<span{k} style="color:#4A6080;font-size:0.55rem;text-transform:uppercase;'
                 f'letter-spacing:.06em">{label}</span></div>')
 
     kpi_body = f"""<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-  {kpi("Regime SPY", spy_regime, regime_color)}
-  {kpi("SPY Close", spy_p, "#E8F0FF")}
-  {kpi("SMA 200", sma_p, "#8BA4C8")}
-  {kpi("Score Médio", f"{avg_score:.3f}", "#7C83FD")}
-  {kpi("Forte Compra", str(n_strong), "#00FF9D")}
-  {kpi("Score > 0.50", str(int((scores_df["score"]>=0.5).sum())), "#4D9FFF")}
+  {kpi("Regime SPY", spy_regime, regime_color, "kpi.spy_regime")}
+  {kpi("SPY Close",  spy_p,              "#E8F0FF", "kpi.spy_close")}
+  {kpi("SMA 200",    sma_p,              "#8BA4C8", "kpi.sma200")}
+  {kpi("Score Médio",   f"{avg_score:.3f}",                          "#7C83FD", "kpi.avg_score")}
+  {kpi("Forte Compra",  str(n_strong),                               "#00FF9D", "kpi.strong_buy")}
+  {kpi("Score > 0.50",  str(int((scores_df["score"]>=0.5).sum())),   "#4D9FFF", "kpi.score_above")}
 </div>"""
-    left_kpi = _panel("Key Indicators", kpi_body)
+    left_kpi = _panel("Key Indicators", kpi_body, title_key="panel.key_indicators")
 
     # ── Alertas Activos (right top) ───────────────────────────────────────────
     alert_icons = {"FORTE COMPRA": ("🟢","#00FF9D"), "COMPRA": ("🔵","#00D4FF"),
@@ -468,9 +487,9 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
       </div>
     </div>"""
     if not alerts_html:
-        alerts_html = '<div style="color:#4A6080;font-size:0.72rem">Sem sinais activos hoje.</div>'
+        alerts_html = '<div data-i18n="signal.no_signals" style="color:#4A6080;font-size:0.72rem">Sem sinais activos hoje.</div>'
     right_alerts = _panel("Alertas Activos", alerts_html,
-                           f"{len(signals)} sinais")
+                           f"{len(signals)} sinais", title_key="panel.alerts")
 
     # ── Scores Recentes table (right middle) ──────────────────────────────────
     rows_sorted = sorted(rows_raw, key=lambda r: r["score"], reverse=True)[:10]
@@ -480,8 +499,12 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
         color = _score_color(s)
         trend_icon = "↑" if r.get("trend_sma") else "↓"
         trend_color = "#00FF9D" if r.get("trend_sma") else "#FF4466"
-        risk_label = "Baixo" if r.get("drawdown",0) > -0.05 else ("Médio" if r.get("drawdown",0) > -0.10 else "Alto")
-        risk_color = "#00FF9D" if risk_label=="Baixo" else ("#FFB800" if risk_label=="Médio" else "#FF4466")
+        if r.get("drawdown", 0) > -0.05:
+            risk_label, risk_key, risk_color = "Baixo", "table.risk_low", "#00FF9D"
+        elif r.get("drawdown", 0) > -0.10:
+            risk_label, risk_key, risk_color = "Médio", "table.risk_med", "#FFB800"
+        else:
+            risk_label, risk_key, risk_color = "Alto",  "table.risk_high", "#FF4466"
         tbl_rows += f"""<tr style="border-bottom:1px solid #1E2D4D22">
       <td style="padding:6px 4px;color:#E8F0FF;font-weight:700;font-size:0.72rem;white-space:nowrap">{r["ticker"]}</td>
       <td style="padding:6px 8px;text-align:right">
@@ -489,22 +512,23 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
       </td>
       <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < 0.48 else ("FORTE COMPRA" if s>=0.62 else ("COMPRA" if s>=0.54 else "POTENCIAL")))}</td>
       <td style="padding:6px 4px;text-align:center;color:{trend_color};font-size:0.80rem">{trend_icon}</td>
-      <td style="padding:6px 4px;text-align:right;color:{risk_color};font-size:0.65rem">{risk_label}</td>
+      <td style="padding:6px 4px;text-align:right;color:{risk_color};font-size:0.65rem" data-i18n="{risk_key}">{risk_label}</td>
     </tr>"""
 
+    _TH = "padding:4px;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase"
     scores_tbl = f"""<table style="width:100%;border-collapse:collapse">
   <thead>
     <tr style="border-bottom:1px solid #1E2D4D">
-      <th style="padding:4px 4px;text-align:left;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">ETF</th>
-      <th style="padding:4px 8px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Score</th>
-      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Sinal</th>
-      <th style="padding:4px;text-align:center;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Tend.</th>
-      <th style="padding:4px;text-align:right;color:#4A6080;font-size:0.60rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Risco</th>
+      <th style="{_TH};text-align:left;padding:4px 4px"><span data-i18n="table.etf">ETF</span></th>
+      <th style="{_TH};text-align:right;padding:4px 8px"><span data-i18n="table.score">Score</span></th>
+      <th style="{_TH};text-align:center"><span data-i18n="table.signal">Sinal</span></th>
+      <th style="{_TH};text-align:center"><span data-i18n="table.trend">Tend.</span></th>
+      <th style="{_TH};text-align:right"><span data-i18n="table.risk">Risco</span></th>
     </tr>
   </thead>
   <tbody>{tbl_rows}</tbody>
 </table>"""
-    right_table = _panel("Scores Recentes", scores_tbl, "top 10")
+    right_table = _panel("Scores Recentes", scores_tbl, "top 10", title_key="panel.recent_scores")
 
     # ── ETF Heatmap (right bottom) ────────────────────────────────────────────
     top16 = rows_sorted[:16]
@@ -524,7 +548,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
                        f'</div>')
     right_heat = _panel("Heatmap de ETFs",
                         f'<div class="heat-grid">{heat_tiles}</div>',
-                        f"top 16")
+                        "top 16", title_key="panel.heatmap")
 
     # ── Assemble grid ─────────────────────────────────────────────────────────
     return f"""
@@ -549,17 +573,17 @@ def signal_legend_html(n_etfs: int = 0) -> str:
 <div class="signal-legend">
   <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <span style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_STRONG_BUY_SCORE} · percentil superior · todos os factores alinhados</span>
+    <span data-i18n="signal.strong_buy" style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_STRONG_BUY_SCORE} · <span data-i18n="legend.strong_buy_desc">percentil superior · todos os factores alinhados</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
-    <span style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_BUY_SCORE} · sinal construtivo · maioria dos factores positivos</span>
+    <span data-i18n="signal.buy" style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_BUY_SCORE} · <span data-i18n="legend.buy_desc">sinal construtivo · maioria dos factores positivos</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
-    <span style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
-    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_POTENTIAL_SCORE} · sinal incipiente · aguardar confirmação</span>
+    <span data-i18n="signal.potential" style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
+    <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_POTENTIAL_SCORE} · <span data-i18n="legend.potential_desc">sinal incipiente · aguardar confirmação</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({{behavior:'smooth'}});return false;"
-       style="color:var(--patina);font-size:0.65rem;text-decoration:none">📖 guia completo ↓</a>
+       style="color:var(--patina);font-size:0.65rem;text-decoration:none"><span data-i18n="legend.guide">📖 guia completo ↓</span></a>
   </div>
 </div>"""
 
@@ -571,27 +595,28 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
     n_high = int((scores_df["score"] >= 0.50).sum()) if "score" in scores_df.columns else 0
     avg_score = scores_df["score"].mean() if "score" in scores_df.columns else 0
 
-    def signal_card(label, value, color, bg, desc):
+    def signal_card(label, label_key, value, color, bg, desc, desc_key=""):
         bar_w = min(100, int(float(str(value)) / max(n_fc + n_c + n_p, 1) * 100)) if str(value).isdigit() else 0
         bar_html = f'<div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:{bar_w}%;height:3px;background:{color};border-radius:2px;box-shadow:0 0 6px {color}"></div></div>' if bar_w > 0 else ""
+        dk = f' data-i18n="{desc_key}"' if desc_key else ""
         return f"""<div style="flex:1;min-width:120px;padding:16px 14px;
             background:linear-gradient(135deg,#0D1525,#0A0F1A);
             border:1px solid {color}44;border-left:3px solid {color};border-radius:6px">
           <div style="color:{color};font-size:36px;font-weight:800;line-height:1;
                       text-shadow:0 0 16px {color}">{value}</div>
-          <div style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
+          <div data-i18n="{label_key}" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
                       text-transform:uppercase;margin-top:6px">{label}</div>
-          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px">{desc}</div>
+          <div{dk} style="color:#4A6080;font-size:0.55rem;margin-top:3px">{desc}</div>
           {bar_html}
         </div>"""
 
     return f"""
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 8px">
-  {signal_card("Forte Compra", n_fc,  "#00FF9D", "#0D2318", f"score ≥ {CONVICTION_STRONG_BUY_SCORE} · todos factores alinhados")}
-  {signal_card("Compra",       n_c,   "#00D4FF", "#0A1A25", f"score ≥ {CONVICTION_BUY_SCORE} · sinal construtivo")}
-  {signal_card("Potencial",    n_p,   "#FFB800", "#1A1400", f"score ≥ {CONVICTION_POTENTIAL_SCORE} · aguardar confirmação")}
-  {signal_card("Score > 0.50", n_high,"#7C83FD", "#0F1020", f"de {len(scores_df)} ETFs analisados")}
-  {signal_card("Score Médio",  f"{avg_score:.3f}", "#4D9FFF", "#0A1020", "média cross-sectional")}
+  {signal_card("Forte Compra", "summary.strong_buy", n_fc,  "#00FF9D", "#0D2318", f"score ≥ {CONVICTION_STRONG_BUY_SCORE} · todos factores alinhados", "summary.strong_buy_desc")}
+  {signal_card("Compra",       "summary.buy",        n_c,   "#00D4FF", "#0A1A25", f"score ≥ {CONVICTION_BUY_SCORE} · sinal construtivo",                "summary.buy_desc")}
+  {signal_card("Potencial",    "summary.potential",  n_p,   "#FFB800", "#1A1400", f"score ≥ {CONVICTION_POTENTIAL_SCORE} · aguardar confirmação",        "summary.potential_desc")}
+  {signal_card("Score > 0.50", "summary.score_above",n_high,"#7C83FD", "#0F1020", f"de {len(scores_df)} ETFs analisados")}
+  {signal_card("Score Médio",  "summary.avg_score",  f"{avg_score:.3f}", "#4D9FFF", "#0A1020", "média cross-sectional", "summary.avg_score_desc")}
 </div>"""
 
 
@@ -929,7 +954,7 @@ def advisor_section(rows_raw: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("dashboard")}Melhor Posicionados — Análise Técnica Consolidada</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("dashboard")}<span data-i18n="section.best_positioned">Melhor Posicionados — Análise Técnica Consolidada</span></h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:10px">
     Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa.
     Baseado em critérios académicos: Jegadeesh &amp; Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze alpha101.
@@ -986,7 +1011,7 @@ def buy_signals_section(signals: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("scoring")}Sinais de Compra</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("scoring")}<span data-i18n="section.buy_signals">Sinais de Compra</span></h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Confluência de indicadores técnicos · entrada não comprometida
   </p>
@@ -1015,7 +1040,7 @@ def category_heatmap_section(cats: list[dict]) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}Rotação por Categoria</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}<span data-i18n="section.category_rotation">Rotação por Categoria</span></h2>
   <div class="cat-grid">{items}</div>
 </section>"""
 
@@ -1089,20 +1114,21 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
     rows_json = json.dumps(rows_js, ensure_ascii=False)
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}Todos os ETFs</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("etfs")}<span data-i18n="section.all_etfs">Todos os ETFs</span></h2>
   <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-    <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…"
+    <input id="tbl-search" type="text" placeholder="Pesquisar ETF ou categoria…" data-i18n-ph="search.placeholder"
       style="width:220px">
     <select id="tbl-filter">
-      <option value="">Todos</option>
-      <option value="FORTE COMPRA">FORTE COMPRA</option>
-      <option value="COMPRA">COMPRA</option>
-      <option value="POTENCIAL">POTENCIAL</option>
+      <option value="" data-i18n="search.all">Todos</option>
+      <option value="FORTE COMPRA" data-i18n="signal.strong_buy">FORTE COMPRA</option>
+      <option value="COMPRA" data-i18n="signal.buy">COMPRA</option>
+      <option value="POTENCIAL" data-i18n="signal.potential">POTENCIAL</option>
       <option value="score_high">Score ≥ 0.60</option>
     </select>
     <button id="wl-toggle" onclick="toggleWatchlist()"
       style="background:var(--deep);border:1px solid var(--border);color:var(--muted);
-             padding:6px 12px;border-radius:2px;cursor:pointer;font-size:0.8rem">
+             padding:6px 12px;border-radius:2px;cursor:pointer;font-size:0.8rem"
+      data-i18n="search.watchlist">
       ☆ Watchlist
     </button>
   </div>
@@ -1111,25 +1137,25 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
       <thead>
         <tr id="tbl-head" style="background:var(--deep);color:var(--champagne)">
           <th style="padding:7px 6px;text-align:center;cursor:pointer" title="Watchlist">☆</th>
-          <th class="sortable" data-col="ticker"  style="padding:7px 10px;text-align:left;cursor:pointer;white-space:nowrap">ETF ↕</th>
-          <th class="sortable" data-col="nome"    style="padding:7px 10px;text-align:left;cursor:pointer">Nome ↕</th>
-          <th class="sortable" data-col="cat"     style="padding:7px 10px;text-align:left;cursor:pointer">Categ. ↕</th>
-          <th class="sortable" data-col="score"   style="padding:7px 10px;text-align:right;cursor:pointer">Score ↕</th>
-          <th style="padding:7px 10px;text-align:right">Pct.</th>
-          <th class="sortable" data-col="r1d"  style="padding:7px 10px;text-align:right;cursor:pointer">Dia ↕</th>
+          <th class="sortable" data-col="ticker"  style="padding:7px 10px;text-align:left;cursor:pointer;white-space:nowrap"><span data-i18n="table.etf">ETF</span> ↕</th>
+          <th class="sortable" data-col="nome"    style="padding:7px 10px;text-align:left;cursor:pointer"><span data-i18n="table.name">Nome</span> ↕</th>
+          <th class="sortable" data-col="cat"     style="padding:7px 10px;text-align:left;cursor:pointer"><span data-i18n="table.category">Categ.</span> ↕</th>
+          <th class="sortable" data-col="score"   style="padding:7px 10px;text-align:right;cursor:pointer"><span data-i18n="table.score">Score</span> ↕</th>
+          <th style="padding:7px 10px;text-align:right"><span data-i18n="table.pct">Pct.</span></th>
+          <th class="sortable" data-col="r1d"  style="padding:7px 10px;text-align:right;cursor:pointer"><span data-i18n="table.day">Dia</span> ↕</th>
           <th class="sortable" data-col="r5d"  style="padding:7px 10px;text-align:right;cursor:pointer">5d ↕</th>
           <th class="sortable" data-col="r63d" style="padding:7px 10px;text-align:right;cursor:pointer">3M ↕</th>
           <th class="sortable" data-col="rsi"  style="padding:7px 10px;text-align:right;cursor:pointer">RSI ↕</th>
           <th class="sortable" data-col="adx"  style="padding:7px 10px;text-align:right;cursor:pointer">ADX ↕</th>
-          <th class="sortable" data-col="dd"   style="padding:7px 10px;text-align:right;cursor:pointer">Drawdown ↕</th>
-          <th style="padding:7px 10px;text-align:center">Trend</th>
+          <th class="sortable" data-col="dd"   style="padding:7px 10px;text-align:right;cursor:pointer"><span data-i18n="table.drawdown">Drawdown</span> ↕</th>
+          <th style="padding:7px 10px;text-align:center"><span data-i18n="table.trend">Trend</span></th>
           <th style="padding:7px 10px;text-align:center">MACD</th>
           <th style="padding:7px 10px;text-align:center">RS/SPY</th>
           <th style="padding:7px 10px;text-align:center">SMA200</th>
           <th class="sortable" data-col="ter"     style="padding:7px 10px;text-align:right;cursor:pointer">TER ↕</th>
           <th class="sortable" data-col="aum"     style="padding:7px 10px;text-align:right;cursor:pointer">AuM Bn ↕</th>
-          <th style="padding:7px 10px;text-align:center">Réplica</th>
-          <th style="padding:7px 10px;text-align:center">ESG</th>
+          <th style="padding:7px 10px;text-align:center"><span data-i18n="table.replica">Réplica</span></th>
+          <th style="padding:7px 10px;text-align:center"><span data-i18n="table.esg">ESG</span></th>
           <th style="padding:7px 10px;text-align:left">ISIN</th>
         </tr>
       </thead>
@@ -1314,7 +1340,7 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
     chart_data = json.dumps({"labels": date_labels, "datasets": datasets})
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("chart")}Evolução de Score — Top 5 ETFs (últimos 30 dias)</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("chart")}<span data-i18n="section.score_history">Evolução de Score — Top 5</span></h2>
   <div style="position:relative;height:240px">
     <canvas id="scoreChart"></canvas>
   </div>
@@ -1382,7 +1408,7 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("backtest")}Backtest — Retorno Forward 21d por Sinal</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("backtest")}<span data-i18n="section.backtest">Backtest — Validação Histórica</span></h2>
   <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:12px">
     Retorno dos 21 dias seguintes a cada sinal · excesso vs SPY no mesmo período
   </p>
@@ -1497,7 +1523,7 @@ def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
 
     return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}Portfólio Alpaca</h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span data-i18n="section.portfolio">Portfólio Alpaca</span></h2>
   <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
     <div>
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Valor Total</div>
@@ -2003,12 +2029,12 @@ async function subscribePush() {{
         f'<footer>'
         f'<div style="max-width:900px;margin:0 auto">'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
-        f'<span style="background:#0F1629;border:1px solid #00D4FF44;color:#00D4FF;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⟳ AUTO-UPDATED</span>'
-        f'<span style="background:#0F1629;border:1px solid #7C83FD44;color:#7C83FD;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⚙ QUANT ENGINE</span>'
-        f'<span style="background:#0F1629;border:1px solid #00FF9D44;color:#00FF9D;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">◈ ETF SCANNER</span>'
-        f'<span style="background:#0F1629;border:1px solid #FFB80044;color:#FFB800;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">✦ OPEN SOURCE</span>'
+        f'<span data-i18n="footer.auto_updated" style="background:#0F1629;border:1px solid #00D4FF44;color:#00D4FF;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⟳ AUTO-UPDATED</span>'
+        f'<span data-i18n="footer.quant_engine" style="background:#0F1629;border:1px solid #7C83FD44;color:#7C83FD;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">⚙ QUANT ENGINE</span>'
+        f'<span data-i18n="footer.etf_scanner" style="background:#0F1629;border:1px solid #00FF9D44;color:#00FF9D;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">◈ ETF SCANNER</span>'
+        f'<span data-i18n="footer.open_source" style="background:#0F1629;border:1px solid #FFB80044;color:#FFB800;padding:3px 10px;border-radius:3px;font-size:0.60rem;letter-spacing:0.08em;font-weight:600">✦ OPEN SOURCE</span>'
         f'</div>'
-        f'<div style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · actualização diária</div>'
+        f'<div data-i18n="footer.data_source" style="color:var(--muted);font-size:0.65rem;margin-bottom:8px;text-align:center">ET-Spotter · dados via yfinance · actualização diária</div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
         f'<span class="acad-badge" title="Momentum 12-1M">Jegadeesh &amp; Titman (1993)</span>'
         f'<span class="acad-badge" title="Trend following SMA">Faber (2007)</span>'
@@ -2016,7 +2042,7 @@ async function subscribePush() {{
         f'<span class="acad-badge" title="Low-volatility anomaly">Ang et al. (2006)</span>'
         f'<span class="acad-badge" title="Alpha cross-sectional">Kakushadze (2015)</span>'
         f'</div>'
-        f'<span style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — <b>não constitui aconselhamento financeiro</b>. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span>'
+        f'<span data-i18n="footer.disclaimer" style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span>'
         f'</div>'
         f'{push_btn}</footer>',
     ]
@@ -2050,6 +2076,8 @@ async function subscribePush() {{
 <body>
 {"".join(sections)}
 {sw_script}
+<script src="https://unpkg.com/i18next@23.11.5/dist/umd/i18next.min.js"></script>
+<script src="./i18n.js"></script>
 </body>
 </html>"""
 
