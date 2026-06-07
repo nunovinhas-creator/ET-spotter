@@ -9,4 +9,34 @@
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+  <url>
+    <loc>https://et-spotter.com/vwce-vs-iwda.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-07</lastmod>
+  </url>
+  <url>
+    <loc>https://et-spotter.com/melhor-etf-europa.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-07</lastmod>
+  </url>
+  <url>
+    <loc>https://et-spotter.com/etf-esg-europa.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-07</lastmod>
+  </url>
+  <url>
+    <loc>https://et-spotter.com/estrategia-momentum.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-07</lastmod>
+  </url>
+  <url>
+    <loc>https://et-spotter.com/guia-etf-ucits.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-07</lastmod>
+  </url>
 </urlset>
