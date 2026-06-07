@@ -112,6 +112,38 @@ tr:nth-child(even) td{background:#090c14}
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">'
 
 
+TICKER_SEG = (
+    "&nbsp;&nbsp;◈ ET-SPOTTER · Scanner quantitativo de ETFs UCITS ·"
+    " Momentum · Tendência · Risco · Alpha ·"
+    " Ranking diário de 97+ ETFs ·"
+    " Sinal de FORTE COMPRA quando todos os factores alinham ·"
+    " Baseado em Jegadeesh &amp; Titman (1993) · Faber (2007) · Antonacci (2014) ·"
+    " Grátis · Open Source · Actualizado todos os dias às 22h ·"
+    " Abre o scanner → et-spotter.com · &nbsp;&nbsp;"
+)
+
+TICKER_CSS = """
+<style>
+@keyframes et-ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+</style>"""
+
+def _ticker() -> str:
+    track = TICKER_SEG * 2
+    return f"""
+{TICKER_CSS}
+<div style="width:100%;overflow:hidden;background:#03050d;border-bottom:1px solid #00D4FF18;
+            padding:5px 0;white-space:nowrap">
+  <div style="display:inline-block;animation:et-ticker 50s linear infinite;
+              font-size:0.62rem;letter-spacing:0.07em;font-family:'Albert Sans',sans-serif;
+              color:#4A6080">
+    {track}
+  </div>
+</div>"""
+
+
 def _header() -> str:
     return f"""
 <header class="site-header">
@@ -219,6 +251,7 @@ def article_page(
   {CSS}
 </head>
 <body>
+{_ticker()}
 {_header()}
 <div class="container">
   <article class="article">

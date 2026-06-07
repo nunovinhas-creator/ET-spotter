@@ -189,6 +189,63 @@ BRAND_BANNER_SVG = """\
 </svg>"""
 
 
+def ticker_html(signals_all: list[dict], spy_regime: str, avg_score: float, n_etfs: int) -> str:
+    """Full-width scrolling ticker strip with live daily data."""
+    regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#4A6080")
+    regime_label = f'<span style="color:{regime_color};font-weight:800">SPY {spy_regime}</span>'
+
+    strong_buys = [s for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY")]
+    buys        = [s for s in signals_all if s["level"] in ("COMPRA", "BUY")]
+
+    etf_items = ""
+    for s in strong_buys[:5]:
+        sym   = s.get("etf", "")
+        score = s.get("score", 0)
+        etf_items += f' <span style="color:#00FF9D;font-weight:700">{sym}</span> <span style="color:#4A6080">{score:.2f}</span> ·'
+    for s in buys[:3]:
+        sym   = s.get("etf", "")
+        score = s.get("score", 0)
+        etf_items += f' <span style="color:#00D4FF">{sym}</span> <span style="color:#4A6080">{score:.2f}</span> ·'
+
+    n_sb   = len(strong_buys)
+    n_b    = len(buys)
+    signal_summary = (
+        f'<span style="color:#00FF9D;font-weight:700">{n_sb} FORTE COMPRA</span>'
+        if n_sb else '<span style="color:#4A6080">0 FORTE COMPRA</span>'
+    )
+    signal_summary += f' · <span style="color:#00D4FF">{n_b} COMPRA</span>'
+
+    # build text segment (will be duplicated for seamless loop)
+    seg = (
+        f'&nbsp;&nbsp;◈ ET-SPOTTER · {regime_label} · {signal_summary} ·'
+        f'{etf_items}'
+        f' Score médio <span style="color:#FFB800;font-weight:700">{avg_score:.3f}</span> ·'
+        f' {n_etfs} ETFs UCITS analisados ·'
+        f' Actualizado diariamente às 22h UTC ·'
+        f' Momentum · Tendência · Risco · Alpha ·'
+        f' Grátis · Open Source ·'
+        f' &nbsp;&nbsp;'
+    )
+    # duplicate for seamless infinite scroll
+    track = seg * 2
+
+    return f"""
+<div style="width:100%;overflow:hidden;background:#03050d;border-bottom:1px solid #00D4FF18;
+            padding:5px 0;white-space:nowrap;position:relative;z-index:100">
+  <div style="display:inline-block;animation:et-ticker 55s linear infinite;
+              font-size:0.62rem;letter-spacing:0.07em;font-family:'Albert Sans',sans-serif;
+              color:#4A6080">
+    {track}
+  </div>
+</div>
+<style>
+@keyframes et-ticker {{
+  0%   {{ transform: translateX(0); }}
+  100% {{ transform: translateX(-50%); }}
+}}
+</style>"""
+
+
 def brand_banner_section_html() -> str:
     """Inline brand banner — exibido no fundo do dashboard antes do footer."""
     return f"""
@@ -2248,7 +2305,10 @@ async function subscribePush() {{
     n_strong_buy = sum(1 for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY"))
     n_buy        = sum(1 for s in signals_all if s["level"] in ("COMPRA", "BUY"))
 
+    avg_score    = float(data["scores_df"]["score"].mean()) if not data["scores_df"].empty and "score" in data["scores_df"].columns else 0.0
+
     sections = [
+        ticker_html(signals_all, data["spy_regime"], avg_score, n_etfs_today),
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
         '<div class="main">',
 
