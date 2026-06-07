@@ -8,7 +8,8 @@ from pathlib import Path
 
 DOCS     = Path(__file__).parent.parent / "docs"
 TODAY    = datetime.now().strftime("%Y-%m-%d")
-SITE_URL = "https://et-spotter.com"
+# Actualizar para "https://et-spotter.com" quando o domínio estiver comprado e DNS configurado
+SITE_URL = "https://nunovinhas-creator.github.io/ET-spotter"
 BEEHIIV_URL = "https://et-spotter.beehiiv.com"
 
 # ── CSS partilhado ─────────────────────────────────────────────────────────────

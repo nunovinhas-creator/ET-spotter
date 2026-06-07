@@ -2181,7 +2181,8 @@ async function subscribePush() {{
     ]
 
     today_iso    = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%Y-%m-%d")
-    site_url     = "https://et-spotter.com"
+    # Actualizar para "https://et-spotter.com" quando o domínio estiver comprado e DNS configurado
+    site_url     = "https://nunovinhas-creator.github.io/ET-spotter"
     meta_desc_en = (f"ET-Spotter — daily quantitative ranking of {n_etfs_today} UCITS ETFs "
                     f"for European investors. Today: {n_strong_buy} strong buy · {n_buy} buy. "
                     f"Momentum, trend, risk & alpha score. Free, updated daily.")
