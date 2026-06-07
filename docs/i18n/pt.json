@@ -2,7 +2,8 @@
   "nav": {
     "overview": "Overview",
     "signals": "Scores & Alertas",
-    "reports": "Relatórios"
+    "reports": "Relatórios",
+    "guides": "Guias"
   },
   "header": {
     "subtitle": "Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)",

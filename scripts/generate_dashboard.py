@@ -246,11 +246,12 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
     <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
     <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
+    <button class="nav-tab" onclick="switchTab('guides',this)" data-i18n="nav.guides">Guias</button>
   </nav>
 </header>
 <script>
 function switchTab(tab, btn) {{
-  ['overview','signals','reports'].forEach(function(t) {{
+  ['overview','signals','reports','guides'].forEach(function(t) {{
     var el = document.getElementById('tab-'+t);
     if (el) el.style.display = t === tab ? '' : 'none';
   }});
@@ -299,6 +300,92 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
 <div style="margin:16px 0 0;padding:0">
   <div style="display:flex;gap:8px;flex-wrap:wrap">{cards}</div>
 </div>"""
+
+
+def articles_section_html() -> str:
+    """Grid of SEO article cards linking to the static article pages."""
+    site = "https://nunovinhas-creator.github.io/ET-spotter"
+    articles = [
+        {
+            "href": f"{site}/vwce-vs-iwda.html",
+            "tag": "COMPARATIVO",
+            "title_pt": "VWCE vs IWDA — Qual o Melhor ETF Global?",
+            "title_en": "VWCE vs IWDA — Which Global ETF Is Best?",
+            "desc_pt": "Diferenças de TER, dividendos, liquidez e impostos para investidores portugueses.",
+            "desc_en": "TER differences, dividends, liquidity and taxes for European investors.",
+            "color": "#00D4FF",
+        },
+        {
+            "href": f"{site}/melhor-etf-europa.html",
+            "tag": "GUIA",
+            "title_pt": "Melhor ETF para Europeus em 2025",
+            "title_en": "Best ETF for Europeans in 2025",
+            "desc_pt": "Como escolher ETFs UCITS com base em score quant, TER e regime de mercado.",
+            "desc_en": "How to choose UCITS ETFs based on quant score, TER and market regime.",
+            "color": "#00FF9D",
+        },
+        {
+            "href": f"{site}/etf-esg-europa.html",
+            "tag": "ESG",
+            "title_pt": "ETFs ESG na Europa: Vale a Pena?",
+            "title_en": "ESG ETFs in Europe: Is It Worth It?",
+            "desc_pt": "Análise quantitativa de performance, TER e critérios de selecção ESG.",
+            "desc_en": "Quantitative analysis of performance, TER and ESG selection criteria.",
+            "color": "#7C83FD",
+        },
+        {
+            "href": f"{site}/estrategia-momentum.html",
+            "tag": "ESTRATÉGIA",
+            "title_pt": "Estratégia de Momentum com ETFs",
+            "title_en": "Momentum Strategy with ETFs",
+            "desc_pt": "Como aplicar Dual Momentum (Antonacci, 2014) com ETFs UCITS acessíveis.",
+            "desc_en": "How to apply Dual Momentum (Antonacci, 2014) with accessible UCITS ETFs.",
+            "color": "#FFB800",
+        },
+        {
+            "href": f"{site}/guia-etf-ucits.html",
+            "tag": "INICIANTE",
+            "title_pt": "Guia Completo de ETFs UCITS",
+            "title_en": "Complete Guide to UCITS ETFs",
+            "desc_pt": "O que são ETFs UCITS, como funcionam e como começar a investir na Europa.",
+            "desc_en": "What UCITS ETFs are, how they work and how to start investing in Europe.",
+            "color": "#FF6B9D",
+        },
+    ]
+    cards_html = ""
+    for a in articles:
+        cards_html += f"""
+  <a href="{a['href']}" target="_blank" rel="noopener" class="article-card"
+     style="border-color:{a['color']}22;--card-accent:{a['color']}">
+    <span class="article-card-tag" style="color:{a['color']}">{a['tag']}</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">{a['title_pt']}</span>
+      <span class="lang-en-only">{a['title_en']}</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">{a['desc_pt']}</span>
+      <span class="lang-en-only">{a['desc_en']}</span>
+    </div>
+    <span class="article-card-cta" style="color:{a['color']}">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>"""
+
+    return f"""
+<section class="section" id="guides-section">
+  <h2 class="section-title" style="display:flex;align-items:center">
+    {_icon("chart")}
+    <span class="lang-pt-only">Guias &amp; Artigos</span>
+    <span class="lang-en-only">Guides &amp; Articles</span>
+  </h2>
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:20px">
+    <span class="lang-pt-only">Análises aprofundadas sobre ETFs UCITS, estratégias de momentum e investimento quantitativo na Europa.</span>
+    <span class="lang-en-only">In-depth analyses on UCITS ETFs, momentum strategies and quantitative investing in Europe.</span>
+  </p>
+  <div class="articles-grid">{cards_html}
+  </div>
+</section>"""
 
 
 def subscribe_section_html() -> str:
@@ -1770,6 +1857,49 @@ header {
   color: var(--champagne);
   margin-bottom: 14px;
 }
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.article-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 16px 14px;
+  text-decoration: none;
+  transition: border-color .2s, background .2s;
+}
+.article-card:hover {
+  border-color: var(--card-accent, #00D4FF);
+  background: #0d1628;
+  text-decoration: none;
+}
+.article-card-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.article-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+.article-card-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+  flex: 1;
+}
+.article-card-cta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -2152,6 +2282,11 @@ async function subscribePush() {{
         portfolio_section(PORTFOLIO, data["cmap"]),
         _GLOW_DIVIDER,
         etf_table_section(data["scores_df"], data["cmap"], metadata),
+        '</div>',
+
+        # ── Tab: Guias ────────────────────────────────────────────────────────
+        '<div id="tab-guides" style="display:none">',
+        articles_section_html(),
         '</div>',
 
         subscribe_section_html(),
