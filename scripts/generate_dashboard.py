@@ -24,6 +24,11 @@ from constants import (
     CONVICTION_POTENTIAL_SCORE,  CONVICTION_POTENTIAL_SIGNALS,
 )
 
+# ── Monetisation config ────────────────────────────────────────────────────────
+# Fill these in once you have the accounts — grep for the placeholder names.
+BEEHIIV_PUB_ID        = ""   # e.g. "pub-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+DEGIRO_AFFILIATE_LINK = ""   # e.g. "https://www.degiro.eu/?referral=XXXXXXXX"
+
 
 # ── Carrega dados ─────────────────────────────────────────────────────────────
 
@@ -297,21 +302,70 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
 </div>"""
 
 
-def cta_strip_html() -> str:
-    """Faixa de CTA — converte visitantes em utilizadores."""
-    return """
-<div class="cta-strip">
-  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-    <span style="color:var(--green);font-size:14px">●</span>
-    <span data-i18n="cta.email" style="color:var(--text);font-size:0.78rem;font-weight:500">Receber este relatório por email todos os dias às 22h</span>
-    <span data-i18n="cta.free" style="color:var(--muted);font-size:0.72rem">— grátis, sem servidores, sem subscrição</span>
+def subscribe_section_html() -> str:
+    """Email capture + broker affiliate CTA. Activate: set BEEHIIV_PUB_ID / DEGIRO_AFFILIATE_LINK."""
+    if BEEHIIV_PUB_ID:
+        embed_html = f"""
+    <div style="max-width:520px;margin:0 auto 4px">
+      <iframe src="https://embeds.beehiiv.com/{BEEHIIV_PUB_ID}"
+              data-test-id="beehiiv-embed" width="100%" height="52"
+              frameborder="0" scrolling="no"
+              style="border-radius:4px;overflow:hidden;display:block"></iframe>
+    </div>"""
+    else:
+        embed_html = """
+    <div style="max-width:520px;margin:0 auto 4px;display:flex;gap:8px;justify-content:center">
+      <input type="email" data-i18n-ph="subscribe.email_ph"
+             placeholder="o teu email"
+             style="flex:1;max-width:300px;background:#0a0d17;border:1px solid var(--border);
+                    border-radius:4px;padding:10px 14px;color:var(--text);font-size:0.8rem;
+                    font-family:inherit;outline:none"
+             onfocus="this.style.borderColor='var(--green)'"
+             onblur="this.style.borderColor='var(--border)'">
+      <button onclick="alert('Em breve! A configurar o sistema de email.')"
+              style="background:var(--green);color:#000;border:none;border-radius:4px;
+                     padding:10px 18px;font-weight:700;font-size:0.78rem;cursor:pointer;
+                     font-family:inherit;white-space:nowrap"
+              data-i18n="subscribe.btn">Subscrever</button>
+    </div>"""
+
+    broker_href = DEGIRO_AFFILIATE_LINK or "https://www.degiro.eu/"
+    rel_attr    = 'rel="noopener sponsored"' if DEGIRO_AFFILIATE_LINK else 'rel="noopener"'
+
+    return f"""
+<section class="section" id="subscribe-section"
+  style="background:linear-gradient(135deg,#08111f 0%,#0d1a2e 100%);
+         border:1px solid #00D4FF18;border-radius:8px;margin:12px 0">
+  <div style="padding:28px 20px;text-align:center">
+    <div style="color:var(--green);font-size:0.58rem;letter-spacing:0.14em;font-weight:700;margin-bottom:8px">
+      ● DAILY SIGNAL
+    </div>
+    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px"
+         data-i18n="subscribe.title">
+      Recebe o relatório diário às 22h
+    </div>
+    <div style="color:var(--muted);font-size:0.75rem;margin-bottom:20px;
+                max-width:380px;margin-left:auto;margin-right:auto;line-height:1.6"
+         data-i18n="subscribe.desc">
+      Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis.
+    </div>
+    {embed_html}
+    <div style="color:var(--muted);font-size:0.68rem;margin-top:10px"
+         data-i18n="subscribe.privacy">
+      Sem spam. Cancelas quando quiseres.
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ffffff09">
+      <span style="color:var(--muted);font-size:0.70rem" data-i18n="subscribe.broker_cta">
+        Queres agir sobre os sinais?
+      </span>
+      <a href="{broker_href}" target="_blank" {rel_attr}
+         style="color:var(--accent);text-decoration:none;margin-left:6px;font-size:0.70rem;font-weight:600"
+         data-i18n="subscribe.broker_link">
+        Abre conta DEGIRO →
+      </a>
+    </div>
   </div>
-  <a href="https://github.com/nunovinhas-creator/ET-spotter/fork" target="_blank" rel="noopener"
-     class="gh-btn" style="white-space:nowrap;border-color:var(--green);color:var(--green)"
-     data-i18n="cta.fork">
-    🍴 Fork e configura em 3 minutos
-  </a>
-</div>"""
+</section>"""
 
 
 def _panel(title: str, body: str, badge: str = "", title_key: str = "") -> str:
@@ -2072,6 +2126,8 @@ async function subscribePush() {{
         for cat in cfg.get("categories", [])
         if isinstance(cat, dict)
     ) or 97
+    n_strong_buy = sum(1 for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY"))
+    n_buy        = sum(1 for s in signals_all if s["level"] in ("COMPRA", "BUY"))
 
     sections = [
         header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
@@ -2109,6 +2165,7 @@ async function subscribePush() {{
         etf_table_section(data["scores_df"], data["cmap"], metadata),
         '</div>',
 
+        subscribe_section_html(),
         brand_banner_section_html(),
         '</div>',
         f'<footer>'
@@ -2134,6 +2191,31 @@ async function subscribePush() {{
         f'{push_btn}</footer>',
     ]
 
+    today_iso    = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%Y-%m-%d")
+    site_url     = "https://et-spotter.com"
+    meta_desc_en = (f"ET-Spotter — daily quantitative ranking of {n_etfs_today} UCITS ETFs "
+                    f"for European investors. Today: {n_strong_buy} strong buy · {n_buy} buy. "
+                    f"Momentum, trend, risk & alpha score. Free, updated daily.")
+    meta_desc_pt = (f"ET-Spotter — ranking quantitativo diário de {n_etfs_today} ETFs UCITS "
+                    f"para investidores europeus. Hoje: {n_strong_buy} forte compra · {n_buy} compra. "
+                    f"Score composto: momentum, tendência, risco e alpha. Grátis, actualizado diariamente.")
+    json_ld = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ET-Spotter",
+        "url": site_url,
+        "description": meta_desc_en,
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Any",
+        "inLanguage": ["pt", "en"],
+        "dateModified": today_iso,
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR",
+                   "availability": "https://schema.org/InStock"},
+        "author": {"@type": "Organization", "name": "ET-Spotter", "url": site_url},
+        "keywords": ("UCITS ETF scanner, ETF momentum Europa, ETF ranking Europa, "
+                     "melhor ETF Europa, ETF UCITS Portugal, VWCE IWDA score")
+    }, ensure_ascii=False, separators=(',', ':'))
+
     html = f"""<!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -2141,16 +2223,27 @@ async function subscribePush() {{
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="300">
   <meta name="theme-color" content="#080a10">
-  <title>ET-Spotter · UCITS ETF Quant Scanner</title>
-  <meta name="description" content="Quantitative cross-sectional analysis of {n_etfs_today} UCITS ETFs, updated daily. Composite score: momentum, trend, risk and alpha. Free, open-source, no servers.">
+  <title>ET-Spotter · UCITS ETF Scanner — Momentum, Trend & Risk Score</title>
+  <meta name="description" content="{meta_desc_pt}">
+  <meta name="keywords" content="ETF UCITS, ETF momentum, ETF Europa, VWCE, IWDA, ETF scanner, ETF ranking Portugal, melhor ETF Europa">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{site_url}/">
+  <link rel="alternate" hreflang="pt" href="{site_url}/?lang=pt">
+  <link rel="alternate" hreflang="en" href="{site_url}/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="{site_url}/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="ET-Spotter · UCITS ETF Quant Scanner">
-  <meta property="og:description" content="{n_etfs_today} European ETFs analysed daily. Receive the technical signal by email — free, open-source, GitHub Actions.">
-  <meta property="og:url" content="https://nunovinhas-creator.github.io/ET-spotter">
-  <meta property="og:image" content="https://raw.githubusercontent.com/nunovinhas-creator/ET-spotter/claude/youthful-euler-SKkX7/docs/assets/banner-minimal.svg">
+  <meta property="og:site_name" content="ET-Spotter">
+  <meta property="og:title" content="ET-Spotter · UCITS ETF Scanner — {n_strong_buy} Strong Buy today">
+  <meta property="og:description" content="{meta_desc_en}">
+  <meta property="og:url" content="{site_url}/">
+  <meta property="og:image" content="{site_url}/assets/banner.svg">
+  <meta property="og:locale" content="pt_PT">
+  <meta property="og:locale:alternate" content="en_GB">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="ET-Spotter · UCITS ETF Quant Scanner">
-  <meta name="twitter:description" content="{n_etfs_today} UCITS ETFs analysed daily. Momentum, trend, risk and alpha score. Free, open-source.">
+  <meta name="twitter:title" content="ET-Spotter · {n_strong_buy} UCITS ETFs with Strong Buy today">
+  <meta name="twitter:description" content="{meta_desc_en}">
+  <meta name="twitter:image" content="{site_url}/assets/banner.svg">
+  <script type="application/ld+json">{json_ld}</script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
