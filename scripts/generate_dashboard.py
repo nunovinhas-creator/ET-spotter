@@ -375,8 +375,8 @@ def articles_section_html() -> str:
         {
             "href": f"{site}/melhor-etf-europa.html",
             "tag": "GUIA",
-            "title_pt": "Melhor ETF para Europeus em 2025",
-            "title_en": "Best ETF for Europeans in 2025",
+            "title_pt": "Melhor ETF para Europeus em 2026",
+            "title_en": "Best ETF for Europeans in 2026",
             "desc_pt": "Como escolher ETFs UCITS com base em score quant, TER e regime de mercado.",
             "desc_en": "How to choose UCITS ETFs based on quant score, TER and market regime.",
             "color": "#00FF9D",

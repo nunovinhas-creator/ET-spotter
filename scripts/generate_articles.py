@@ -357,12 +357,12 @@ ARTICLES.append(dict(
 # ── 2. Melhor ETF Europa ──────────────────────────────────────────────────────
 ARTICLES.append(dict(
     slug="melhor-etf-europa",
-    title="Melhores ETFs UCITS para Investidores Europeus — Ranking 2025",
-    description="Quais os melhores ETFs UCITS disponíveis para investidores europeus em 2025? Análise por categoria: mercado mundial, tecnologia, emergentes, ESG e imobiliário.",
-    keywords="melhor ETF Europa 2025, melhores ETFs UCITS, ETF investidores europeus, ETF Portugal 2025, ranking ETF Europa",
+    title="Melhores ETFs UCITS para Investidores Europeus — Ranking 2026",
+    description="Quais os melhores ETFs UCITS disponíveis para investidores europeus em 2026? Análise por categoria: mercado mundial, tecnologia, emergentes, ESG e imobiliário.",
+    keywords="melhor ETF Europa 2026, melhores ETFs UCITS, ETF investidores europeus, ETF Portugal 2026, ranking ETF Europa",
     tag="● RANKING & ANÁLISE",
     faqs=[
-        {"q": "Qual o melhor ETF para investidores europeus em 2025?",
+        {"q": "Qual o melhor ETF para investidores europeus em 2026?",
          "a": "Não existe um único 'melhor' ETF — depende do teu perfil de risco, horizonte temporal e objectivos. Para exposição global diversificada, VWCE e IWDA são as escolhas mais populares. Para tecnologia, o Invesco QQQ UCITS (EQQQ) ou o iShares S&P 500 Information Technology. Use o ET-Spotter para ver qual tem melhor score quantitativo no momento actual."},
         {"q": "O que é um ETF UCITS e porquê é importante para europeus?",
          "a": "UCITS (Undertakings for Collective Investment in Transferable Securities) é um quadro regulatório europeu que garante protecção ao investidor, transparência e diversificação mínima. ETFs UCITS têm tratamento fiscal vantajoso para residentes na UE vs ETFs americanos (não sujeitos à retenção na fonte de 30% dos dividendos americanos para não-residentes)."},
@@ -458,7 +458,7 @@ ARTICLES.append(dict(
 # ── 3. ETF ESG Europa ────────────────────────────────────────────────────────
 ARTICLES.append(dict(
     slug="etf-esg-europa",
-    title="Melhores ETFs ESG e Sustentáveis para Investidores Europeus 2025",
+    title="Melhores ETFs ESG e Sustentáveis para Investidores Europeus 2026",
     description="Guia completo sobre ETFs ESG UCITS: diferenças entre SRI, ESG Enhanced e exclusão, principais opções disponíveis e como avaliar o impacto real.",
     keywords="ETF ESG Europa, ETF sustentável UCITS, ETF SRI Portugal, investimento responsável ETF, SUAS ESGW VFTE",
     tag="● ESG & SUSTENTABILIDADE",
