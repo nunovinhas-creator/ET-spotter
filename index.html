@@ -132,6 +132,49 @@ header {
   color: var(--champagne);
   margin-bottom: 14px;
 }
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.article-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 16px 14px;
+  text-decoration: none;
+  transition: border-color .2s, background .2s;
+}
+.article-card:hover {
+  border-color: var(--card-accent, #00D4FF);
+  background: #0d1628;
+  text-decoration: none;
+}
+.article-card-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.article-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+.article-card-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+  flex: 1;
+}
+.article-card-cta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -433,7 +476,7 @@ html[lang="pt"] .lang-en-only { display: none !important; }
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 07/06/2026  15:08 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 07/06/2026  15:35 (Lisboa)
       </div>
     </div>
   </div>
@@ -441,11 +484,12 @@ html[lang="pt"] .lang-en-only { display: none !important; }
     <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
     <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
     <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
+    <button class="nav-tab" onclick="switchTab('guides',this)" data-i18n="nav.guides">Guias</button>
   </nav>
 </header>
 <script>
 function switchTab(tab, btn) {
-  ['overview','signals','reports'].forEach(function(t) {
+  ['overview','signals','reports','guides'].forEach(function(t) {
     var el = document.getElementById('tab-'+t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
@@ -1709,6 +1753,99 @@ function switchTab(tab, btn) {
     });
     applyFilters();
   </script>
+</section></div><div id="tab-guides" style="display:none">
+<section class="section" id="guides-section">
+  <h2 class="section-title" style="display:flex;align-items:center">
+    <svg viewBox="0 0 20 20" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><g stroke="#7C83FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,16 5,11 9,13 13,7 18,9"/><line x1="2" y1="18" x2="18" y2="18" stroke-width="1"/></g></svg>
+    <span class="lang-pt-only">Guias &amp; Artigos</span>
+    <span class="lang-en-only">Guides &amp; Articles</span>
+  </h2>
+  <p style="color:var(--muted);font-size:11px;margin-top:-8px;margin-bottom:20px">
+    <span class="lang-pt-only">Análises aprofundadas sobre ETFs UCITS, estratégias de momentum e investimento quantitativo na Europa.</span>
+    <span class="lang-en-only">In-depth analyses on UCITS ETFs, momentum strategies and quantitative investing in Europe.</span>
+  </p>
+  <div class="articles-grid">
+  <a href="https://nunovinhas-creator.github.io/ET-spotter/vwce-vs-iwda.html" target="_blank" rel="noopener" class="article-card"
+     style="border-color:#00D4FF22;--card-accent:#00D4FF">
+    <span class="article-card-tag" style="color:#00D4FF">COMPARATIVO</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">VWCE vs IWDA — Qual o Melhor ETF Global?</span>
+      <span class="lang-en-only">VWCE vs IWDA — Which Global ETF Is Best?</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">Diferenças de TER, dividendos, liquidez e impostos para investidores portugueses.</span>
+      <span class="lang-en-only">TER differences, dividends, liquidity and taxes for European investors.</span>
+    </div>
+    <span class="article-card-cta" style="color:#00D4FF">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>
+  <a href="https://nunovinhas-creator.github.io/ET-spotter/melhor-etf-europa.html" target="_blank" rel="noopener" class="article-card"
+     style="border-color:#00FF9D22;--card-accent:#00FF9D">
+    <span class="article-card-tag" style="color:#00FF9D">GUIA</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">Melhor ETF para Europeus em 2025</span>
+      <span class="lang-en-only">Best ETF for Europeans in 2025</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">Como escolher ETFs UCITS com base em score quant, TER e regime de mercado.</span>
+      <span class="lang-en-only">How to choose UCITS ETFs based on quant score, TER and market regime.</span>
+    </div>
+    <span class="article-card-cta" style="color:#00FF9D">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>
+  <a href="https://nunovinhas-creator.github.io/ET-spotter/etf-esg-europa.html" target="_blank" rel="noopener" class="article-card"
+     style="border-color:#7C83FD22;--card-accent:#7C83FD">
+    <span class="article-card-tag" style="color:#7C83FD">ESG</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">ETFs ESG na Europa: Vale a Pena?</span>
+      <span class="lang-en-only">ESG ETFs in Europe: Is It Worth It?</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">Análise quantitativa de performance, TER e critérios de selecção ESG.</span>
+      <span class="lang-en-only">Quantitative analysis of performance, TER and ESG selection criteria.</span>
+    </div>
+    <span class="article-card-cta" style="color:#7C83FD">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>
+  <a href="https://nunovinhas-creator.github.io/ET-spotter/estrategia-momentum.html" target="_blank" rel="noopener" class="article-card"
+     style="border-color:#FFB80022;--card-accent:#FFB800">
+    <span class="article-card-tag" style="color:#FFB800">ESTRATÉGIA</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">Estratégia de Momentum com ETFs</span>
+      <span class="lang-en-only">Momentum Strategy with ETFs</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">Como aplicar Dual Momentum (Antonacci, 2014) com ETFs UCITS acessíveis.</span>
+      <span class="lang-en-only">How to apply Dual Momentum (Antonacci, 2014) with accessible UCITS ETFs.</span>
+    </div>
+    <span class="article-card-cta" style="color:#FFB800">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>
+  <a href="https://nunovinhas-creator.github.io/ET-spotter/guia-etf-ucits.html" target="_blank" rel="noopener" class="article-card"
+     style="border-color:#FF6B9D22;--card-accent:#FF6B9D">
+    <span class="article-card-tag" style="color:#FF6B9D">INICIANTE</span>
+    <div class="article-card-title">
+      <span class="lang-pt-only">Guia Completo de ETFs UCITS</span>
+      <span class="lang-en-only">Complete Guide to UCITS ETFs</span>
+    </div>
+    <div class="article-card-desc">
+      <span class="lang-pt-only">O que são ETFs UCITS, como funcionam e como começar a investir na Europa.</span>
+      <span class="lang-en-only">What UCITS ETFs are, how they work and how to start investing in Europe.</span>
+    </div>
+    <span class="article-card-cta" style="color:#FF6B9D">
+      <span class="lang-pt-only">Ler artigo →</span>
+      <span class="lang-en-only">Read article →</span>
+    </span>
+  </a>
+  </div>
 </section></div>
 <section class="section" id="subscribe-section"
   style="background:linear-gradient(135deg,#08111f 0%,#0d1a2e 100%);
