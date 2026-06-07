@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://et-spotter.com/sitemap.xml
+Sitemap: https://nunovinhas-creator.github.io/ET-spotter/sitemap.xml
