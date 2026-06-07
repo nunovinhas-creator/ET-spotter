@@ -25,8 +25,7 @@ from constants import (
 )
 
 # ── Monetisation config ────────────────────────────────────────────────────────
-# Fill these in once you have the accounts — grep for the placeholder names.
-BEEHIIV_PUB_ID        = ""   # e.g. "pub-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+BEEHIIV_URL           = "https://et-spotter.beehiiv.com"   # newsletter subscription page
 DEGIRO_AFFILIATE_LINK = ""   # e.g. "https://www.degiro.eu/?referral=XXXXXXXX"
 
 
@@ -303,32 +302,7 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
 
 
 def subscribe_section_html() -> str:
-    """Email capture + broker affiliate CTA. Activate: set BEEHIIV_PUB_ID / DEGIRO_AFFILIATE_LINK."""
-    if BEEHIIV_PUB_ID:
-        embed_html = f"""
-    <div style="max-width:520px;margin:0 auto 4px">
-      <iframe src="https://embeds.beehiiv.com/{BEEHIIV_PUB_ID}"
-              data-test-id="beehiiv-embed" width="100%" height="52"
-              frameborder="0" scrolling="no"
-              style="border-radius:4px;overflow:hidden;display:block"></iframe>
-    </div>"""
-    else:
-        embed_html = """
-    <div style="max-width:520px;margin:0 auto 4px;display:flex;gap:8px;justify-content:center">
-      <input type="email" data-i18n-ph="subscribe.email_ph"
-             placeholder="o teu email"
-             style="flex:1;max-width:300px;background:#0a0d17;border:1px solid var(--border);
-                    border-radius:4px;padding:10px 14px;color:var(--text);font-size:0.8rem;
-                    font-family:inherit;outline:none"
-             onfocus="this.style.borderColor='var(--green)'"
-             onblur="this.style.borderColor='var(--border)'">
-      <button onclick="alert('Em breve! A configurar o sistema de email.')"
-              style="background:var(--green);color:#000;border:none;border-radius:4px;
-                     padding:10px 18px;font-weight:700;font-size:0.78rem;cursor:pointer;
-                     font-family:inherit;white-space:nowrap"
-              data-i18n="subscribe.btn">Subscrever</button>
-    </div>"""
-
+    """Email capture (Beehiiv form) + broker affiliate CTA."""
     broker_href = DEGIRO_AFFILIATE_LINK or "https://www.degiro.eu/"
     rel_attr    = 'rel="noopener sponsored"' if DEGIRO_AFFILIATE_LINK else 'rel="noopener"'
 
@@ -349,7 +323,22 @@ def subscribe_section_html() -> str:
          data-i18n="subscribe.desc">
       Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis.
     </div>
-    {embed_html}
+    <form action="{BEEHIIV_URL}/subscribe" method="POST" target="_blank"
+          style="max-width:520px;margin:0 auto 4px;display:flex;gap:8px;justify-content:center">
+      <input type="email" name="email" required
+             data-i18n-ph="subscribe.email_ph"
+             placeholder="o teu email"
+             style="flex:1;max-width:300px;background:#0a0d17;border:1px solid var(--border);
+                    border-radius:4px;padding:10px 14px;color:var(--text);font-size:0.8rem;
+                    font-family:inherit;outline:none"
+             onfocus="this.style.borderColor='var(--green)'"
+             onblur="this.style.borderColor='var(--border)'">
+      <button type="submit"
+              style="background:var(--green);color:#000;border:none;border-radius:4px;
+                     padding:10px 18px;font-weight:700;font-size:0.78rem;cursor:pointer;
+                     font-family:inherit;white-space:nowrap"
+              data-i18n="subscribe.btn">Subscrever</button>
+    </form>
     <div style="color:var(--muted);font-size:0.68rem;margin-top:10px"
          data-i18n="subscribe.privacy">
       Sem spam. Cancelas quando quiseres.
