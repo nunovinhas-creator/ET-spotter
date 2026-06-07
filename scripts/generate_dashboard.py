@@ -2234,6 +2234,365 @@ html[lang="pt"] .lang-en-only { display: none !important; }
 </style>"""
 
 
+
+
+# ── Daily article ──────────────────────────────────────────────────────────────
+
+_MONTHS_PT = ["janeiro","fevereiro","março","abril","maio","junho",
+              "julho","agosto","setembro","outubro","novembro","dezembro"]
+
+def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_score: float, today_iso: str) -> str:
+    """Destaque da análise diária — aparece no topo do tab Overview."""
+    from zoneinfo import ZoneInfo
+    today_obj   = datetime.now(ZoneInfo("Europe/Lisbon"))
+    day_fmt     = f"{today_obj.day} de {_MONTHS_PT[today_obj.month-1]} de {today_obj.year}"
+    site        = "https://nunovinhas-creator.github.io/ET-spotter"
+    article_url = f"{site}/analise-diaria.html"
+
+    strong_buys = [s for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY")]
+    buys        = [s for s in signals_all if s["level"] in ("COMPRA", "BUY")]
+    n_sb, n_b   = len(strong_buys), len(buys)
+
+    regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#4A6080")
+    regime_badge = f'<span style="background:{regime_color}22;color:{regime_color};border:1px solid {regime_color}44;padding:2px 8px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.1em">SPY {spy_regime}</span>'
+
+    top_etfs_html = ""
+    for s in strong_buys[:3]:
+        sym   = s.get("etf", "")
+        score = s.get("score", 0)
+        top_etfs_html += f'<span style="color:#00FF9D;font-weight:700">{sym}</span><span style="color:#4A6080;font-size:0.68rem"> {score:.2f}</span>  '
+    for s in buys[:2]:
+        sym   = s.get("etf", "")
+        score = s.get("score", 0)
+        top_etfs_html += f'<span style="color:#00D4FF">{sym}</span><span style="color:#4A6080;font-size:0.68rem"> {score:.2f}</span>  '
+
+    headline_pt = (
+        f"{n_sb} ETF{'s' if n_sb!=1 else ''} em Forte Compra · {n_b} em Compra · Score médio {avg_score:.3f}"
+        if (n_sb + n_b) > 0 else
+        f"Score médio {avg_score:.3f} · Sem sinais de compra hoje"
+    )
+
+    return f"""
+<div style="margin:0 0 18px;background:linear-gradient(135deg,#05080f 0%,#0a111e 100%);
+            border:1px solid #FFB80033;border-left:3px solid #FFB800;border-radius:6px;
+            padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+            gap:16px;flex-wrap:wrap">
+  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="color:#FFB800;font-size:0.60rem;font-weight:800;letter-spacing:0.14em">📰 ANÁLISE DO DIA</span>
+      <span style="color:var(--muted);font-size:0.60rem">{day_fmt}</span>
+      {regime_badge}
+    </div>
+    <div style="color:var(--text);font-size:0.82rem;font-weight:600">{headline_pt}</div>
+    <div style="font-size:0.72rem;letter-spacing:0.02em">{top_etfs_html}</div>
+  </div>
+  <a href="{article_url}" target="_blank" rel="noopener"
+     style="flex-shrink:0;background:#FFB800;color:#000;font-weight:800;font-size:0.72rem;
+            padding:9px 18px;border-radius:4px;text-decoration:none;white-space:nowrap;
+            letter-spacing:0.04em">
+    Ler análise →
+  </a>
+</div>"""
+
+
+def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float, n_etfs: int) -> None:
+    """Gera docs/analise-diaria.html com análise do dia baseada em dados reais."""
+    from zoneinfo import ZoneInfo
+    from pathlib import Path
+
+    today_obj   = datetime.now(ZoneInfo("Europe/Lisbon"))
+    today_iso   = today_obj.strftime("%Y-%m-%d")
+    day_fmt     = f"{today_obj.day} de {_MONTHS_PT[today_obj.month-1]} de {today_obj.year}"
+    site        = "https://nunovinhas-creator.github.io/ET-spotter"
+    article_url = f"{site}/analise-diaria.html"
+
+    spy_regime   = data.get("spy_regime", "DESCONHECIDO")
+    spy_close    = data.get("spy_close")
+    spy_sma200   = data.get("spy_sma200")
+    cats         = data.get("cats", [])
+
+    strong_buys = [s for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY")]
+    buys        = [s for s in signals_all if s["level"] in ("COMPRA", "BUY")]
+    n_sb, n_b   = len(strong_buys), len(buys)
+
+    regime_color_css = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#4A6080")
+    regime_label_pt  = "mercado em tendência de alta" if spy_regime == "BULL" else ("mercado abaixo da média de 200 dias" if spy_regime == "BEAR" else "regime indefinido")
+
+    # ── Parágrafo de contexto de mercado ─────────────────────────────────────
+    spy_ctx = ""
+    if spy_close and spy_sma200:
+        dist = (spy_close / spy_sma200 - 1) * 100
+        spy_ctx = (
+            f"O S&P 500 (SPY) fecha em {spy_close:.2f}, "
+            f"{'acima' if spy_regime=='BULL' else 'abaixo'} da sua média móvel de 200 dias ({spy_sma200:.2f}) "
+            f"em {abs(dist):.1f}%. "
+        )
+
+    if n_sb + n_b == 0:
+        intro = (f"{spy_ctx}Hoje não se registam confluências de sinais suficientes para emitir alertas de compra. "
+                 f"O score médio do universo de {n_etfs} ETFs UCITS é de {avg_score:.3f}, "
+                 f"sugerindo um mercado neutro sem pressão direcional clara.")
+        title_suffix = "Mercado Neutro"
+    elif n_sb >= 3:
+        intro = (f"{spy_ctx}Dia de grande confluência quantitativa: {n_sb} ETFs UCITS atingem o nível FORTE COMPRA "
+                 f"e {n_b} atingem COMPRA, num universo de {n_etfs} ETFs analisados. "
+                 f"O score médio do dia é {avg_score:.3f}. O modelo identifica alinhamento simultâneo "
+                 f"de momentum multi-período, tendência confirmada e força relativa positiva.")
+        title_suffix = f"{n_sb} ETFs em Forte Compra"
+    else:
+        intro = (f"{spy_ctx}O scanner quantitativo identifica hoje {n_sb} ETF{'s' if n_sb!=1 else ''} em FORTE COMPRA "
+                 f"e {n_b} em COMPRA, num universo de {n_etfs} ETFs UCITS analisados. "
+                 f"Score médio do universo: {avg_score:.3f}.")
+        title_suffix = f"{n_sb} Sinal{'is' if n_sb!=1 else ''} de Forte Compra"
+
+    article_title = f"Análise ETFs UCITS — {day_fmt}: {title_suffix}"
+    meta_desc     = (f"Análise quantitativa diária de ETFs UCITS para {day_fmt}. "
+                     f"SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f}. "
+                     f"Baseada em momentum, tendência, risco e alpha.")
+
+    # ── Secção FORTE COMPRA ────────────────────────────────────────────────────
+    def etf_card(s: dict, highlight: bool = False) -> str:
+        sym    = s.get("etf", "")
+        nome   = _nome_curto(s)
+        score  = s.get("score", 0)
+        ret63  = float(s.get("ret_63d", 0) or 0)
+        ret5d  = float(s.get("ret_5d",  0) or 0)
+        level  = s.get("level", "")
+        color  = "#00FF9D" if "FORTE" in level or "STRONG" in level else "#00D4FF"
+        label  = "FORTE COMPRA" if "FORTE" in level or "STRONG" in level else "COMPRA"
+        narr   = narrativa_simples(s)
+        border = f"border-left:3px solid {color};" if highlight else ""
+        return (
+            f'<div style="background:#0d1525;border:1px solid #1e2d4d;{border}border-radius:6px;padding:16px 18px;margin-bottom:12px">'
+            f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'
+            f'<span style="color:{color};font-size:1.1rem;font-weight:800">{sym}</span>'
+            f'<span style="color:#c8cedd;font-size:0.78rem">{nome}</span>'
+            f'<span style="margin-left:auto;background:{color}22;color:{color};border:1px solid {color}44;'
+            f'padding:2px 8px;border-radius:3px;font-size:0.62rem;font-weight:700">{label}</span>'
+            f'</div>'
+            f'<div style="display:flex;gap:18px;font-size:0.72rem;color:#4a6080;margin-bottom:10px;flex-wrap:wrap">'
+            f'<span>Score <strong style="color:{color}">{score:.3f}</strong></span>'
+            f'<span>3 meses <strong style="color:{"#00FF9D" if ret63>=0 else "#FF4466"}">{ret63:+.1%}</strong></span>'
+            f'<span>5 dias <strong style="color:{"#00FF9D" if ret5d>=0 else "#FF4466"}">{ret5d:+.1%}</strong></span>'
+            f'</div>'
+            f'<p style="color:#c8cedd;font-size:0.82rem;line-height:1.65;margin:0">{narr}</p>'
+            f'</div>'
+        )
+
+    sb_cards = "".join(etf_card(s, highlight=True) for s in strong_buys[:5])
+    b_cards  = "".join(etf_card(s, highlight=False) for s in buys[:5])
+
+    forte_section = ""
+    if strong_buys:
+        forte_section = f"""
+<h2 style="font-size:1.05rem;font-weight:700;color:#00FF9D;margin:32px 0 10px;
+           padding-bottom:6px;border-bottom:1px solid #1e2d4d">
+  Forte Compra — {n_sb} ETF{'s' if n_sb!=1 else ''} com todos os factores alinhados
+</h2>
+<p style="color:#c8cedd;font-size:0.85rem;margin-bottom:16px">
+  O modelo identifica alinhamento simultâneo de momentum multi-período (Jegadeesh &amp; Titman, 1993),
+  tendência confirmada acima da SMA (Faber, 2007) e força relativa positiva (Antonacci, 2014).
+</p>
+{sb_cards}"""
+
+    buy_section = ""
+    if buys:
+        buy_section = f"""
+<h2 style="font-size:1.05rem;font-weight:700;color:#00D4FF;margin:32px 0 10px;
+           padding-bottom:6px;border-bottom:1px solid #1e2d4d">
+  Compra — {n_b} ETF{'s' if n_b!=1 else ''} com sinal construtivo
+</h2>
+{b_cards}"""
+
+    # ── Rotação de categorias ─────────────────────────────────────────────────
+    top_cats = sorted(cats, key=lambda c: c.get("score_avg", 0), reverse=True)[:3]
+    cat_rows = ""
+    for c in top_cats:
+        sc = c.get("score_avg", 0)
+        cat_rows += (
+            f'<div style="display:flex;align-items:center;justify-content:space-between;'
+            f'padding:8px 0;border-bottom:1px solid #1e2d4d">'
+            f'<span style="color:{c.get("color","#ccc")};font-weight:600;font-size:0.82rem">{c.get("name","")}</span>'
+            f'<span style="color:{"#00FF9D" if sc>=0.5 else "#4a6080"};font-weight:700">{sc:.3f}</span>'
+            f'</div>'
+        )
+    cat_section = ""
+    if cat_rows:
+        cat_section = f"""
+<h2 style="font-size:1.05rem;font-weight:700;color:#7C83FD;margin:32px 0 10px;
+           padding-bottom:6px;border-bottom:1px solid #1e2d4d">
+  Categorias em Destaque
+</h2>
+<p style="color:#c8cedd;font-size:0.85rem;margin-bottom:12px">
+  Top 3 categorias por score médio — útil para identificar rotação sectorial.
+</p>
+<div style="background:#0d1525;border:1px solid #1e2d4d;border-radius:6px;padding:4px 16px">
+  {cat_rows}
+</div>"""
+
+    no_signals_section = ""
+    if n_sb + n_b == 0:
+        no_signals_section = """
+<div style="background:#0d1525;border:1px solid #1e2d4d;border-left:3px solid #4a6080;
+            border-radius:6px;padding:16px 18px;margin:20px 0">
+  <p style="color:#c8cedd;font-size:0.85rem;margin:0">
+    Dias sem sinal são igualmente informativos: indicam ausência de confluência técnica e sugerem
+    cautela ou espera. O modelo emite sinais apenas quando todos os critérios convergem —
+    precisamente para evitar falsos positivos.
+  </p>
+</div>"""
+
+    # ── JSON-LD Article schema ────────────────────────────────────────────────
+    import json as _json
+    article_schema = _json.dumps({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": article_title,
+        "description": meta_desc,
+        "author": {"@type": "Organization", "name": "ET-Spotter", "url": site},
+        "publisher": {"@type": "Organization", "name": "ET-Spotter", "url": site},
+        "datePublished": today_iso,
+        "dateModified": today_iso,
+        "url": article_url
+    }, ensure_ascii=False, separators=(',', ':'))
+
+    html = f"""<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080a10">
+  <title>{article_title}</title>
+  <meta name="description" content="{meta_desc}">
+  <meta name="keywords" content="análise ETF UCITS {today_iso}, ETF forte compra hoje, scanner ETF diário, momentum ETF Europa">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{article_url}">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="{article_title}">
+  <meta property="og:description" content="{meta_desc}">
+  <meta property="og:url" content="{article_url}">
+  <meta property="og:site_name" content="ET-Spotter">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{article_schema}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{{--bg:#080a10;--surface:#0f1629;--text:#E8EAF0;--muted:#4A6080;--border:#1E2D45;
+          --green:#00FF9D;--accent:#00D4FF;--yellow:#FFB800;--font:'Albert Sans',system-ui,sans-serif}}
+    *{{box-sizing:border-box;margin:0;padding:0}}
+    body{{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.75;font-size:15px}}
+    a{{color:var(--accent);text-decoration:none}}
+    a:hover{{text-decoration:underline}}
+    .container{{max-width:740px;margin:0 auto;padding:0 18px}}
+    .site-header{{border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:0}}
+    .site-header .inner{{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}}
+    .logo{{font-size:1rem;font-weight:800;letter-spacing:0.06em;color:var(--text);white-space:nowrap}}
+    .logo span{{color:var(--accent)}}
+    .back-btn{{font-size:0.72rem;color:var(--muted);border:1px solid var(--border);
+              padding:5px 12px;border-radius:3px;white-space:nowrap;transition:color .2s}}
+    .back-btn:hover{{color:var(--accent);text-decoration:none;border-color:var(--accent)}}
+    .article{{padding:32px 0 48px}}
+    .article-tag{{display:inline-block;color:var(--yellow);font-size:0.6rem;letter-spacing:0.14em;
+                 font-weight:700;margin-bottom:12px}}
+    h1{{font-size:1.45rem;font-weight:800;line-height:1.3;margin-bottom:10px}}
+    .article-meta{{color:var(--muted);font-size:0.72rem;margin-bottom:24px;padding-bottom:16px;
+                  border-bottom:1px solid var(--border)}}
+    .intro{{color:#C8CEDD;font-size:0.92rem;line-height:1.75;margin-bottom:8px;
+            background:#0d1525;border:1px solid #1e2d4d;border-left:3px solid var(--yellow);
+            border-radius:6px;padding:14px 18px}}
+    .subscribe-box{{background:var(--surface);border:1px solid var(--border);
+                   border-radius:8px;padding:22px 20px;text-align:center;margin:36px 0}}
+    .subscribe-box h3{{font-size:0.95rem;margin-bottom:6px}}
+    .subscribe-box p{{font-size:0.78rem;color:var(--muted);margin-bottom:14px}}
+    .sub-form{{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}}
+    .sub-form input{{flex:1;min-width:200px;max-width:280px;background:#0a0d17;
+                    border:1px solid var(--border);border-radius:4px;padding:10px 14px;
+                    color:var(--text);font-size:0.8rem;font-family:var(--font);outline:none}}
+    .sub-form input:focus{{border-color:var(--green)}}
+    .sub-form button{{background:var(--green);color:#000;border:none;border-radius:4px;
+                     padding:10px 18px;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:var(--font)}}
+    .privacy{{color:var(--muted);font-size:0.65rem;margin-top:8px}}
+    .cta-scanner{{background:linear-gradient(135deg,#08111f 0%,#0d1a2e 100%);
+                 border:1px solid #00D4FF22;border-radius:8px;padding:24px 20px;
+                 text-align:center;margin:36px 0}}
+    .cta-scanner h3{{color:var(--text);font-size:1rem;margin-bottom:6px}}
+    .cta-scanner p{{font-size:0.8rem;color:var(--muted);margin-bottom:16px}}
+    .btn-primary{{display:inline-block;background:var(--green);color:#000;font-weight:800;
+                 font-size:0.82rem;padding:11px 24px;border-radius:4px;text-decoration:none}}
+    .btn-primary:hover{{text-decoration:none;opacity:.9}}
+    .site-footer{{border-top:1px solid var(--border);padding:20px 0;margin-top:40px}}
+    .site-footer p{{font-size:0.68rem;color:var(--muted);text-align:center;line-height:1.6}}
+    @keyframes et-ticker{{0%{{transform:translateX(0)}}100%{{transform:translateX(-50%)}}}}
+    @media(max-width:520px){{h1{{font-size:1.2rem}}}}
+  </style>
+</head>
+<body>
+<div style="width:100%;overflow:hidden;background:#03050d;border-bottom:1px solid #FFB80022;
+            padding:5px 0;white-space:nowrap">
+  <div style="display:inline-block;animation:et-ticker 50s linear infinite;
+              font-size:0.62rem;letter-spacing:0.07em;font-family:'Albert Sans',sans-serif;color:#4A6080">
+    &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source · &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source ·
+  </div>
+</div>
+<header class="site-header">
+  <div class="container inner">
+    <a href="{site}/" class="logo" style="text-decoration:none">ET<span>-</span>SPOTTER</a>
+    <a href="{site}/" class="back-btn">← Ver scanner ao vivo</a>
+  </div>
+</header>
+<div class="container">
+  <article class="article">
+    <div class="article-tag">📰 ANÁLISE DIÁRIA · {day_fmt.upper()}</div>
+    <h1>{article_title}</h1>
+    <div class="article-meta">
+      ET-Spotter · Gerado automaticamente em {day_fmt} às 22h UTC ·
+      Universo: {n_etfs} ETFs UCITS · SPY <span style="color:{regime_color_css};font-weight:700">{spy_regime}</span>
+      ({regime_label_pt})
+    </div>
+
+    <div class="intro">{intro}</div>
+
+    {forte_section}
+    {buy_section}
+    {no_signals_section}
+    {cat_section}
+
+    <div class="subscribe-box" style="margin-top:40px">
+      <h3>📬 Recebe esta análise por email todos os dias às 22h</h3>
+      <p>Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis</p>
+      <form action="https://et-spotter.beehiiv.com/subscribe" method="POST" target="_blank" class="sub-form">
+        <input type="email" name="email" placeholder="o teu email" required>
+        <button type="submit">Subscrever</button>
+      </form>
+      <p class="privacy">Sem spam. Cancelas quando quiseres.</p>
+    </div>
+
+    <div class="cta-scanner">
+      <h3>📊 Ver o scanner completo ao vivo</h3>
+      <p>Todos os {n_etfs} ETFs ordenados por score · gráficos de evolução · backtest histórico</p>
+      <a href="{site}/" class="btn-primary">Abrir ET-Spotter →</a>
+    </div>
+
+    <p style="color:var(--muted);font-size:0.68rem;margin-top:32px;line-height:1.6">
+      ⚠️ Análise gerada automaticamente com base em dados históricos de preços via yfinance.
+      Não constitui aconselhamento financeiro nem garantia de retorno. Consulta sempre um profissional antes de investir.
+    </p>
+  </article>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <p>© ET-Spotter · <a href="{site}/">ET-Spotter</a> · Dados via yfinance · Actualizado diariamente às 22h</p>
+    <p style="margin-top:6px">Base académica: Jegadeesh &amp; Titman (1993) · Faber (2007) · Antonacci (2014) · Ang et al. (2006) · Kakushadze (2015)</p>
+  </div>
+</footer>
+</body>
+</html>"""
+
+    out = Path(__file__).parent.parent / "docs" / "analise-diaria.html"
+    out.write_text(html, encoding="utf-8")
+    print(f"[OK] analise-diaria.html  ({len(html)//1024} KB)")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def generate_dashboard(cfg: dict) -> None:
@@ -2306,6 +2665,9 @@ async function subscribePush() {{
     n_buy        = sum(1 for s in signals_all if s["level"] in ("COMPRA", "BUY"))
 
     avg_score    = float(data["scores_df"]["score"].mean()) if not data["scores_df"].empty and "score" in data["scores_df"].columns else 0.0
+    today_iso    = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%Y-%m-%d")
+
+    generate_daily_article(data, signals_all, avg_score, n_etfs_today)
 
     sections = [
         ticker_html(signals_all, data["spy_regime"], avg_score, n_etfs_today),
@@ -2316,6 +2678,7 @@ async function subscribePush() {{
         '<div id="tab-overview">',
         hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
         signal_legend_html(n_etfs=n_etfs_today),
+        daily_highlight_card_html(signals_all, data["spy_regime"], avg_score, today_iso),
         summary_cards_html(signals_all, data["scores_df"]),
         overview_grid_html(data["rows_raw"], signals_all, data["scores_df"],
                            data["spy_close"], data["spy_sma200"], data["spy_regime"],
@@ -2375,7 +2738,6 @@ async function subscribePush() {{
         f'{push_btn}</footer>',
     ]
 
-    today_iso    = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%Y-%m-%d")
     # Actualizar para "https://et-spotter.com" quando o domínio estiver comprado e DNS configurado
     site_url     = "https://nunovinhas-creator.github.io/ET-spotter"
     meta_desc_en = (f"ET-Spotter — daily quantitative ranking of {n_etfs_today} UCITS ETFs "

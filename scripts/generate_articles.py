@@ -710,6 +710,13 @@ def main() -> None:
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>"""
+    url_entries += f"""
+  <url>
+    <loc>https://et-spotter.com/analise-diaria.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <lastmod>{TODAY}</lastmod>
+  </url>"""
     for slug in slugs:
         url_entries += f"""
   <url>
@@ -725,7 +732,7 @@ def main() -> None:
 </urlset>
 """
     sitemap_path.write_text(sitemap, encoding="utf-8")
-    print(f"[OK] sitemap.xml actualizado ({len(slugs)+1} URLs)")
+    print(f"[OK] sitemap.xml actualizado ({len(slugs)+2} URLs)")
 
 
 if __name__ == "__main__":
