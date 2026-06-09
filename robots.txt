@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nunovinhas-creator.github.io/ET-spotter/sitemap.xml

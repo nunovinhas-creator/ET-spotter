@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "signals": "Scores & Alertas",
+    "reports": "Relatórios",
+    "guides": "Guias"
+  },
+  "header": {
+    "subtitle": "Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)",
+    "updated": "Actualizado:",
+    "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY acima da SMA200 (tendência de alta). BEAR = abaixo (tendência de baixa)."
+  },
+  "panel": {
+    "etf_summary": "ETF Analysis Summary",
+    "score_trend": "Score Trend — Top 5 ETFs (30 dias)",
+    "key_indicators": "Key Indicators",
+    "alerts": "Alertas Activos",
+    "recent_scores": "Scores Recentes",
+    "heatmap": "Heatmap de ETFs",
+    "signals": "sinais"
+  },
+  "kpi": {
+    "spy_regime": "Regime SPY",
+    "spy_close": "SPY Close",
+    "sma200": "SMA 200",
+    "avg_score": "Score Médio",
+    "strong_buy": "Forte Compra",
+    "score_above": "Score > 0.50"
+  },
+  "metric": {
+    "momentum": "Momentum",
+    "volatility": "Volatilidade",
+    "drawdown": "Drawdown",
+    "trend": "Tendência",
+    "risk": "Risco"
+  },
+  "signal": {
+    "strong_buy": "FORTE COMPRA",
+    "buy": "COMPRA",
+    "potential": "POTENCIAL",
+    "strong_short": "Forte",
+    "buy_short": "Compra",
+    "pot": "Pot.",
+    "weak": "Fraco",
+    "no_signals": "Sem sinais activos hoje."
+  },
+  "table": {
+    "etf": "ETF",
+    "name": "Nome",
+    "category": "Categ.",
+    "score": "Score",
+    "pct": "Pct.",
+    "day": "Dia",
+    "signal": "Sinal",
+    "trend": "Tend.",
+    "risk": "Risco",
+    "risk_low": "Baixo",
+    "risk_med": "Médio",
+    "risk_high": "Alto",
+    "drawdown": "Drawdown",
+    "replica": "Réplica",
+    "esg": "ESG"
+  },
+  "hero": {
+    "etfs_ucits": "ETFs UCITS",
+    "factors": "Factores",
+    "daily": "Diário",
+    "cost": "Custo",
+    "pipeline": "Pipeline",
+    "universe": "no universo",
+    "factors_desc": "M · T · R · α",
+    "daily_desc": "actualização EOD",
+    "cost_desc": "infra-estrutura",
+    "pipeline_desc": "fetch → score → email"
+  },
+  "summary": {
+    "strong_buy": "Forte Compra",
+    "buy": "Compra",
+    "potential": "Potencial",
+    "score_above": "Score > 0.50",
+    "avg_score": "Score Médio",
+    "strong_buy_desc": "todos factores alinhados",
+    "buy_desc": "sinal construtivo",
+    "potential_desc": "aguardar confirmação",
+    "avg_score_desc": "média cross-sectional",
+    "ml_confirmed": "ML Confirmado",
+    "of": "de",
+    "etfs_analyzed": "ETFs analisados"
+  },
+  "legend": {
+    "strong_buy_desc": "percentil superior · todos os factores alinhados",
+    "buy_desc": "sinal construtivo · maioria dos factores positivos",
+    "potential_desc": "sinal incipiente · aguardar confirmação",
+    "guide": "guia completo ↓",
+    "of": "de",
+    "etfs_analyzed": "ETFs analisados hoje:"
+  },
+  "explainer": {
+    "title": "📖 Novo aqui? Guia completo — o que é um ETF, como ler o score, glossário",
+    "expand": "clica para expandir"
+  },
+  "advisor": {
+    "tech_score": "Score técnico",
+    "ret3m": "Ret.3M",
+    "ret5d": "Ret.5d",
+    "disclaimer": "ANÁLISE GERADA AUTOMATICAMENTE · NÃO CONSTITUI ACONSELHAMENTO FINANCEIRO",
+    "section_desc": "Top 3 ETFs com maior alinhamento de momentum multi-período, tendência e força relativa. Baseado em critérios académicos: Jegadeesh & Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze (2015), AQR, Sharpe.",
+    "legal": "Análise técnica baseada em evidência histórica. Não constitui aconselhamento financeiro nem garantia de retorno."
+  },
+  "buy": {
+    "no_signals": "Sem confluência de sinais suficiente.",
+    "section_desc": "Confluência de indicadores técnicos · entrada não comprometida"
+  },
+  "backtest": {
+    "desc": "Retorno dos 21 dias seguintes a cada sinal · excesso vs SPY no mesmo período",
+    "all_tab": "Todos",
+    "avg_ret": "Ret. médio 21d",
+    "win_rate": "Win rate",
+    "excess_spy": "Excesso SPY",
+    "no_data": "Sem dados suficientes.",
+    "academic_basis": "Base Académica",
+    "for_whom": "Para quem",
+    "for_whom_desc": "Investidores europeus que seguem estratégias quantitativas baseadas em evidência académica e querem sinais técnicos transparentes, reproduzíveis e auditáveis."
+  },
+  "section": {
+    "best_positioned": "Melhor Posicionados — Análise Técnica Consolidada",
+    "buy_signals": "Sinais de Compra",
+    "category_rotation": "Rotação por Categoria",
+    "all_etfs": "Todos os ETFs",
+    "score_history": "Evolução de Score — Top 5",
+    "backtest": "Backtest — Validação Histórica",
+    "portfolio": "Portfólio Alpaca"
+  },
+  "search": {
+    "placeholder": "Pesquisar ETF ou categoria…",
+    "all": "Todos",
+    "watchlist": "☆ Watchlist",
+    "watchlist_on": "★ Watchlist"
+  },
+  "alert": {
+    "no_signals": "Sem sinais activos hoje.",
+    "days5": "5d:"
+  },
+  "cta": {
+    "email": "Receber este relatório por email todos os dias às 22h",
+    "free": "— grátis, sem servidores, sem subscrição",
+    "fork": "🍴 Fork e configura em 3 minutos"
+  },
+  "footer": {
+    "auto_updated": "⟳ AUTO-UPDATED",
+    "quant_engine": "⚙ QUANT ENGINE",
+    "etf_scanner": "◈ ETF SCANNER",
+    "open_source": "✦ OPEN SOURCE",
+    "data_source": "ET-Spotter · dados via yfinance · actualização diária",
+    "disclaimer": "Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir."
+  }
+}
