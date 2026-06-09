@@ -83,6 +83,7 @@
     "buy_desc": "constructive signal",
     "potential_desc": "await confirmation",
     "avg_score_desc": "cross-sectional average",
+    "ml_confirmed": "ML Confirmed",
     "of": "of",
     "etfs_analyzed": "ETFs analysed"
   },

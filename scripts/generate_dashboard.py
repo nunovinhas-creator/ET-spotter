@@ -787,6 +787,11 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
     n_p   = sum(1 for s in signals if s["level"] in ("POTENCIAL", "POTENTIAL"))
     n_high = int((scores_df["score"] >= 0.50).sum()) if "score" in scores_df.columns else 0
     avg_score = scores_df["score"].mean() if "score" in scores_df.columns else 0
+    n_ml_confirmed = sum(
+        1 for s in signals
+        if s.get("ml_prob") is not None and s["ml_prob"] >= 0.55
+        and s["level"] in ("FORTE COMPRA", "STRONG_BUY", "COMPRA", "BUY")
+    )
 
     def signal_card(label, label_key, value, color, bg, desc, desc_key=""):
         bar_w = min(100, int(float(str(value)) / max(n_fc + n_c + n_p, 1) * 100)) if str(value).isdigit() else 0
@@ -810,6 +815,7 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
   {signal_card("Potencial",    "summary.potential",  n_p,   "#FFB800", "#1A1400", f"score ≥ {CONVICTION_POTENTIAL_SCORE} · aguardar confirmação",        "summary.potential_desc")}
   {signal_card("Score > 0.50", "summary.score_above",n_high,"#7C83FD", "#0F1020", f'<span data-i18n="summary.of">de</span> {len(scores_df)} <span data-i18n="summary.etfs_analyzed">ETFs analisados</span>')}
   {signal_card("Score Médio",  "summary.avg_score",  f"{avg_score:.3f}", "#4D9FFF", "#0A1020", "média cross-sectional", "summary.avg_score_desc")}
+  {signal_card("ML ✓",        "summary.ml_confirmed", n_ml_confirmed, "#A78BFA", "#0E0A1A", "quant + XGBoost confirmados")}
 </div>"""
 
 
@@ -1246,6 +1252,18 @@ def buy_signals_section(signals: list[dict]) -> str:
 
         forte_class = ' class="signal-forte"' if s["level"] == "FORTE COMPRA" else ""
         level_label_key = {"FORTE COMPRA": "signal.strong_buy", "COMPRA": "signal.buy", "POTENCIAL": "signal.potential"}.get(s["level"], "signal.potential")
+
+        ml_prob = s.get("ml_prob")
+        ml_confirmed = ml_prob is not None and ml_prob >= 0.55
+        ml_badge = ""
+        if ml_prob is not None:
+            ml_color = "#00FF9D" if ml_confirmed else "#4A6080"
+            ml_icon  = "🤖 ML ✓" if ml_confirmed else "🤖 ML"
+            ml_badge = (f'<span title="XGBoost: probabilidade de retorno positivo a 21 dias = {ml_prob:.0%}" '
+                        f'style="background:{ml_color}22;color:{ml_color};border:1px solid {ml_color}44;'
+                        f'padding:1px 7px;border-radius:2px;font-size:0.58rem;font-weight:700;cursor:help">'
+                        f'{ml_icon} {ml_prob:.0%}</span>')
+
         cards += f"""
         <div{forte_class} style="background:{bg};border:1px solid {border_clr};padding:12px 16px;margin:6px 0;border-radius:2px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1253,6 +1271,7 @@ def buy_signals_section(signals: list[dict]) -> str:
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
             <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="{level_label_key}">{s['level']}</span>
             <span style="color:{s['cor']};font-size:10px">● {html_mod.escape(s['categoria'])}</span>
+            {ml_badge}
           </div>
           <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11px">
             <span><span style="color:var(--muted)">Score</span> <b style="color:{clr}">{s['score']:.3f}</b> {pct_html}</span>

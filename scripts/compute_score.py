@@ -90,6 +90,8 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
             "macd_bullish": int(last.get("macd_bullish",  0) or 0),
             "above_sma200": int(last.get("above_sma200",  0) or 0),
             "drawdown":     _safe(last.get("drawdown")),
+            "macd":         _safe(last.get("macd")),
+            "macd_signal":  _safe(last.get("macd_signal")),
         })
 
     if not rows:
@@ -190,6 +192,32 @@ def compute_score_percentile(snap: pd.DataFrame) -> pd.DataFrame:
     return snap
 
 
+def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
+    """Adiciona ml_prob: probabilidade XGBoost de retorno positivo a 21 dias."""
+    import pickle
+    model_path = Path(__file__).parent.parent / "data" / "models" / "xgb_signal.pkl"
+    if not model_path.exists():
+        snap["ml_prob"] = np.nan
+        return snap
+
+    with open(model_path, "rb") as f:
+        bundle = pickle.load(f)
+    model    = bundle["model"]
+    features = bundle["features"]
+
+    snap = snap.copy()
+    snap["macd_hist"] = snap["macd"].fillna(0) - snap["macd_signal"].fillna(0)
+
+    missing = [c for c in features if c not in snap.columns]
+    if missing:
+        snap["ml_prob"] = np.nan
+        return snap
+
+    X = snap[features].fillna(0)
+    snap["ml_prob"] = model.predict_proba(X)[:, 1].round(3)
+    return snap
+
+
 def persist_scores(snap: pd.DataFrame) -> None:
     """Guarda scores_latest.csv e appenda a scores_history.csv."""
     REPORTS.mkdir(parents=True, exist_ok=True)
@@ -198,7 +226,7 @@ def persist_scores(snap: pd.DataFrame) -> None:
         "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d", "ret_252d",
         "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21", "rs_mom_63",
         "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown",
-        "score", "score_pct",
+        "score", "score_pct", "ml_prob",
         "_momentum", "_trend", "_risk", "_alpha_quality",
     ]
     out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
@@ -232,6 +260,7 @@ def main():
 
     snap = compute_scores(snap)
     snap = compute_score_percentile(snap)
+    snap = compute_ml_score(snap)
 
     # Guarda scores nos ficheiros diários individuais
     for _, row in snap.iterrows():

@@ -361,6 +361,7 @@ def _etf_row_raw(sym: str, last, info: dict, delta_score: float = 0.0) -> dict:
         "sharpe_63":    float(last.get("sharpe_63",    0) or 0),
         "calmar_63":    float(last.get("calmar_63",    0) or 0),
         "close":        round(float(last.get("close",  0) or 0), 2),
+        "ml_prob":      float(last.get("ml_prob", 0) or 0) if last.get("ml_prob") not in (None, "") else None,
         "_momentum":    _safe_sub(last.get("_momentum")),
         "_trend":       _safe_sub(last.get("_trend")),
         "_risk":        _safe_sub(last.get("_risk")),
