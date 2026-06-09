@@ -67,6 +67,7 @@ def load_data(cfg: dict) -> dict:
 
     # delta_score: day-over-day change per ETF from history
     delta_map: dict[str, float] = {}
+    signal_deltas: list[dict] = []
     if not hist_df.empty and "score" in hist_df.columns and "etf" in hist_df.columns:
         for etf_sym, grp in hist_df.groupby("etf"):
             grp_sorted = grp.sort_values("date")
@@ -74,6 +75,36 @@ def load_data(cfg: dict) -> dict:
                 prev = float(grp_sorted["score"].iloc[-2] or 0)
                 curr = float(grp_sorted["score"].iloc[-1] or 0)
                 delta_map[str(etf_sym)] = round(curr - prev, 4)
+
+        def _score_level(s: float) -> str | None:
+            if s >= 0.62: return "FORTE COMPRA"
+            if s >= 0.54: return "COMPRA"
+            if s >= 0.48: return "POTENCIAL"
+            return None
+
+        level_order = {None: 0, "POTENCIAL": 1, "COMPRA": 2, "FORTE COMPRA": 3}
+        dates_sorted = sorted(hist_df["date"].unique())
+        if len(dates_sorted) >= 2:
+            prev_d = dates_sorted[-2]
+            curr_d = dates_sorted[-1]
+            prev_df = hist_df[hist_df["date"] == prev_d][["etf", "score"]].copy()
+            curr_df = hist_df[hist_df["date"] == curr_d][["etf", "score"]].copy()
+            prev_df["prev_level"] = prev_df["score"].apply(_score_level)
+            curr_df["curr_level"] = curr_df["score"].apply(_score_level)
+            merged_d = curr_df.merge(prev_df[["etf", "prev_level"]], on="etf", how="left")
+            for _, row in merged_d.iterrows():
+                cl = row["curr_level"]
+                pl = row.get("prev_level")
+                direction = level_order.get(cl, 0) - level_order.get(pl, 0)
+                if direction != 0:
+                    signal_deltas.append({
+                        "etf": str(row["etf"]),
+                        "prev_level": pl,
+                        "curr_level": cl,
+                        "score": float(row["score"]),
+                        "direction": direction,
+                    })
+        signal_deltas.sort(key=lambda x: (-x["direction"], -x["score"]))
 
     # rows completos para build_buy_signals
     rows_raw = [
@@ -89,15 +120,16 @@ def load_data(cfg: dict) -> dict:
     cats = category_summary(df_for_cats, cfg)
 
     return {
-        "scores_df":  scores_df,
-        "rows_raw":   rows_raw,
-        "cats":       cats,
-        "hist_df":    hist_df,
-        "bt_df":      bt_df,
-        "cmap":       cmap,
-        "spy_close":  spy_close,
-        "spy_sma200": spy_sma200,
-        "spy_regime": spy_regime,
+        "scores_df":     scores_df,
+        "rows_raw":      rows_raw,
+        "cats":          cats,
+        "hist_df":       hist_df,
+        "bt_df":         bt_df,
+        "cmap":          cmap,
+        "spy_close":     spy_close,
+        "spy_sma200":    spy_sma200,
+        "spy_regime":    spy_regime,
+        "signal_deltas": signal_deltas,
     }
 
 
@@ -2260,6 +2292,63 @@ html[lang="pt"] .lang-en-only { display: none !important; }
 _MONTHS_PT = ["janeiro","fevereiro","março","abril","maio","junho",
               "julho","agosto","setembro","outubro","novembro","dezembro"]
 
+def signal_deltas_html(deltas: list[dict]) -> str:
+    """Banner compacto com upgrades/downgrades de nível de sinal dia-a-dia."""
+    upgrades   = [d for d in deltas if d["direction"] > 0]
+    downgrades = [d for d in deltas if d["direction"] < 0]
+    if not upgrades and not downgrades:
+        return ""
+
+    level_colors = {"FORTE COMPRA": "#00FF9D", "COMPRA": "#00D4FF", "POTENCIAL": "#FFB800"}
+
+    def _pill(level: str | None) -> str:
+        if not level:
+            return '<span style="color:#4A6080;font-size:0.58rem">—</span>'
+        c = level_colors.get(level, "#4A6080")
+        return (f'<span style="background:{c};color:#000;padding:1px 6px;border-radius:2px;'
+                f'font-size:0.58rem;font-weight:800">{level}</span>')
+
+    items = ""
+    for d in upgrades[:8]:
+        items += f"""
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1E2D4D40">
+        <span style="color:#00FF9D;font-size:13px;flex-shrink:0">▲</span>
+        <span style="color:#E8F0FF;font-size:0.78rem;font-weight:700;min-width:72px">{d['etf']}</span>
+        {_pill(d['prev_level'])}
+        <span style="color:#4A6080;font-size:0.62rem">→</span>
+        {_pill(d['curr_level'])}
+        <span style="color:{level_colors.get(d['curr_level'],'#4A6080')};font-size:0.72rem;font-weight:700;margin-left:auto">{d['score']:.3f}</span>
+      </div>"""
+    for d in downgrades[:4]:
+        items += f"""
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1E2D4D20;opacity:0.65">
+        <span style="color:#FF4466;font-size:11px;flex-shrink:0">▼</span>
+        <span style="color:#8A9CC0;font-size:0.72rem;font-weight:600;min-width:72px">{d['etf']}</span>
+        {_pill(d['prev_level'])}
+        <span style="color:#4A6080;font-size:0.62rem">→</span>
+        {_pill(d['curr_level'])}
+        <span style="color:#8A9CC0;font-size:0.68rem;margin-left:auto">{d['score']:.3f}</span>
+      </div>"""
+
+    badge = (f'<span style="background:#00FF9D22;color:#00FF9D;padding:1px 8px;'
+             f'border-radius:2px;font-size:0.6rem;font-weight:700">{len(upgrades)} ↑</span>')
+    if downgrades:
+        badge += (f' <span style="background:#FF446622;color:#FF4466;padding:1px 8px;'
+                  f'border-radius:2px;font-size:0.6rem;font-weight:700">{len(downgrades)} ↓</span>')
+
+    return f"""
+<div style="background:#0A1628;border:1px solid #1E2D4D;border-radius:8px;padding:14px 16px;margin-bottom:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="color:#E8F0FF;font-size:0.75rem;font-weight:700;letter-spacing:0.06em">
+      <span class="lang-pt-only">VARIAÇÕES DE SINAL · HOJE</span>
+      <span class="lang-en-only">SIGNAL CHANGES · TODAY</span>
+    </span>
+    {badge}
+  </div>
+  <div>{items}</div>
+</div>"""
+
+
 def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_score: float, today_iso: str) -> str:
     """Destaque da análise diária — aparece no topo do tab Overview."""
     from zoneinfo import ZoneInfo
@@ -2698,6 +2787,7 @@ async function subscribePush() {{
         hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
         signal_legend_html(n_etfs=n_etfs_today),
         daily_highlight_card_html(signals_all, data["spy_regime"], avg_score, today_iso),
+        signal_deltas_html(data["signal_deltas"]),
         summary_cards_html(signals_all, data["scores_df"]),
         overview_grid_html(data["rows_raw"], signals_all, data["scores_df"],
                            data["spy_close"], data["spy_sma200"], data["spy_regime"],
