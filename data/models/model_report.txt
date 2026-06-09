@@ -1,0 +1,43 @@
+============================================================
+ET-Spotter — XGBoost Signal Model — Relatório de Avaliação
+============================================================
+
+Período de teste: 2026-01-01 → fim
+Linhas de teste:  16,637
+
+Accuracy:  0.543
+ROC-AUC:   0.534
+
+              precision    recall  f1-score   support
+
+        DOWN       0.42      0.27      0.33      6860
+          UP       0.59      0.73      0.65      9777
+
+    accuracy                           0.54     16637
+   macro avg       0.50      0.50      0.49     16637
+weighted avg       0.52      0.54      0.52     16637
+
+
+── Comparação de estratégias (retorno médio 21d) ──
+ML (prob≥0.55):   retorno +1.56%  win-rate 60.0%  n=10503
+ML (prob<0.55):   retorno +1.95%  (excluídos pelo modelo)
+Rule-based proxy: retorno +0.77%  win-rate 51.5%  n=7416
+Buy-and-hold all: retorno +1.70%  win-rate 58.8%
+── Feature Importance ──
+  above_sma200         0.1953  ███████████████████████████████████████
+  ret_126d             0.0812  ████████████████
+  vol_21               0.0577  ███████████
+  rs_mom_21            0.0571  ███████████
+  ret_5d               0.0540  ██████████
+  rs_positive          0.0512  ██████████
+  ret_21d              0.0512  ██████████
+  drawdown             0.0499  █████████
+  rs_mom_63            0.0499  █████████
+  macd_bullish         0.0480  █████████
+  adx                  0.0471  █████████
+  ret_63d              0.0453  █████████
+  calmar_63            0.0438  ████████
+  trend_sma            0.0429  ████████
+  sharpe_63            0.0427  ████████
+  macd_hist            0.0418  ████████
+  rsi                  0.0412  ████████
