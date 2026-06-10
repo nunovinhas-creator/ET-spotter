@@ -200,8 +200,14 @@ def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
         snap["ml_prob"] = np.nan
         return snap
 
-    with open(model_path, "rb") as f:
-        bundle = pickle.load(f)
+    try:
+        with open(model_path, "rb") as f:
+            bundle = pickle.load(f)
+    except (ModuleNotFoundError, ImportError) as e:
+        print(f"[SKIP] ML score: {e}")
+        snap["ml_prob"] = np.nan
+        return snap
+
     model    = bundle["model"]
     features = bundle["features"]
 
