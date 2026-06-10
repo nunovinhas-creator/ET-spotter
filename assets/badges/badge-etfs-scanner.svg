@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="28" viewBox="0 0 200 28" fill="none">
+  <defs>
+    <filter id="glow-blue" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="pill">
+      <rect width="200" height="28" rx="6"/>
+    </clipPath>
+  </defs>
+
+  <!-- Outer border -->
+  <rect width="200" height="28" rx="6" fill="none" stroke="#4D9FFF" stroke-opacity="0.4" stroke-width="1"/>
+
+  <!-- Left section (label) -->
+  <rect x="0" y="0" width="86" height="28" fill="#0F1629" clip-path="url(#pill)"/>
+  <rect x="0" y="0" width="90" height="28" fill="#0F1629"/>
+
+  <!-- Right section (value) -->
+  <rect x="84" y="0" width="116" height="28" fill="#0A1829" clip-path="url(#pill)"/>
+
+  <!-- Separator line -->
+  <line x1="84" y1="4" x2="84" y2="24" stroke="#4D9FFF" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- Left label text -->
+  <text x="42" y="18" font-family="ui-monospace, 'Cascadia Code', 'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#8BA4C8" text-anchor="middle" dominant-baseline="auto">UNIVERSE</text>
+
+  <!-- Right value text with glow -->
+  <text x="142" y="18" font-family="ui-monospace, 'Cascadia Code', 'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#4D9FFF" text-anchor="middle" dominant-baseline="auto" filter="url(#glow-blue)">97 ETFs UCITS</text>
+</svg>
