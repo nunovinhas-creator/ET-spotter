@@ -61,5 +61,8 @@ jobs:
             fi
             echo "Push falhou (tentativa $attempts/5), aguardando $((2 ** attempts))s..."
             sleep $((2 ** attempts))
-            git pull --rebase origin ${{ github.ref_name }}
+            git fetch origin ${{ github.ref_name }}
+            git reset --soft origin/${{ github.ref_name }}
+            git add data/ docs/
+            git diff --cached --quiet || git commit -m "chore: hourly data update $(date -u '+%Y-%m-%d %H:%M') UTC"
           done
