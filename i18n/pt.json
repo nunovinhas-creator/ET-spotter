@@ -24,7 +24,7 @@
     "spy_close": "SPY Close",
     "sma200": "SMA 200",
     "avg_score": "Score Médio",
-    "strong_buy": "Forte Compra",
+    "strong_buy": "Radar Máximo",
     "score_above": "Score > 0.50"
   },
   "metric": {
@@ -35,12 +35,12 @@
     "risk": "Risco"
   },
   "signal": {
-    "strong_buy": "FORTE COMPRA",
-    "buy": "COMPRA",
-    "potential": "POTENCIAL",
-    "strong_short": "Forte",
-    "buy_short": "Compra",
-    "pot": "Pot.",
+    "strong_buy": "RADAR MÁXIMO",
+    "buy": "EM DESTAQUE",
+    "potential": "A OBSERVAR",
+    "strong_short": "Máximo",
+    "buy_short": "Destaque",
+    "pot": "Observar",
     "weak": "Fraco",
     "no_signals": "Sem sinais activos hoje."
   },
@@ -63,20 +63,28 @@
   },
   "hero": {
     "etfs_ucits": "ETFs UCITS",
-    "factors": "Factores",
-    "daily": "Diário",
-    "cost": "Custo",
+    "factors": "Categorias",
+    "daily": "23h Lisboa",
+    "cost": "Grátis",
     "pipeline": "Pipeline",
     "universe": "no universo",
-    "factors_desc": "M · T · R · α",
-    "daily_desc": "actualização EOD",
-    "cost_desc": "infra-estrutura",
-    "pipeline_desc": "fetch → score → email"
+    "factors_desc": "mundo · sectores · obrigações",
+    "daily_desc": "no teu email",
+    "cost_desc": "sem cartão",
+    "pipeline_desc": "fetch → score → email",
+    "score": "Nota 0–1",
+    "score_desc": "quanto mais alta, mais forte"
+  },
+  "plainhero": {
+    "title": "Que ETFs estão mais fortes hoje?",
+    "cta": "Recebe isto por email todos os dias — grátis",
+    "disclaimer": "Informação estatística, não é recomendação de investimento.",
+    "no_signals": "Sem destaques hoje — não forçamos sinais quando o mercado não os dá."
   },
   "summary": {
-    "strong_buy": "Forte Compra",
-    "buy": "Compra",
-    "potential": "Potencial",
+    "strong_buy": "Radar Máximo",
+    "buy": "Em Destaque",
+    "potential": "A Observar",
     "score_above": "Score > 0.50",
     "avg_score": "Score Médio",
     "strong_buy_desc": "todos factores alinhados",
