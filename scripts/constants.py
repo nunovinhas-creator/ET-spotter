@@ -44,3 +44,41 @@ CONVICTION_BUY_SCORE          = 0.54
 CONVICTION_BUY_SIGNALS        = 4
 CONVICTION_POTENTIAL_SCORE    = 0.48
 CONVICTION_POTENTIAL_SIGNALS  = 3
+
+# ── Chaves internas dos níveis (usadas nos CSVs e lógica interna) ─────────────
+LEVEL_STRONG    = "FORTE COMPRA"
+LEVEL_BUY       = "COMPRA"
+LEVEL_POTENTIAL = "POTENCIAL"
+
+# ── Nomes neutros apresentados ao utilizador (CMVM/MiFID II) ──────────────────
+LEVEL_DISPLAY = {
+    "FORTE COMPRA": "RADAR MÁXIMO",
+    "COMPRA":       "EM DESTAQUE",
+    "POTENCIAL":    "A OBSERVAR",
+}
+LEVEL_DISPLAY_SHORT = {
+    "FORTE COMPRA": "Máximo",
+    "COMPRA":       "Destaque",
+    "POTENCIAL":    "Observar",
+}
+LEVEL_DISPLAY_EN = {
+    "FORTE COMPRA": "TOP RADAR",
+    "COMPRA":       "HIGHLIGHTED",
+    "POTENCIAL":    "WATCHING",
+}
+LEVEL_DESC_PT = {
+    "FORTE COMPRA": "todos os indicadores a apontar no mesmo sentido",
+    "COMPRA":       "a maioria dos indicadores está positiva",
+    "POTENCIAL":    "alguns sinais positivos — ainda sem confirmação",
+}
+
+# ── Regime gate ───────────────────────────────────────────────────────────────
+REGIME_GATE_ENABLED = True
+
+# ── Backtest ──────────────────────────────────────────────────────────────────
+BACKTEST_COST_BPS       = 30   # custo round-trip em basis points
+BACKTEST_MIN_EPISODES   = 30   # mínimo de episódios para estatísticas fiáveis
+
+# ── Versão e freeze das regras de sinal ───────────────────────────────────────
+SIGNAL_RULES_VERSION   = "v3.1"
+SIGNAL_RULES_FROZEN_AT = "2026-06-12"

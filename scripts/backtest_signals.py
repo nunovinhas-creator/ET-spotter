@@ -18,6 +18,10 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, compute_conviction
 from paths import DATA_DAILY, REPORTS, SCORES_HIST
+from constants import (
+    BACKTEST_COST_BPS, BACKTEST_MIN_EPISODES,
+    SIGNAL_RULES_VERSION, SIGNAL_RULES_FROZEN_AT,
+)
 
 HORIZONS     = [5, 10, 21, 42]   # default; substituído por config em run_backtest()
 
@@ -67,23 +71,105 @@ def classify_conviction(row: pd.Series) -> str | None:
     return conv["level"]
 
 
+def write_status(cfg: dict, df, n_days: int, min_days: int) -> None:
+    """Escreve data/reports/backtest_status.json sempre, mesmo em SKIP."""
+    import json as _json, datetime as _dt
+    horizons = get_horizons(cfg)
+    cost_bps = cfg.get("params", {}).get("backtest_cost_bps", BACKTEST_COST_BPS)
+    min_ep   = cfg.get("params", {}).get("backtest_min_episodes", BACKTEST_MIN_EPISODES)
+
+    days_missing = max(0, min_days - n_days)
+    eta_days     = int(days_missing * 7 / 5) + 1
+    eta_date     = (_dt.date.today() + _dt.timedelta(days=eta_days)).isoformat()
+
+    by_level = {}
+    if df is not None and len(df) > 0 and "level" in df.columns:
+        ref_h = 21 if 21 in horizons else horizons[-1]
+        for lvl in ["FORTE COMPRA", "COMPRA", "POTENCIAL"]:
+            sub    = df[df["level"] == lvl]
+            col_g  = f"fwd_{ref_h}d"
+            col_n  = f"fwd_{ref_h}d_net"
+            fwd_g  = sub[col_g].dropna() if col_g in sub.columns else pd.Series(dtype=float)
+            fwd_n  = sub[col_n].dropna() if col_n in sub.columns else pd.Series(dtype=float)
+            exc_c  = f"fwd_{ref_h}d_excess"
+            n = len(fwd_g)
+            by_level[lvl] = {
+                "n":             n,
+                "sufficient":    n >= min_ep,
+                "avg_gross_21d": round(float(fwd_g.mean()), 4) if n > 0 else None,
+                "avg_net_21d":   round(float(fwd_n.mean()), 4) if len(fwd_n) > 0 else None,
+                "win_rate":      round(float((fwd_g > 0).mean()), 3) if n > 0 else None,
+                "excess_spy":    round(float(df[df["level"] == lvl][exc_c].dropna().mean()), 4)
+                                 if exc_c in df.columns else None,
+            }
+
+    n_episodes = len(df) if df is not None and len(df) > 0 else 0
+    status = {
+        "status":              "OK" if (df is not None and len(df) > 0 and n_days >= min_days) else "A_ACUMULAR",
+        "rules_version":       SIGNAL_RULES_VERSION,
+        "rules_frozen_at":     SIGNAL_RULES_FROZEN_AT,
+        "history_days":        n_days,
+        "min_days_required":   min_days,
+        "days_missing":        days_missing,
+        "first_results_eta":   eta_date,
+        "n_episodes":          n_episodes,
+        "min_episodes_target": min_ep,
+        "cost_bps_roundtrip":  cost_bps,
+        "by_level":            by_level,
+        "generated_at":        _dt.datetime.utcnow().isoformat() + "Z",
+    }
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    with open(REPORTS / "backtest_status.json", "w") as f:
+        _json.dump(status, f, indent=2, ensure_ascii=False)
+    print(f"[OK] backtest_status.json (status={status['status']}, days={n_days}/{min_days})")
+
+
+def archive_legacy_backtest(cfg: dict) -> bool:
+    """Arquiva backtest_signals.csv se for maioritariamente de universo antigo."""
+    from utils import get_etfs
+    out = REPORTS / "backtest_signals.csv"
+    if not out.exists():
+        return False
+    try:
+        old = pd.read_csv(out)
+        if old.empty or "etf" not in old.columns:
+            return False
+        universe = set(get_etfs(cfg))
+        old_etfs = set(old["etf"].unique())
+        overlap  = len(old_etfs & universe)
+        fraction = overlap / len(old_etfs) if old_etfs else 1.0
+        if fraction < 0.5:
+            legacy = REPORTS / "backtest_signals_legacy.csv"
+            out.rename(legacy)
+            print(f"[AVISO] backtest_signals.csv arquivado ({overlap}/{len(old_etfs)} ETFs no universo — {fraction:.0%})")
+            return True
+    except Exception as e:
+        print(f"[AVISO] Não foi possível verificar legacy: {e}")
+    return False
+
+
 def run_backtest(cfg: dict) -> pd.DataFrame:
     horizons     = get_horizons(cfg)
     forward_days = max(horizons)
+    cost_bps     = cfg.get("params", {}).get("backtest_cost_bps",      BACKTEST_COST_BPS)
+    dedup        = cfg.get("params", {}).get("backtest_dedup_episodes", True)
+    cost         = cost_bps / 10_000
 
     hist = load_history()
     if hist.empty:
         print("[SKIP] Sem histórico de scores.")
         return pd.DataFrame()
 
-    n_days = hist["date"].nunique()
+    n_days   = hist["date"].nunique()
     min_days = forward_days * 2 + 1
+
     if n_days < min_days:
-        print(f"[SKIP] Histórico insuficiente ({n_days} dias únicos). Mínimo: {min_days}.")
+        print(f"[SKIP] Histórico insuficiente ({n_days} dias). Mínimo: {min_days}.")
         return pd.DataFrame()
 
     spy_close, spy_sma200 = load_spy_daily()
-    results = []
+    results     = []
+    level_order = {None: 0, "POTENCIAL": 1, "COMPRA": 2, "FORTE COMPRA": 3}
 
     for etf, etf_hist in hist.groupby("etf"):
         daily_path = DATA_DAILY / f"{etf}.csv"
@@ -93,74 +179,77 @@ def run_backtest(cfg: dict) -> pd.DataFrame:
         if daily.empty or "close" not in daily.columns:
             continue
 
-        etf_hist = etf_hist.sort_values("date").reset_index(drop=True)
+        etf_hist   = etf_hist.sort_values("date").reset_index(drop=True)
+        prev_level = None
 
         for _, row in etf_hist.iterrows():
             level = classify_conviction(row)
+
+            if dedup:
+                if level_order.get(level, 0) <= level_order.get(prev_level, 0):
+                    prev_level = level
+                    continue
+            prev_level = level
+
             if level is None:
                 continue
 
             signal_date = row["date"]
             future = daily[daily.index > signal_date]["close"].dropna()
             if len(future) < forward_days:
-                continue  # dados forward insuficientes
+                continue
 
             entry = float(future.iloc[0])
             if entry <= 0:
                 continue
 
-            # ── Retornos forward multi-horizonte ──────────────────────────
             fwd = {}
             for h in horizons:
                 if len(future) >= h:
-                    exit_p = float(future.iloc[h - 1])
-                    fwd[f"fwd_{h}d"] = round(exit_p / entry - 1, 6)
+                    gross             = round(float(future.iloc[h - 1]) / entry - 1, 6)
+                    fwd[f"fwd_{h}d"]     = gross
+                    fwd[f"fwd_{h}d_net"] = round(gross - cost, 6)
                 else:
-                    fwd[f"fwd_{h}d"] = np.nan
+                    fwd[f"fwd_{h}d"]     = np.nan
+                    fwd[f"fwd_{h}d_net"] = np.nan
 
-            # ── Excesso de retorno vs SPY (horizonte 21d se disponível) ───
             ref_h = 21 if 21 in horizons else horizons[-1]
             if not spy_close.empty:
-                spy_future = spy_close[spy_close.index > signal_date].dropna()
-                if len(spy_future) >= ref_h:
-                    spy_entry = float(spy_future.iloc[0])
-                    spy_exit  = float(spy_future.iloc[ref_h - 1])
-                    spy_fwd   = spy_exit / spy_entry - 1 if spy_entry > 0 else np.nan
-                    ref_fwd   = fwd.get(f"fwd_{ref_h}d")
-                    fwd[f"fwd_{ref_h}d_excess"] = round(
-                        ref_fwd - spy_fwd, 6
-                    ) if pd.notna(ref_fwd) else np.nan
+                spy_fut = spy_close[spy_close.index > signal_date].dropna()
+                if len(spy_fut) >= ref_h:
+                    se, sx  = float(spy_fut.iloc[0]), float(spy_fut.iloc[ref_h - 1])
+                    spy_fwd = sx / se - 1 if se > 0 else np.nan
+                    rf      = fwd.get(f"fwd_{ref_h}d")
+                    fwd[f"fwd_{ref_h}d_excess"] = round(rf - spy_fwd, 6) if pd.notna(rf) else np.nan
                 else:
                     fwd[f"fwd_{ref_h}d_excess"] = np.nan
             else:
                 fwd[f"fwd_{ref_h}d_excess"] = np.nan
 
-            # ── MAE/MFE na janela de 21 dias ──────────────────────────────
             window21 = future.iloc[:21] if len(future) >= 21 else future
-            prices21 = window21.values
-            rets21   = prices21 / entry - 1
+            rets21   = window21.values / entry - 1
             mae_21d  = round(float(rets21.min()), 6) if len(rets21) > 0 else np.nan
             mfe_21d  = round(float(rets21.max()), 6) if len(rets21) > 0 else np.nan
 
-            # ── Regime de mercado SPY na data do sinal ────────────────────
             if not spy_close.empty and not spy_sma200.empty:
-                spy_at_signal = spy_close.asof(signal_date) if signal_date in spy_close.index or spy_close.index.min() <= signal_date else np.nan
-                sma_at_signal = spy_sma200.asof(signal_date) if signal_date in spy_sma200.index or spy_sma200.index.min() <= signal_date else np.nan
-                if pd.notna(spy_at_signal) and pd.notna(sma_at_signal) and sma_at_signal > 0:
-                    spy_regime = "BULL" if spy_at_signal > sma_at_signal else "BEAR"
-                else:
+                try:
+                    sa = spy_close.asof(signal_date)
+                    sm = spy_sma200.asof(signal_date)
+                    spy_regime = ("BULL" if sa > sm else "BEAR") if pd.notna(sa) and pd.notna(sm) and sm > 0 else "UNKNOWN"
+                except Exception:
                     spy_regime = "UNKNOWN"
             else:
                 spy_regime = "UNKNOWN"
 
             results.append({
-                "etf":         etf,
-                "date":        signal_date,
-                "level":       level,
-                "score":       round(float(row["score"]), 4),
-                "spy_regime":  spy_regime,
-                "mae_21d":     mae_21d,
-                "mfe_21d":     mfe_21d,
+                "etf":           etf,
+                "date":          signal_date,
+                "level":         level,
+                "score":         round(float(row["score"]), 4),
+                "spy_regime":    spy_regime,
+                "mae_21d":       mae_21d,
+                "mfe_21d":       mfe_21d,
+                "rules_version": SIGNAL_RULES_VERSION,
                 **fwd,
             })
 
@@ -215,8 +304,14 @@ def print_summary(df: pd.DataFrame, horizons: list[int] | None = None) -> None:
             std_ref  = fwd_ref.std()
             sharpe   = avg_ref / (std_ref + 1e-10)
 
-            print(f"\n  {level}  (n={len(fwd_ref)})")
-            print(f"    Ret. médio {ref_h}d     : {avg_ref:+.2%}")
+            insuf = " (INSUFICIENTE)" if len(fwd_ref) < BACKTEST_MIN_EPISODES else ""
+            print(f"\n  {level}  (n={len(fwd_ref)}){insuf}")
+            print(f"    Ret. médio {ref_h}d (bruto) : {avg_ref:+.2%}")
+            net_col = f"fwd_{ref_h}d_net"
+            if net_col in sub.columns:
+                net_s = sub[net_col].dropna()
+                if not net_s.empty:
+                    print(f"    Ret. médio {ref_h}d (líq.)  : {net_s.mean():+.2%}")
             print(f"    Ret. mediano {ref_h}d   : {med_ref:+.2%}")
             if not excess.empty:
                 print(f"    Excesso vs SPY {ref_h}d : {excess.mean():+.2%}  (médio)")
@@ -248,11 +343,20 @@ def main():
     cfg = load_config()
     REPORTS.mkdir(parents=True, exist_ok=True)
 
+    archive_legacy_backtest(cfg)
+
+    horizons = get_horizons(cfg)
+    hist     = load_history()
+    n_days   = hist["date"].nunique() if not hist.empty else 0
+    min_days = max(horizons) * 2 + 1
+
     df = run_backtest(cfg)
+    write_status(cfg, df if not df.empty else None, n_days, min_days)
+
     if df.empty:
         return
 
-    print_summary(df, horizons=get_horizons(cfg))
+    print_summary(df, horizons=horizons)
     out = REPORTS / "backtest_signals.csv"
     df.to_csv(out, index=False)
     print(f"\n[OK] Resultados guardados em {out}")

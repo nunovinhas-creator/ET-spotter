@@ -189,10 +189,13 @@
       "score_change": 0.15
     },
     "weights": {
-      "momentum": 0.4,
-      "trend": 0.3,
-      "risk": 0.3
+      "momentum": 0.35,
+      "trend": 0.25,
+      "risk": 0.25,
+      "alpha": 0.15
     },
+    "backtest_cost_bps": 30,
+    "backtest_dedup_episodes": true,
     "backtest_horizons": [5, 10, 21, 42],
     "vapid_public_key": "",
     "goatcounter_code": "tacitus"

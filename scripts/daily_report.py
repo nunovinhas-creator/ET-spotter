@@ -14,7 +14,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import (load_config, get_etfs, get_category_map,
                    category_summary, build_buy_signals, build_advisor_candidates,
-                   _c, _pct, _etf_row_raw)
+                   _c, _pct, _etf_row_raw, level_display)
 from generate_charts import plot_scores_bar, plot_category_summary
 from send_email import send_email
 from paths import DATA_DAILY, REPORTS
@@ -130,7 +130,7 @@ def buy_signals_html(signals: list[dict]) -> str:
         badge_html = (
             f'<span style="background:{s["color"]};color:#000;padding:3px 10px;'
             f'border-radius:12px;font-size:11px;font-weight:bold;'
-            f'letter-spacing:0.5px">{s["level"]}</span>'
+            f'letter-spacing:0.5px">{level_display(s["level"])}</span>'
         )
         rsi_val = s.get("rsi", 50) or 50
         rsi_color = "#4caf50" if 40 <= rsi_val <= 65 else ("#ffd54f" if rsi_val > 70 else "#aaa")
@@ -312,9 +312,9 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
     intro_html    = email_intro_html(n_strong, n_buy, n_pot, n_etfs)
     glossary_html = email_glossary_html()
     summary_line = (
-        f'<span style="color:#4caf50;font-weight:bold">{n_strong} FORTE COMPRA</span> · '
-        f'<span style="color:#8bc34a">{n_buy} COMPRA</span> · '
-        f'<span style="color:#ffd54f">{n_pot} POTENCIAL</span>'
+        f'<span style="color:#4caf50;font-weight:bold">{n_strong} {level_display("FORTE COMPRA")}</span> · '
+        f'<span style="color:#8bc34a">{n_buy} {level_display("COMPRA")}</span> · '
+        f'<span style="color:#ffd54f">{n_pot} {level_display("POTENCIAL")}</span>'
         f' — de {len(df_display)} ETFs analisados'
     )
 

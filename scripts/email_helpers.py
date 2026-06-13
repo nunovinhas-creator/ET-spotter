@@ -4,6 +4,10 @@ Escritos em linguagem simples para utilizadores sem experiência técnica.
 """
 
 import html as html_mod
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from utils import level_display
 
 
 def email_intro_html(n_strong: int, n_buy: int, n_pot: int, n_etfs: int,
@@ -15,13 +19,13 @@ def email_intro_html(n_strong: int, n_buy: int, n_pot: int, n_etfs: int,
     elif n_strong > 0:
         resumo = (
             f"Hoje encontrámos <b style='color:#4caf50'>{n_strong} ETF{'s' if n_strong>1 else ''} "
-            f"com sinal FORTE COMPRA</b> e {n_buy + n_pot} com sinais positivos adicionais, "
+            f"com sinal {level_display('FORTE COMPRA')}</b> e {n_buy + n_pot} com sinais positivos adicionais, "
             f"de um universo de {n_etfs} ETFs analisados."
         )
     else:
         resumo = (
             f"Hoje encontrámos <b style='color:#8bc34a'>{n_buy} ETF{'s' if n_buy>1 else ''} "
-            f"com sinal de COMPRA</b> e {n_pot} com potencial, de {n_etfs} ETFs analisados."
+            f"com sinal de {level_display('COMPRA')}</b> e {n_pot} com potencial, de {n_etfs} ETFs analisados."
         )
 
     return f"""
@@ -41,15 +45,15 @@ def email_intro_html(n_strong: int, n_buy: int, n_pot: int, n_etfs: int,
   </p>
   <div style="display:flex;flex-wrap:wrap;gap:8px">
     <div style="background:#0d200f;border-left:3px solid #4caf50;padding:6px 12px;border-radius:3px;font-size:11px">
-      <b style="color:#4caf50">FORTE COMPRA</b>
+      <b style="color:#4caf50">{level_display("FORTE COMPRA")}</b>
       <span style="color:#888"> — vários indicadores alinhados, momentum forte (score ≥ 0.75)</span>
     </div>
     <div style="background:#131f0e;border-left:3px solid #8bc34a;padding:6px 12px;border-radius:3px;font-size:11px">
-      <b style="color:#8bc34a">COMPRA</b>
+      <b style="color:#8bc34a">{level_display("COMPRA")}</b>
       <span style="color:#888"> — maioria dos indicadores positivos, fase construtiva (score ≥ 0.55)</span>
     </div>
     <div style="background:#1a1900;border-left:3px solid #ffd54f;padding:6px 12px;border-radius:3px;font-size:11px">
-      <b style="color:#ffd54f">POTENCIAL</b>
+      <b style="color:#ffd54f">{level_display("POTENCIAL")}</b>
       <span style="color:#888"> — alguns sinais positivos, aguardar confirmação (score ≥ 0.40)</span>
     </div>
   </div>

@@ -24,7 +24,7 @@
     "spy_close": "SPY Close",
     "sma200": "SMA 200",
     "avg_score": "Average Score",
-    "strong_buy": "Strong Buy",
+    "strong_buy": "Top Radar",
     "score_above": "Score > 0.50"
   },
   "metric": {
@@ -35,12 +35,12 @@
     "risk": "Risk"
   },
   "signal": {
-    "strong_buy": "STRONG BUY",
-    "buy": "BUY",
-    "potential": "POTENTIAL",
-    "strong_short": "Strong",
-    "buy_short": "Buy",
-    "pot": "Pot.",
+    "strong_buy": "TOP RADAR",
+    "buy": "HIGHLIGHTED",
+    "potential": "WATCHING",
+    "strong_short": "Top",
+    "buy_short": "Featured",
+    "pot": "Watch.",
     "weak": "Weak",
     "no_signals": "No active signals today."
   },
@@ -74,9 +74,9 @@
     "pipeline_desc": "fetch → score → email"
   },
   "summary": {
-    "strong_buy": "Strong Buy",
-    "buy": "Buy",
-    "potential": "Potential",
+    "strong_buy": "Top Radar",
+    "buy": "Highlighted",
+    "potential": "Watching",
     "score_above": "Score > 0.50",
     "avg_score": "Average Score",
     "strong_buy_desc": "all factors aligned",

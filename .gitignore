@@ -6,5 +6,8 @@ __pycache__/
 venv/
 *.egg-info/
 .DS_Store
-# dados horários (volume alto – opcional excluir)
-# data/hourly/
+# dados gerados pelos scripts — não versionar
+data/daily/
+data/hourly/
+data/reports/
+data/scores_history.csv

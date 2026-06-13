@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw, get_etf_metadata
+from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw, get_etf_metadata, level_display
 from paths import DATA_DAILY, REPORTS, SCORES_HIST, PORTFOLIO
 from constants import (
     CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
@@ -350,25 +350,80 @@ function switchTab(tab, btn) {{
 </script>"""
 
 
+def hero_plain_html(signals_all: list[dict], n_etfs: int, spy_regime: str) -> str:
+    """Hero simples em linguagem corrente — primeira secção do Overview."""
+    top3 = [s for s in signals_all if s.get("level")][:3]
+
+    regime_pt = {"BULL": "mercado em alta (SPY acima da SMA200)", "BEAR": "mercado em baixa (SPY abaixo da SMA200)"}.get(spy_regime, "regime de mercado indeterminado")
+    regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#8A9CC0")
+
+    if top3:
+        cards_html = ""
+        for s in top3:
+            ret63 = s.get("ret_63d", 0) or 0
+            ret_str = f'{"subiu" if ret63 >= 0 else "caiu"} {abs(ret63):.1%} nos últimos 3 meses'
+            lv = level_display(s.get("level"))
+            lv_color = {"RADAR MÁXIMO": "#00FF9D", "EM DESTAQUE": "#00D4FF", "A OBSERVAR": "#FFB800"}.get(lv, "#7C83FD")
+            cards_html += f"""
+<div style="flex:1;min-width:160px;background:#0A1628;border:1px solid {lv_color}44;
+            border-top:2px solid {lv_color};border-radius:8px;padding:14px 16px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span style="color:#E8F0FF;font-size:0.85rem;font-weight:800">{s['ticker']}</span>
+    <span style="background:{lv_color};color:#000;padding:1px 8px;border-radius:2px;
+                 font-size:0.58rem;font-weight:800">{lv}</span>
+  </div>
+  <div style="color:#4A6080;font-size:0.62rem;margin-bottom:6px">{s.get('nome','')[:35]}</div>
+  <div style="color:{lv_color};font-size:1.5rem;font-weight:900;line-height:1">{s['score']:.2f}</div>
+  <div style="color:#4A6080;font-size:0.58rem;margin-top:4px">{ret_str}</div>
+</div>"""
+        content_html = f'<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">{cards_html}</div>'
+    else:
+        content_html = '<p style="color:#4A6080;font-size:0.85rem;margin:16px 0" data-i18n="plainhero.no_signals">Sem destaques hoje — não forçamos sinais quando o mercado não os dá.</p>'
+
+    return f"""
+<div style="background:#060C1A;border:1px solid #1E2D4D;border-radius:10px;padding:20px 22px;margin-bottom:16px">
+  <h1 style="color:#E8F0FF;font-size:1.25rem;font-weight:800;margin:0 0 8px" data-i18n="plainhero.title">
+    Que ETFs estão mais fortes hoje?
+  </h1>
+  <p style="color:#8A9CC0;font-size:0.82rem;margin:0 0 10px;line-height:1.5">
+    Todos os dias, depois do fecho dos mercados, comparamos <strong style="color:#E8F0FF">{n_etfs}</strong> ETFs europeus e damos a cada um uma nota de 0 a 1.
+    Vês num relance quais estão a ganhar força — e recebes tudo por email, de graça.
+  </p>
+  <div style="margin-bottom:12px">
+    <span style="color:{regime_color};font-size:0.75rem;font-weight:700">◉ {spy_regime}</span>
+    <span style="color:#4A6080;font-size:0.72rem"> — {regime_pt}</span>
+  </div>
+  {content_html}
+  <a href="#subscribe-section" style="display:inline-block;background:#FFB800;color:#000;
+     font-size:0.80rem;font-weight:800;padding:10px 22px;border-radius:6px;
+     text-decoration:none;margin-top:4px" data-i18n="plainhero.cta">
+    Recebe isto por email todos os dias — grátis
+  </a>
+  <p style="color:#4A6080;font-size:0.58rem;margin:8px 0 0" data-i18n="plainhero.disclaimer">
+    Informação estatística, não é recomendação de investimento.
+  </p>
+</div>"""
+
+
 def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     """Hero stat strip with fintech premium CSS design."""
     etf_sub = f"de {n_total}" if n_etfs != n_total else str(n_total)
     stats = [
         (str(n_etfs), "ETFs UCITS",       etf_sub, "hero.universe",     "#00D4FF", "#00D4FF33",
-         f"{n_etfs} de {n_total} ETFs com dados suficientes hoje",
+         f"{n_etfs} ETFs europeus UCITS analisados todos os dias",
          "hero.etfs_ucits"),
-        ("4",         "Factores",         "M · T · R · α",    "hero.factors_desc", "#7C83FD", "#7C83FD33",
-         "Momentum 35% · Tendência 25% · Risco 25% · Alpha 15%",
+        ("11",        "Categorias",       "mundo · sectores · obrigações", "hero.factors_desc", "#7C83FD", "#7C83FD33",
+         "Mundo · Sectores · Obrigações · Commodities",
          "hero.factors"),
-        ("22h",       "Diário",           "actualização EOD", "hero.daily_desc",   "#FFB800", "#FFB80033",
-         "Dados de fecho actualizados todos os dias às 22h UTC",
+        ("23h",       "No teu email",     "hora de Lisboa",   "hero.daily_desc",   "#FFB800", "#FFB80033",
+         "Relatório diário enviado às 23h (hora de Lisboa)",
          "hero.daily"),
-        ("€0",        "Custo",            "infra-estrutura",  "hero.cost_desc",    "#00FF9D", "#00FF9D33",
-         "GitHub Actions free tier · yfinance · zero servidores",
+        ("Grátis",    "Sem cartão",       "zero subscrição",  "hero.cost_desc",    "#00FF9D", "#00FF9D33",
+         "Open source · GitHub Actions · sem servidores pagos",
          "hero.cost"),
-        ("~3min",     "Pipeline",         "fetch → score → email", "hero.pipeline_desc", "#4D9FFF", "#4D9FFF33",
-         "Pipeline completo em ~3 minutos por GitHub Actions",
-         "hero.pipeline"),
+        ("0–1",       "Nota simples",     "quanto mais alta, mais forte", "hero.score_desc", "#4D9FFF", "#4D9FFF33",
+         "Score cross-sectional: 0 = fraco · 1 = muito forte",
+         "hero.score"),
     ]
     cards = ""
     for val, label, sub, sub_key, color, glow, tip, label_key in stats:
@@ -552,9 +607,9 @@ def _score_pill(level: str | None) -> str:
 
 
 def _score_color(s: float) -> str:
-    if s >= 0.62: return "#00FF9D"
-    if s >= 0.54: return "#00D4FF"
-    if s >= 0.48: return "#FFB800"
+    if s >= CONVICTION_STRONG_BUY_SCORE: return "#00FF9D"
+    if s >= CONVICTION_BUY_SCORE:        return "#00D4FF"
+    if s >= CONVICTION_POTENTIAL_SCORE:  return "#FFB800"
     return "#FF4466"
 
 
@@ -668,7 +723,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
     spy_p = f"{spy_close:.2f}" if spy_close else "—"
     sma_p = f"{spy_sma200:.2f}" if spy_sma200 else "—"
     avg_score = float(scores_df["score"].mean()) if "score" in scores_df.columns else 0
-    n_strong = int((scores_df["score"] >= 0.62).sum()) if "score" in scores_df.columns else 0
+    n_strong = sum(1 for s in signals if s.get("level") in ("FORTE COMPRA", "STRONG_BUY"))
 
     def kpi(label, value, color="#E8F0FF", lkey=""):
         k = f' data-i18n="{lkey}"' if lkey else ""
@@ -705,7 +760,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
           <span style="color:{_score_color(s["score"])};font-size:0.72rem;font-weight:700;margin-left:auto">{s["score"]:.3f}</span>
         </div>
         <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
-          {s.get("nome","")[:40]} · 5d: <span style="color:{'#00FF9D' if ret5>=0 else '#FF4466'}">{ret5_str}</span>
+          {s.get("nome","")[:40]} · 5d: <span style="color:{'#00FF9D' if ret5>=0 else '#FF4466'}">{ret5_str}</span>{'&nbsp;<span style="color:#8A9CC0;font-size:0.58rem">— em correcção; tendência mantém-se</span>' if ret5 < -0.05 else ""}
         </div>
       </div>
     </div>"""
@@ -734,7 +789,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
       <td style="padding:6px 8px;text-align:right">
         <span style="color:{color};font-weight:700;font-size:0.75rem">{s:.3f}</span>
       </td>
-      <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < 0.48 else ("FORTE COMPRA" if s>=0.62 else ("COMPRA" if s>=0.54 else "POTENCIAL")))}</td>
+      <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < CONVICTION_POTENTIAL_SCORE else ("FORTE COMPRA" if s>=CONVICTION_STRONG_BUY_SCORE else ("COMPRA" if s>=CONVICTION_BUY_SCORE else "POTENCIAL")))}</td>
       <td style="padding:6px 4px;text-align:center;color:{trend_color};font-size:0.80rem">{trend_icon}</td>
       <td style="padding:6px 4px;text-align:right;color:{risk_color};font-size:0.65rem" data-i18n="{risk_key}">{risk_label}</td>
     </tr>"""
@@ -760,9 +815,9 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
     for r in top16:
         s = r["score"]
         # Map score 0-1 to green-yellow-red
-        if s >= 0.62:   bg, fg = "#00FF9D22", "#00FF9D"
-        elif s >= 0.54: bg, fg = "#00D4FF22", "#00D4FF"
-        elif s >= 0.48: bg, fg = "#FFB80022", "#FFB800"
+        if s >= CONVICTION_STRONG_BUY_SCORE: bg, fg = "#00FF9D22", "#00FF9D"
+        elif s >= CONVICTION_BUY_SCORE:      bg, fg = "#00D4FF22", "#00D4FF"
+        elif s >= CONVICTION_POTENTIAL_SCORE: bg, fg = "#FFB80022", "#FFB800"
         elif s >= 0.35: bg, fg = "#4A608033", "#8BA4C8"
         else:           bg, fg = "#FF446622", "#FF4466"
         heat_tiles += (f'<div class="heat-tile" style="background:{bg};border:1px solid {fg}33" '
@@ -798,13 +853,13 @@ def signal_legend_html(n_etfs: int = 0) -> str:
 <div class="signal-legend">
   <span style="color:var(--muted);font-size:0.68rem">{ctx}</span>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <span data-i18n="signal.strong_buy" style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">FORTE COMPRA</span>
+    <span data-i18n="signal.strong_buy" style="background:var(--green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">RADAR MÁXIMO</span>
     <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_STRONG_BUY_SCORE} · <span data-i18n="legend.strong_buy_desc">percentil superior · todos os factores alinhados</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
-    <span data-i18n="signal.buy" style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">COMPRA</span>
+    <span data-i18n="signal.buy" style="background:var(--light-green);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">EM DESTAQUE</span>
     <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_BUY_SCORE} · <span data-i18n="legend.buy_desc">sinal construtivo · maioria dos factores positivos</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
-    <span data-i18n="signal.potential" style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">POTENCIAL</span>
+    <span data-i18n="signal.potential" style="background:var(--yellow);color:#000;padding:2px 9px;border-radius:2px;font-size:0.60rem;font-weight:800;letter-spacing:0.08em">A OBSERVAR</span>
     <span style="color:var(--muted);font-size:0.65rem">score ≥ {CONVICTION_POTENTIAL_SCORE} · <span data-i18n="legend.potential_desc">sinal incipiente · aguardar confirmação</span></span>
     <span style="color:var(--border);font-size:0.65rem">·</span>
     <a href="#" onclick="document.getElementById('explainer-details').open=true;document.getElementById('explainer-details').scrollIntoView({{behavior:'smooth'}});return false;"
@@ -876,16 +931,16 @@ def explainer_section() -> str:
       <p {_p} style="margin-bottom:8px">Cada ETF recebe um score cross-sectional de 0 a 1, calculado diariamente como média ponderada de 4 factores académicos. O ranking é relativo ao universo: um score de 0.62 significa que o ETF está no percentil superior do universo analisado nesse dia. <b style="color:var(--text)">Não é uma previsão de retorno</b> — é um snapshot quantitativo do alinhamento de factores no momento actual.</p>
       <div style="display:flex;flex-direction:column;gap:5px">
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">FORTE COMPRA</span>
-          <span {_sub}>Score ≥ 0.62 — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
+          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">RADAR MÁXIMO</span>
+          <span {_sub}>Score ≥ {CONVICTION_STRONG_BUY_SCORE} — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">COMPRA</span>
-          <span {_sub}>Score ≥ 0.54 — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
+          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">EM DESTAQUE</span>
+          <span {_sub}>Score ≥ {CONVICTION_BUY_SCORE} — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">POTENCIAL</span>
-          <span {_sub}>Score ≥ 0.48 — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
+          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">A OBSERVAR</span>
+          <span {_sub}>Score ≥ {CONVICTION_POTENTIAL_SCORE} — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
         </div>
       </div>
     </div>
@@ -938,16 +993,16 @@ def explainer_section() -> str:
       <p {_p} style="margin-bottom:8px">Each ETF receives a cross-sectional score from 0 to 1, calculated daily as a weighted average of 4 academic factors. The ranking is relative to the universe: a score of 0.62 means the ETF is in the top percentile of the universe analysed that day. <b style="color:var(--text)">This is not a return forecast</b> — it is a quantitative snapshot of factor alignment at the current moment.</p>
       <div style="display:flex;flex-direction:column;gap:5px">
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">STRONG BUY</span>
-          <span {_sub}>Score ≥ 0.62 — top percentile: strong 12-1M momentum, confirmed trend (ADX &gt; 25), controlled risk, positive alpha vs SPY</span>
+          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">TOP RADAR</span>
+          <span {_sub}>Score ≥ {CONVICTION_STRONG_BUY_SCORE} — top percentile: strong 12-1M momentum, confirmed trend (ADX &gt; 25), controlled risk, positive alpha vs SPY</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">BUY</span>
-          <span {_sub}>Score ≥ 0.54 — constructive signal: medium-high momentum, price above SMA200, acceptable Sharpe</span>
+          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">HIGHLIGHTED</span>
+          <span {_sub}>Score ≥ {CONVICTION_BUY_SCORE} — constructive signal: medium-high momentum, price above SMA200, acceptable Sharpe</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">POTENTIAL</span>
-          <span {_sub}>Score ≥ 0.48 — nascent signal: positive momentum without full trend confirmation or adjusted risk</span>
+          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">WATCHING</span>
+          <span {_sub}>Score ≥ {CONVICTION_POTENTIAL_SCORE} — nascent signal: positive momentum without full trend confirmation or adjusted risk</span>
         </div>
       </div>
     </div>
@@ -1301,7 +1356,7 @@ def buy_signals_section(signals: list[dict]) -> str:
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:var(--text);font-size:17px;font-weight:bold">{html_mod.escape(s['ticker'])}</span>
             <span style="color:var(--muted);font-size:11px">{html_mod.escape(s['nome'])}</span>
-            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="{level_label_key}">{s['level']}</span>
+            <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold" data-i18n="{level_label_key}">{level_display(s['level'])}</span>
             <span style="color:{s['cor']};font-size:10px">● {html_mod.escape(s['categoria'])}</span>
             {ml_badge}
           </div>
@@ -1432,9 +1487,9 @@ def etf_table_section(scores_df: pd.DataFrame, cmap: dict, metadata: dict | None
       style="width:220px">
     <select id="tbl-filter">
       <option value="" data-i18n="search.all">Todos</option>
-      <option value="STRONG_BUY" data-i18n="signal.strong_buy">FORTE COMPRA</option>
-      <option value="BUY" data-i18n="signal.buy">COMPRA</option>
-      <option value="POTENTIAL" data-i18n="signal.potential">POTENCIAL</option>
+      <option value="STRONG_BUY" data-i18n="signal.strong_buy">RADAR MÁXIMO</option>
+      <option value="BUY" data-i18n="signal.buy">EM DESTAQUE</option>
+      <option value="POTENTIAL" data-i18n="signal.potential">A OBSERVAR</option>
       <option value="score_high">Score ≥ 0.60</option>
     </select>
     <button id="wl-toggle" onclick="toggleWatchlist()"
@@ -1685,6 +1740,35 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 
 
 def backtest_section(bt_df: pd.DataFrame) -> str:
+    # Ler status do backtest — mostrar painel de acumulação se necessário
+    status_path = REPORTS / "backtest_status.json"
+    if status_path.exists():
+        try:
+            bst = json.load(open(status_path))
+            if bst.get("status") == "A_ACUMULAR":
+                days     = bst.get("history_days", 0)
+                min_days = bst.get("min_days_required", 85)
+                eta      = bst.get("first_results_eta", "?")
+                pct      = min(100, int(days / max(min_days, 1) * 100))
+                return f"""
+<section class="section">
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("backtest")}<span data-i18n="section.backtest">Backtest — Validação Histórica</span></h2>
+  <div style="background:#0A1628;border:1px solid #1E2D4D;border-radius:8px;padding:18px 20px;margin-top:8px">
+    <div style="color:#FFB800;font-size:0.75rem;font-weight:700;margin-bottom:8px">⏳ A ACUMULAR HISTÓRICO</div>
+    <p style="color:#8A9CC0;font-size:0.80rem;margin:0 0 12px;line-height:1.5">
+      O backtest requer mínimo de <strong style="color:#E8F0FF">{min_days} dias</strong> de histórico de sinais.
+      Estado actual: <strong style="color:#E8F0FF">{days} de {min_days} dias</strong>.
+      Primeiros resultados estimados: <strong style="color:#FFB800">{eta}</strong>.
+    </p>
+    <div style="background:#0D1525;border-radius:4px;height:8px;overflow:hidden">
+      <div style="background:linear-gradient(90deg,#FFB800,#FF8800);height:100%;width:{pct}%;transition:width .3s"></div>
+    </div>
+    <div style="color:#4A6080;font-size:0.62rem;margin-top:6px">{pct}% completo</div>
+  </div>
+</section>"""
+        except Exception:
+            pass
+
     if bt_df.empty:
         return ""
 
@@ -2442,20 +2526,20 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
                  f"sugerindo um mercado neutro sem pressão direcional clara.")
         title_suffix = "Mercado Neutro"
     elif n_sb >= 3:
-        intro = (f"{spy_ctx}Dia de grande confluência quantitativa: {n_sb} ETFs UCITS atingem o nível FORTE COMPRA "
-                 f"e {n_b} atingem COMPRA, num universo de {n_etfs} ETFs analisados. "
+        intro = (f"{spy_ctx}Dia de grande confluência quantitativa: {n_sb} ETFs UCITS atingem o nível {level_display('FORTE COMPRA')} "
+                 f"e {n_b} atingem {level_display('COMPRA')}, num universo de {n_etfs} ETFs analisados. "
                  f"O score médio do dia é {avg_score:.3f}. O modelo identifica alinhamento simultâneo "
                  f"de momentum multi-período, tendência confirmada e força relativa positiva.")
-        title_suffix = f"{n_sb} ETFs em Forte Compra"
+        title_suffix = f"{n_sb} ETFs em Radar Máximo"
     else:
-        intro = (f"{spy_ctx}O scanner quantitativo identifica hoje {n_sb} ETF{'s' if n_sb!=1 else ''} em FORTE COMPRA "
-                 f"e {n_b} em COMPRA, num universo de {n_etfs} ETFs UCITS analisados. "
+        intro = (f"{spy_ctx}O scanner quantitativo identifica hoje {n_sb} ETF{'s' if n_sb!=1 else ''} em {level_display('FORTE COMPRA')} "
+                 f"e {n_b} em {level_display('COMPRA')}, num universo de {n_etfs} ETFs UCITS analisados. "
                  f"Score médio do universo: {avg_score:.3f}.")
-        title_suffix = f"{n_sb} Sinal{'is' if n_sb!=1 else ''} de Forte Compra"
+        title_suffix = f"{n_sb} Sinal{'is' if n_sb!=1 else ''} em Destaque"
 
     article_title = f"Análise ETFs UCITS — {day_fmt}: {title_suffix}"
     meta_desc     = (f"Análise quantitativa diária de ETFs UCITS para {day_fmt}. "
-                     f"SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f}. "
+                     f"SPY {spy_regime} · {n_sb} {level_display('FORTE COMPRA')} · {n_b} {level_display('COMPRA')} · Score médio {avg_score:.3f}. "
                      f"Baseada em momentum, tendência, risco e alpha.")
 
     # ── Secção FORTE COMPRA ────────────────────────────────────────────────────
@@ -2467,7 +2551,7 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
         ret5d  = float(s.get("ret_5d",  0) or 0)
         level  = s.get("level", "")
         color  = "#00FF9D" if "FORTE" in level or "STRONG" in level else "#00D4FF"
-        label  = "FORTE COMPRA" if "FORTE" in level or "STRONG" in level else "COMPRA"
+        label  = level_display("FORTE COMPRA") if "FORTE" in level or "STRONG" in level else level_display("COMPRA")
         narr   = narrativa_simples(s)
         border = f"border-left:3px solid {color};" if highlight else ""
         return (
@@ -2639,7 +2723,7 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
             padding:5px 0;white-space:nowrap">
   <div style="display:inline-block;animation:et-ticker 50s linear infinite;
               font-size:0.62rem;letter-spacing:0.07em;font-family:'Albert Sans',sans-serif;color:#4A6080">
-    &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source · &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} FORTE COMPRA · {n_b} COMPRA · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source ·
+    &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} {level_display('FORTE COMPRA')} · {n_b} {level_display('COMPRA')} · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source · &nbsp;&nbsp;◈ ET-SPOTTER · Análise quantitativa actualizada às 22h · SPY {spy_regime} · {n_sb} {level_display('FORTE COMPRA')} · {n_b} {level_display('COMPRA')} · Score médio {avg_score:.3f} · {n_etfs} ETFs UCITS analisados · Momentum · Tendência · Risco · Alpha · Grátis · Open Source ·
   </div>
 </div>
 <header class="site-header">
@@ -2784,6 +2868,7 @@ async function subscribePush() {{
 
         # ── Tab: Overview ─────────────────────────────────────────────────────
         '<div id="tab-overview">',
+        hero_plain_html(signals_all, n_etfs_today, data["spy_regime"]),
         hero_bar_html(n_etfs=n_etfs_today, n_total=n_total),
         signal_legend_html(n_etfs=n_etfs_today),
         daily_highlight_card_html(signals_all, data["spy_regime"], avg_score, today_iso),

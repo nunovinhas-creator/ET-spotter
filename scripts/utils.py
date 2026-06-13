@@ -11,6 +11,8 @@ from constants import (
     CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
     CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
     CONVICTION_POTENTIAL_SCORE,  CONVICTION_POTENTIAL_SIGNALS,
+    LEVEL_DISPLAY, LEVEL_DISPLAY_SHORT,
+    REGIME_GATE_ENABLED,
 )
 
 _CONFIG_DEFAULT = Path(__file__).parent.parent / "config" / "etfs.json"
@@ -137,12 +139,43 @@ def category_summary(scores_df, cfg: dict) -> list[dict]:
     return sorted(result, key=lambda x: x["score_avg"], reverse=True)
 
 
+def get_spy_regime() -> str:
+    """Lê SPY close vs SMA200. Devolve 'BULL', 'BEAR' ou 'DESCONHECIDO'."""
+    from paths import DATA_DAILY
+    spy_path = DATA_DAILY / "SPY.csv"
+    try:
+        if not spy_path.exists():
+            return "DESCONHECIDO"
+        df = __import__("pandas").read_csv(spy_path, index_col=0, parse_dates=True)
+        if df.empty or "close" not in df.columns or len(df) < 200:
+            return "DESCONHECIDO"
+        close = df["close"].dropna()
+        sma200 = float(close.rolling(200).mean().iloc[-1])
+        spy_close = float(close.iloc[-1])
+        return "BULL" if spy_close > sma200 else "BEAR"
+    except Exception:
+        return "DESCONHECIDO"
+
+
+def level_display(level: str | None, short: bool = False, lang: str = "pt") -> str:
+    """Converte chave interna → nome neutro via LEVEL_DISPLAY/LEVEL_DISPLAY_SHORT."""
+    if level is None:
+        return ""
+    if lang == "en":
+        from constants import LEVEL_DISPLAY_EN
+        return LEVEL_DISPLAY_EN.get(level, level)
+    if short:
+        return LEVEL_DISPLAY_SHORT.get(level, level)
+    return LEVEL_DISPLAY.get(level, level)
+
+
 # ─── Análise de convicção ─────────────────────────────────────────────────────
 
 def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
                        rsi: float, rs_positive: int, ret_63d: float,
                        delta_score: float, drawdown: float,
-                       ret_5d: float = 0.0, vol_21: float = 0.0) -> dict:
+                       ret_5d: float = 0.0, vol_21: float = 0.0,
+                       market_bull: bool = True) -> dict:
     """
     Conta confluência de 7 sinais técnicos e devolve nível de convicção.
 
@@ -181,13 +214,15 @@ def compute_conviction(score: float, trend_sma: int, macd_bullish: int,
         vol_threshold = 0.07
     late_entry = rsi_val > 68 or ret5 > vol_threshold
 
-    if not late_entry and score >= CONVICTION_STRONG_BUY_SCORE and signals >= CONVICTION_STRONG_BUY_SIGNALS:
-        return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals}
-    if not late_entry and score >= CONVICTION_BUY_SCORE and signals >= CONVICTION_BUY_SIGNALS:
-        return {"level": "COMPRA",       "color": "#8bc34a", "bg": "#1e2f1a", "signals": signals}
+    regime_capped = REGIME_GATE_ENABLED and not market_bull
+
+    if not regime_capped and not late_entry and score >= CONVICTION_STRONG_BUY_SCORE and signals >= CONVICTION_STRONG_BUY_SIGNALS:
+        return {"level": "FORTE COMPRA", "color": "#4caf50", "bg": "#1b3a2a", "signals": signals, "regime_capped": False}
+    if not regime_capped and not late_entry and score >= CONVICTION_BUY_SCORE and signals >= CONVICTION_BUY_SIGNALS:
+        return {"level": "COMPRA",       "color": "#8bc34a", "bg": "#1e2f1a", "signals": signals, "regime_capped": False}
     if score >= CONVICTION_POTENTIAL_SCORE and signals >= CONVICTION_POTENTIAL_SIGNALS:
-        return {"level": "POTENCIAL",    "color": "#ffd54f", "bg": "#2a2510", "signals": signals}
-    return {"level": None, "color": None, "bg": None, "signals": signals}
+        return {"level": "POTENCIAL",    "color": "#ffd54f", "bg": "#2a2510", "signals": signals, "regime_capped": regime_capped}
+    return {"level": None, "color": None, "bg": None, "signals": signals, "regime_capped": regime_capped}
 
 
 def analyst_rationale(trend_sma: int, macd_bullish: int, ret_5d: float,
@@ -377,13 +412,15 @@ def _safe_sub(v) -> float | None:
         return None
 
 
-def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
+def build_buy_signals(rows: list[dict], top_n: int = 8, market_bull: bool | None = None) -> list[dict]:
     """
     Filtra e ordena os ETFs com sinais de compra.
     Cada row deve ter: ticker, nome, categoria, cor, score, trend_sma,
                        macd_bullish, rsi, rs_positive, ret_63d, ret_5d,
                        delta_score, drawdown, adx.
     """
+    if market_bull is None:
+        market_bull = (get_spy_regime() != "BEAR")
     signals = []
     for r in rows:
         conv = compute_conviction(
@@ -391,6 +428,7 @@ def build_buy_signals(rows: list[dict], top_n: int = 8) -> list[dict]:
             r.get("rsi", 50), r.get("rs_positive", 0), r.get("ret_63d", 0),
             r.get("delta_score", 0), r.get("drawdown", -0.5),
             r.get("ret_5d", 0), r.get("vol_21", 0),
+            market_bull=market_bull,
         )
         if conv["level"] is None:
             continue
