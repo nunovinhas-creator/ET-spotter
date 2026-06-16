@@ -5,8 +5,11 @@
     "reports": "Reports",
     "guides": "Guides"
   },
+  "common": {
+    "free": "Free"
+  },
   "header": {
-    "subtitle": "Quantitative cross-sectional UCITS ETF analysis · composite score v3 (0–1)",
+    "subtitle": "{{count}} European ETFs · daily score 0 to 1",
     "updated": "Updated:",
     "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY above 200-day SMA (uptrend). BEAR = below (downtrend)."
   },
@@ -63,15 +66,34 @@
   },
   "hero": {
     "etfs_ucits": "ETFs UCITS",
-    "factors": "Factors",
-    "daily": "Daily",
-    "cost": "Cost",
+    "factors": "Categories",
+    "daily": "In your inbox",
+    "cost": "No card",
     "pipeline": "Pipeline",
     "universe": "in universe",
-    "factors_desc": "M · T · R · α",
-    "daily_desc": "EOD update",
-    "cost_desc": "infrastructure",
-    "pipeline_desc": "fetch → score → email"
+    "factors_desc": "global · sectors · bonds",
+    "daily_desc": "Lisbon time",
+    "cost_desc": "zero subscription",
+    "pipeline_desc": "fetch → score → email",
+    "score": "Simple score",
+    "score_desc": "higher is stronger"
+  },
+  "plainhero": {
+    "title": "Which ETFs are strongest today?",
+    "cta": "Receive this by email every day — free",
+    "disclaimer": "Statistical information, not investment advice.",
+    "no_signals": "No highlights today — we don't force signals when the market doesn't give them.",
+    "body": "Every day, after markets close, we rank {{count}} European ETFs and give each a score from 0 to 1. See at a glance which are gaining strength — and receive it all by email, for free.",
+    "regime_bull": "bull market (SPY above 200-day SMA)",
+    "regime_bear": "bear market (SPY below 200-day SMA)",
+    "regime_unknown": "market regime undetermined",
+    "top_etf_up": "up {{pct}} over the past 3 months",
+    "top_etf_down": "down {{pct}} over the past 3 months"
+  },
+  "ticker": {
+    "score_label": "Avg score",
+    "etfs_label": "UCITS ETFs analysed",
+    "updated": "Updated daily after market close"
   },
   "summary": {
     "strong_buy": "Top Radar",
@@ -120,7 +142,10 @@
     "no_data": "Insufficient data.",
     "academic_basis": "Academic Basis",
     "for_whom": "For whom",
-    "for_whom_desc": "European investors following quantitative strategies based on academic evidence who want transparent, reproducible and auditable technical signals."
+    "for_whom_desc": "European investors following quantitative strategies based on academic evidence who want transparent, reproducible and auditable technical signals.",
+    "accumulating": "⏳ ACCUMULATING HISTORY",
+    "accumulating_desc": "The backtest requires a minimum of {{min_days}} signal history days. Current status: {{days}} of {{min_days}} days. First results estimated: {{eta}}.",
+    "pct_complete": "{{pct}}% complete"
   },
   "section": {
     "best_positioned": "Best Positioned — Consolidated Technical Analysis",
@@ -139,12 +164,30 @@
   },
   "alert": {
     "no_signals": "No active signals today.",
-    "days5": "5d:"
+    "days5": "5d:",
+    "correction": "in correction; trend intact"
   },
   "cta": {
     "email": "Receive this report by email every day at 10pm",
     "free": "— free, no servers, no subscription",
     "fork": "🍴 Fork and set up in 3 minutes"
+  },
+  "portfolio": {
+    "symbol": "Symbol",
+    "qty": "Qty.",
+    "value": "Value",
+    "pnl": "P&L",
+    "pnl_pct": "P&L %",
+    "weight": "Weight",
+    "total_value": "Total Value",
+    "unrealized_pnl": "Unrealised P&L",
+    "positions": "Positions"
+  },
+  "highlight": {
+    "label": "📰 DAILY ANALYSIS",
+    "headline": "{{strong}} Top Radar · {{buy}} Highlighted · Avg score {{avg}}",
+    "headline_no_signals": "Avg score {{avg}} · No buy signals today",
+    "read_more": "Read analysis →"
   },
   "footer": {
     "auto_updated": "⟳ AUTO-UPDATED",

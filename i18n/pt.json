@@ -5,8 +5,11 @@
     "reports": "Relatórios",
     "guides": "Guias"
   },
+  "common": {
+    "free": "Grátis"
+  },
   "header": {
-    "subtitle": "Análise quantitativa cross-sectional de ETFs UCITS · score composto v3 (0–1)",
+    "subtitle": "{{count}} ETFs europeus · nota diária de 0 a 1",
     "updated": "Actualizado:",
     "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY acima da SMA200 (tendência de alta). BEAR = abaixo (tendência de baixa)."
   },
@@ -64,22 +67,33 @@
   "hero": {
     "etfs_ucits": "ETFs UCITS",
     "factors": "Categorias",
-    "daily": "23h Lisboa",
-    "cost": "Grátis",
+    "daily": "No teu email",
+    "cost": "Sem cartão",
     "pipeline": "Pipeline",
     "universe": "no universo",
     "factors_desc": "mundo · sectores · obrigações",
-    "daily_desc": "no teu email",
-    "cost_desc": "sem cartão",
+    "daily_desc": "hora de Lisboa",
+    "cost_desc": "zero subscrição",
     "pipeline_desc": "fetch → score → email",
-    "score": "Nota 0–1",
+    "score": "Nota simples",
     "score_desc": "quanto mais alta, mais forte"
   },
   "plainhero": {
     "title": "Que ETFs estão mais fortes hoje?",
     "cta": "Recebe isto por email todos os dias — grátis",
     "disclaimer": "Informação estatística, não é recomendação de investimento.",
-    "no_signals": "Sem destaques hoje — não forçamos sinais quando o mercado não os dá."
+    "no_signals": "Sem destaques hoje — não forçamos sinais quando o mercado não os dá.",
+    "body": "Todos os dias, depois do fecho dos mercados, comparamos {{count}} ETFs europeus e damos a cada um uma nota de 0 a 1. Vês num relance quais estão a ganhar força — e recebes tudo por email, de graça.",
+    "regime_bull": "mercado em alta (SPY acima da SMA200)",
+    "regime_bear": "mercado em baixa (SPY abaixo da SMA200)",
+    "regime_unknown": "regime de mercado indeterminado",
+    "top_etf_up": "subiu {{pct}} nos últimos 3 meses",
+    "top_etf_down": "caiu {{pct}} nos últimos 3 meses"
+  },
+  "ticker": {
+    "score_label": "Score médio",
+    "etfs_label": "ETFs UCITS analisados",
+    "updated": "Actualizado diariamente após o fecho"
   },
   "summary": {
     "strong_buy": "Radar Máximo",
@@ -128,7 +142,10 @@
     "no_data": "Sem dados suficientes.",
     "academic_basis": "Base Académica",
     "for_whom": "Para quem",
-    "for_whom_desc": "Investidores europeus que seguem estratégias quantitativas baseadas em evidência académica e querem sinais técnicos transparentes, reproduzíveis e auditáveis."
+    "for_whom_desc": "Investidores europeus que seguem estratégias quantitativas baseadas em evidência académica e querem sinais técnicos transparentes, reproduzíveis e auditáveis.",
+    "accumulating": "⏳ A ACUMULAR HISTÓRICO",
+    "accumulating_desc": "O backtest requer mínimo de {{min_days}} dias de histórico de sinais. Estado actual: {{days}} de {{min_days}} dias. Primeiros resultados estimados: {{eta}}.",
+    "pct_complete": "{{pct}}% completo"
   },
   "section": {
     "best_positioned": "Melhor Posicionados — Análise Técnica Consolidada",
@@ -147,12 +164,30 @@
   },
   "alert": {
     "no_signals": "Sem sinais activos hoje.",
-    "days5": "5d:"
+    "days5": "5d:",
+    "correction": "em correcção; tendência mantém-se"
   },
   "cta": {
     "email": "Receber este relatório por email todos os dias às 22h",
     "free": "— grátis, sem servidores, sem subscrição",
     "fork": "🍴 Fork e configura em 3 minutos"
+  },
+  "portfolio": {
+    "symbol": "Símbolo",
+    "qty": "Qtd.",
+    "value": "Valor",
+    "pnl": "P&L",
+    "pnl_pct": "P&L %",
+    "weight": "Peso",
+    "total_value": "Valor Total",
+    "unrealized_pnl": "P&L Não Realizado",
+    "positions": "Posições"
+  },
+  "highlight": {
+    "label": "📰 ANÁLISE DO DIA",
+    "headline": "{{strong}} em Radar Máximo · {{buy}} em Destaque · Score médio {{avg}}",
+    "headline_no_signals": "Score médio {{avg}} · Sem sinais de compra hoje",
+    "read_more": "Ler análise →"
   },
   "footer": {
     "auto_updated": "⟳ AUTO-UPDATED",
