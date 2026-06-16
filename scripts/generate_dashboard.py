@@ -22,6 +22,7 @@ from constants import (
     CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
     CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
     CONVICTION_POTENTIAL_SCORE,  CONVICTION_POTENTIAL_SIGNALS,
+    LEVEL_STRONG, LEVEL_BUY, LEVEL_POTENTIAL,
 )
 
 # ── Monetisation config ────────────────────────────────────────────────────────
@@ -77,12 +78,12 @@ def load_data(cfg: dict) -> dict:
                 delta_map[str(etf_sym)] = round(curr - prev, 4)
 
         def _score_level(s: float) -> str | None:
-            if s >= 0.62: return "FORTE COMPRA"
-            if s >= 0.54: return "COMPRA"
-            if s >= 0.48: return "POTENCIAL"
+            if s >= 0.62: return LEVEL_STRONG
+            if s >= 0.54: return LEVEL_BUY
+            if s >= 0.48: return LEVEL_POTENTIAL
             return None
 
-        level_order = {None: 0, "POTENCIAL": 1, "COMPRA": 2, "FORTE COMPRA": 3}
+        level_order = {None: 0, LEVEL_POTENTIAL: 1, LEVEL_BUY: 2, LEVEL_STRONG: 3}
         dates_sorted = sorted(hist_df["date"].unique())
         if len(dates_sorted) >= 2:
             prev_d = dates_sorted[-2]
@@ -226,8 +227,8 @@ def ticker_html(signals_all: list[dict], spy_regime: str, avg_score: float, n_et
     regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#4A6080")
     regime_label = f'<span style="color:{regime_color};font-weight:800">SPY {spy_regime}</span>'
 
-    strong_buys = [s for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY")]
-    buys        = [s for s in signals_all if s["level"] in ("COMPRA", "BUY")]
+    strong_buys = [s for s in signals_all if s["level"] == LEVEL_STRONG]
+    buys        = [s for s in signals_all if s["level"] == LEVEL_BUY]
 
     etf_items = ""
     for s in strong_buys[:5]:
@@ -242,20 +243,26 @@ def ticker_html(signals_all: list[dict], spy_regime: str, avg_score: float, n_et
     n_sb   = len(strong_buys)
     n_b    = len(buys)
     signal_summary = (
-        f'<span style="color:#00FF9D;font-weight:700">{n_sb} FORTE COMPRA</span>'
-        if n_sb else '<span style="color:#4A6080">0 FORTE COMPRA</span>'
+        f'<span style="color:#00FF9D;font-weight:700">'
+        f'{n_sb} <span data-i18n="signal.strong_buy">RADAR MÁXIMO</span></span>'
+        if n_sb else
+        f'<span style="color:#4A6080">'
+        f'0 <span data-i18n="signal.strong_buy">RADAR MÁXIMO</span></span>'
     )
-    signal_summary += f' · <span style="color:#00D4FF">{n_b} COMPRA</span>'
+    signal_summary += (
+        f' · <span style="color:#00D4FF">'
+        f'{n_b} <span data-i18n="signal.buy">EM DESTAQUE</span></span>'
+    )
 
     # build text segment (will be duplicated for seamless loop)
     seg = (
         f'&nbsp;&nbsp;◈ ET-SPOTTER · {regime_label} · {signal_summary} ·'
         f'{etf_items}'
-        f' Score médio <span style="color:#FFB800;font-weight:700">{avg_score:.3f}</span> ·'
-        f' {n_etfs} ETFs UCITS analisados ·'
-        f' Actualizado diariamente às 22h UTC ·'
-        f' Momentum · Tendência · Risco · Alpha ·'
-        f' Grátis · Open Source ·'
+        f' <span data-i18n="ticker.score_label">Score médio</span>'
+        f' <span style="color:#FFB800;font-weight:700">{avg_score:.3f}</span> ·'
+        f' {n_etfs} <span data-i18n="ticker.etfs_label">ETFs UCITS analisados</span> ·'
+        f' <span data-i18n="ticker.updated">Actualizado diariamente após o fecho</span> ·'
+        f' <span data-i18n="common.free">Grátis</span> · Open Source ·'
         f' &nbsp;&nbsp;'
     )
     # duplicate for seamless infinite scroll
@@ -309,7 +316,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
   <div class="header-inner">
     <div>
       <div class="logo">ET-SPOTTER</div>
-      <div class="subtitle" data-i18n="header.subtitle">{n_etfs} ETFs europeus · nota diária de 0 a 1</div>
+      <div class="subtitle" data-i18n="header.subtitle" data-i18n-options='{{"count": {n_etfs}}}'>{n_etfs} ETFs europeus · nota diária de 0 a 1</div>
     </div>
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
@@ -353,14 +360,20 @@ def hero_plain_html(signals_all: list[dict], n_etfs: int, spy_regime: str) -> st
     """Hero simples em linguagem corrente — primeira secção do Overview."""
     top3 = [s for s in signals_all if s.get("level")][:3]
 
-    regime_pt = {"BULL": "mercado em alta (SPY acima da SMA200)", "BEAR": "mercado em baixa (SPY abaixo da SMA200)"}.get(spy_regime, "regime de mercado indeterminado")
+    regime_key = (f"plainhero.regime_{spy_regime.lower()}"
+                  if spy_regime in ("BULL", "BEAR") else "plainhero.regime_unknown")
+    regime_fallback = {"BULL": "mercado em alta (SPY acima da SMA200)",
+                       "BEAR": "mercado em baixa (SPY abaixo da SMA200)"}.get(
+                           spy_regime, "regime de mercado indeterminado")
     regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#8A9CC0")
 
     if top3:
         cards_html = ""
         for s in top3:
             ret63 = s.get("ret_63d", 0) or 0
-            ret_str = f'{"subiu" if ret63 >= 0 else "caiu"} {abs(ret63):.1%} nos últimos 3 meses'
+            dir_key = "plainhero.top_etf_up" if ret63 >= 0 else "plainhero.top_etf_down"
+            dir_fallback = f'{"subiu" if ret63 >= 0 else "caiu"} {abs(ret63):.1%} nos últimos 3 meses'
+            pct_val = f"{abs(ret63):.1%}"
             lv = level_display(s.get("level"))
             lv_color = {"RADAR MÁXIMO": "#00FF9D", "EM DESTAQUE": "#00D4FF", "A OBSERVAR": "#FFB800"}.get(lv, "#7C83FD")
             cards_html += f"""
@@ -369,28 +382,34 @@ def hero_plain_html(signals_all: list[dict], n_etfs: int, spy_regime: str) -> st
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
     <span style="color:#E8F0FF;font-size:0.85rem;font-weight:800">{s['ticker']}</span>
     <span style="background:{lv_color};color:#000;padding:1px 8px;border-radius:2px;
-                 font-size:0.58rem;font-weight:800">{lv}</span>
+                 font-size:0.58rem;font-weight:800" data-i18n="signal.{'strong_buy' if 'MÁXIMO' in lv else ('buy' if 'DESTAQUE' in lv else 'potential')}">{lv}</span>
   </div>
   <div style="color:#4A6080;font-size:0.62rem;margin-bottom:6px">{s.get('nome','')[:35]}</div>
   <div style="color:{lv_color};font-size:1.5rem;font-weight:900;line-height:1">{s['score']:.2f}</div>
-  <div style="color:#4A6080;font-size:0.58rem;margin-top:4px">{ret_str}</div>
+  <div style="color:#4A6080;font-size:0.58rem;margin-top:4px"
+       data-i18n="{dir_key}" data-i18n-options='{{"pct":"{pct_val}"}}'>{dir_fallback}</div>
 </div>"""
         content_html = f'<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">{cards_html}</div>'
     else:
         content_html = '<p style="color:#4A6080;font-size:0.85rem;margin:16px 0" data-i18n="plainhero.no_signals">Sem destaques hoje — não forçamos sinais quando o mercado não os dá.</p>'
+
+    body_fallback = (f"Todos os dias, depois do fecho dos mercados, comparamos {n_etfs} ETFs europeus "
+                     f"e damos a cada um uma nota de 0 a 1. Vês num relance quais estão a ganhar força "
+                     f"— e recebes tudo por email, de graça.")
 
     return f"""
 <div style="background:#060C1A;border:1px solid #1E2D4D;border-radius:10px;padding:20px 22px;margin-bottom:16px">
   <h1 style="color:#E8F0FF;font-size:1.25rem;font-weight:800;margin:0 0 8px" data-i18n="plainhero.title">
     Que ETFs estão mais fortes hoje?
   </h1>
-  <p style="color:#8A9CC0;font-size:0.82rem;margin:0 0 10px;line-height:1.5">
-    Todos os dias, depois do fecho dos mercados, comparamos <strong style="color:#E8F0FF">{n_etfs}</strong> ETFs europeus e damos a cada um uma nota de 0 a 1.
-    Vês num relance quais estão a ganhar força — e recebes tudo por email, de graça.
+  <p style="color:#8A9CC0;font-size:0.82rem;margin:0 0 10px;line-height:1.5"
+     data-i18n="plainhero.body" data-i18n-options='{{"count":{n_etfs}}}'>
+    {body_fallback}
   </p>
   <div style="margin-bottom:12px">
     <span style="color:{regime_color};font-size:0.75rem;font-weight:700">◉ {spy_regime}</span>
-    <span style="color:#4A6080;font-size:0.72rem"> — {regime_pt}</span>
+    <span style="color:#4A6080;font-size:0.72rem"> — <span
+      data-i18n="{regime_key}">{regime_fallback}</span></span>
   </div>
   {content_html}
   <a href="#subscribe-section" style="display:inline-block;background:#FFB800;color:#000;
@@ -410,32 +429,33 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     stats = [
         (str(n_etfs), "ETFs UCITS",       etf_sub, "hero.universe",     "#00D4FF", "#00D4FF33",
          f"{n_etfs} ETFs europeus UCITS analisados todos os dias",
-         "hero.etfs_ucits"),
+         "hero.etfs_ucits", ""),
         ("11",        "Categorias",       "mundo · sectores · obrigações", "hero.factors_desc", "#7C83FD", "#7C83FD33",
          "Mundo · Sectores · Obrigações · Commodities",
-         "hero.factors"),
+         "hero.factors", ""),
         ("23h",       "No teu email",     "hora de Lisboa",   "hero.daily_desc",   "#FFB800", "#FFB80033",
          "Relatório diário enviado às 23h (hora de Lisboa)",
-         "hero.daily"),
+         "hero.daily", ""),
         ("Grátis",    "Sem cartão",       "zero subscrição",  "hero.cost_desc",    "#00FF9D", "#00FF9D33",
          "Open source · GitHub Actions · sem servidores pagos",
-         "hero.cost"),
+         "hero.cost", "common.free"),
         ("0–1",       "Nota simples",     "quanto mais alta, mais forte", "hero.score_desc", "#4D9FFF", "#4D9FFF33",
          "Score cross-sectional: 0 = fraco · 1 = muito forte",
-         "hero.score"),
+         "hero.score", ""),
     ]
     cards = ""
-    for val, label, sub, sub_key, color, glow, tip, label_key in stats:
+    for val, label, sub, sub_key, color, glow, tip, label_key, val_key in stats:
         if sub_key == "hero.universe":
             sub_html = f'{etf_sub} <span data-i18n="hero.universe">no universo</span>'
         else:
             sub_html = f'<span data-i18n="{sub_key}">{sub}</span>'
+        val_html = f'<span data-i18n="{val_key}">{val}</span>' if val_key else val
         cards += f"""<div title="{tip}" style="
             flex:1;min-width:100px;padding:16px 12px;text-align:center;
             background:#0D1525;border:1px solid {color}33;border-top:2px solid {color};
             border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
           <span style="color:{color};font-size:28px;font-weight:800;line-height:1;
-                       text-shadow:0 0 20px {color},0 0 40px {color}88">{val}</span>
+                       text-shadow:0 0 20px {color},0 0 40px {color}88">{val_html}</span>
           <span data-i18n="{label_key}" style="color:#A0B4CC;font-size:0.60rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600">{label}</span>
           <span style="color:#4A6080;font-size:0.52rem;letter-spacing:0.03em">{sub_html}</span>
         </div>"""
@@ -596,11 +616,11 @@ def _panel(title: str, body: str, badge: str = "", title_key: str = "") -> str:
 
 
 def _score_pill(level: str | None) -> str:
-    if level == "FORTE COMPRA":
+    if level == LEVEL_STRONG:
         return '<span class="score-pill" style="background:#00FF9D;color:#000" data-i18n="signal.strong_short">Forte</span>'
-    if level == "COMPRA":
+    if level == LEVEL_BUY:
         return '<span class="score-pill" style="background:#00D4FF;color:#000" data-i18n="signal.buy_short">Compra</span>'
-    if level == "POTENCIAL":
+    if level == LEVEL_POTENTIAL:
         return '<span class="score-pill" style="background:#FFB800;color:#000" data-i18n="signal.pot">Pot.</span>'
     return '<span class="score-pill" style="background:#FF446655;color:#FF4466" data-i18n="signal.weak">Fraco</span>'
 
@@ -722,7 +742,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
     spy_p = f"{spy_close:.2f}" if spy_close else "—"
     sma_p = f"{spy_sma200:.2f}" if spy_sma200 else "—"
     avg_score = float(scores_df["score"].mean()) if "score" in scores_df.columns else 0
-    n_strong = sum(1 for s in signals if s.get("level") in ("FORTE COMPRA", "STRONG_BUY"))
+    n_strong = sum(1 for s in signals if s.get("level") == LEVEL_STRONG)
 
     def kpi(label, value, color="#E8F0FF", lkey=""):
         k = f' data-i18n="{lkey}"' if lkey else ""
@@ -743,8 +763,8 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
     left_kpi = _panel("Key Indicators", kpi_body, title_key="panel.key_indicators")
 
     # ── Alertas Activos (right top) ───────────────────────────────────────────
-    alert_icons = {"FORTE COMPRA": ("🟢","#00FF9D"), "COMPRA": ("🔵","#00D4FF"),
-                   "POTENCIAL": ("🟡","#FFB800")}
+    alert_icons = {LEVEL_STRONG: ("🟢","#00FF9D"), LEVEL_BUY: ("🔵","#00D4FF"),
+                   LEVEL_POTENTIAL: ("🟡","#FFB800")}
     alerts_html = ""
     for s in signals[:6]:
         icon, color = alert_icons.get(s["level"], ("⚪","#4A6080"))
@@ -759,7 +779,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
           <span style="color:{_score_color(s["score"])};font-size:0.72rem;font-weight:700;margin-left:auto">{s["score"]:.3f}</span>
         </div>
         <div style="color:#4A6080;font-size:0.60rem;margin-top:3px;line-height:1.4">
-          {s.get("nome","")[:40]} · 5d: <span style="color:{'#00FF9D' if ret5>=0 else '#FF4466'}">{ret5_str}</span>{'&nbsp;<span style="color:#8A9CC0;font-size:0.58rem">— em correcção; tendência mantém-se</span>' if ret5 < -0.05 else ""}
+          {s.get("nome","")[:40]} · 5d: <span style="color:{'#00FF9D' if ret5>=0 else '#FF4466'}">{ret5_str}</span>{'&nbsp;<span data-i18n="alert.correction" style="color:#8A9CC0;font-size:0.58rem">— em correcção; tendência mantém-se</span>' if ret5 < -0.05 else ""}
         </div>
       </div>
     </div>"""
@@ -788,7 +808,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
       <td style="padding:6px 8px;text-align:right">
         <span style="color:{color};font-weight:700;font-size:0.75rem">{s:.3f}</span>
       </td>
-      <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < CONVICTION_POTENTIAL_SCORE else ("FORTE COMPRA" if s>=CONVICTION_STRONG_BUY_SCORE else ("COMPRA" if s>=CONVICTION_BUY_SCORE else "POTENCIAL")))}</td>
+      <td style="padding:6px 4px;text-align:center">{_score_pill(None if s < CONVICTION_POTENTIAL_SCORE else (LEVEL_STRONG if s>=CONVICTION_STRONG_BUY_SCORE else (LEVEL_BUY if s>=CONVICTION_BUY_SCORE else LEVEL_POTENTIAL)))}</td>
       <td style="padding:6px 4px;text-align:center;color:{trend_color};font-size:0.80rem">{trend_icon}</td>
       <td style="padding:6px 4px;text-align:right;color:{risk_color};font-size:0.65rem" data-i18n="{risk_key}">{risk_label}</td>
     </tr>"""
@@ -868,15 +888,15 @@ def signal_legend_html(n_etfs: int = 0) -> str:
 
 
 def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
-    n_fc  = sum(1 for s in signals if s["level"] in ("FORTE COMPRA", "STRONG_BUY"))
-    n_c   = sum(1 for s in signals if s["level"] in ("COMPRA", "BUY"))
-    n_p   = sum(1 for s in signals if s["level"] in ("POTENCIAL", "POTENTIAL"))
+    n_fc  = sum(1 for s in signals if s["level"] == LEVEL_STRONG)
+    n_c   = sum(1 for s in signals if s["level"] == LEVEL_BUY)
+    n_p   = sum(1 for s in signals if s["level"] == LEVEL_POTENTIAL)
     n_high = int((scores_df["score"] >= 0.50).sum()) if "score" in scores_df.columns else 0
     avg_score = scores_df["score"].mean() if "score" in scores_df.columns else 0
     n_ml_confirmed = sum(
         1 for s in signals
         if s.get("ml_prob") is not None and s["ml_prob"] >= 0.55
-        and s["level"] in ("FORTE COMPRA", "STRONG_BUY", "COMPRA", "BUY")
+        and s["level"] in (LEVEL_STRONG, LEVEL_BUY)
     )
 
     def signal_card(label, label_key, value, color, bg, desc, desc_key=""):
@@ -1327,9 +1347,9 @@ def buy_signals_section(signals: list[dict]) -> str:
     cards = ""
     for s in signals:
         level_colors = {
-            "FORTE COMPRA": ("var(--green)",       "oklch(13% 0.045 188)", "oklch(48% 0.09 188)"),
-            "COMPRA":       ("var(--light-green)", "oklch(12% 0.025 188)", "oklch(38% 0.08 188)"),
-            "POTENCIAL":    ("var(--yellow)",       "oklch(13% 0.04 80)",   "oklch(48% 0.12 80)"),
+            LEVEL_STRONG:   ("var(--green)",       "oklch(13% 0.045 188)", "oklch(48% 0.09 188)"),
+            LEVEL_BUY:      ("var(--light-green)", "oklch(12% 0.025 188)", "oklch(38% 0.08 188)"),
+            LEVEL_POTENTIAL:("var(--yellow)",       "oklch(13% 0.04 80)",   "oklch(48% 0.12 80)"),
         }
         clr, bg, border_clr = level_colors.get(s["level"], ("var(--muted)", "var(--bg)", "var(--border)"))
         pct = s.get("score_pct")
@@ -1340,8 +1360,8 @@ def buy_signals_section(signals: list[dict]) -> str:
         rsi = s.get("rsi", 50) or 50
         rsi_c = "var(--green)" if 40 <= rsi <= 65 else ("var(--yellow)" if rsi > 70 else "var(--red)" if rsi < 35 else "var(--muted)")
 
-        forte_class = ' class="signal-forte"' if s["level"] == "FORTE COMPRA" else ""
-        level_label_key = {"FORTE COMPRA": "signal.strong_buy", "COMPRA": "signal.buy", "POTENCIAL": "signal.potential"}.get(s["level"], "signal.potential")
+        forte_class = ' class="signal-forte"' if s["level"] == LEVEL_STRONG else ""
+        level_label_key = {LEVEL_STRONG: "signal.strong_buy", LEVEL_BUY: "signal.buy", LEVEL_POTENTIAL: "signal.potential"}.get(s["level"], "signal.potential")
 
         ml_prob = s.get("ml_prob")
         ml_confirmed = ml_prob is not None and ml_prob >= 0.55
@@ -1757,16 +1777,21 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
 <section class="section">
   <h2 class="section-title" style="display:flex;align-items:center">{_icon("backtest")}<span data-i18n="section.backtest">Backtest — Validação Histórica</span></h2>
   <div style="background:#0A1628;border:1px solid #1E2D4D;border-radius:8px;padding:18px 20px;margin-top:8px">
-    <div style="color:#FFB800;font-size:0.75rem;font-weight:700;margin-bottom:8px">⏳ A ACUMULAR HISTÓRICO</div>
-    <p style="color:#8A9CC0;font-size:0.80rem;margin:0 0 12px;line-height:1.5">
-      O backtest requer mínimo de <strong style="color:#E8F0FF">{min_days} dias</strong> de histórico de sinais.
-      Estado actual: <strong style="color:#E8F0FF">{days} de {min_days} dias</strong>.
-      Primeiros resultados estimados: <strong style="color:#FFB800">{eta}</strong>.
+    <div style="color:#FFB800;font-size:0.75rem;font-weight:700;margin-bottom:8px"
+         data-i18n="backtest.accumulating">⏳ A ACUMULAR HISTÓRICO</div>
+    <p style="color:#8A9CC0;font-size:0.80rem;margin:0 0 12px;line-height:1.5"
+       data-i18n="backtest.accumulating_desc"
+       data-i18n-options='{{"min_days":{min_days},"days":{days},"eta":"{eta}"}}'>
+      O backtest requer mínimo de {min_days} dias de histórico de sinais.
+      Estado actual: {days} de {min_days} dias.
+      Primeiros resultados estimados: {eta}.
     </p>
     <div style="background:#0D1525;border-radius:4px;height:8px;overflow:hidden">
       <div style="background:linear-gradient(90deg,#FFB800,#FF8800);height:100%;width:{pct}%;transition:width .3s"></div>
     </div>
-    <div style="color:#4A6080;font-size:0.62rem;margin-top:6px">{pct}% completo</div>
+    <div style="color:#4A6080;font-size:0.62rem;margin-top:6px"
+         data-i18n="backtest.pct_complete"
+         data-i18n-options='{{"pct":{pct}}}'>{pct}% completo</div>
   </div>
 </section>"""
         except Exception:
@@ -1780,9 +1805,9 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
     if fwd_col not in bt_df.columns:
         return ""
 
-    levels = ["FORTE COMPRA", "COMPRA", "POTENCIAL"]
-    level_colors = {"FORTE COMPRA": "var(--green)", "COMPRA": "var(--light-green)", "POTENCIAL": "var(--yellow)"}
-    level_i18n   = {"FORTE COMPRA": "signal.strong_buy", "COMPRA": "signal.buy", "POTENCIAL": "signal.potential"}
+    levels = [LEVEL_STRONG, LEVEL_BUY, LEVEL_POTENTIAL]
+    level_colors = {LEVEL_STRONG: "var(--green)", LEVEL_BUY: "var(--light-green)", LEVEL_POTENTIAL: "var(--yellow)"}
+    level_i18n   = {LEVEL_STRONG: "signal.strong_buy", LEVEL_BUY: "signal.buy", LEVEL_POTENTIAL: "signal.potential"}
 
     def regime_block(df_sub, regime_label):
         rows_html = ""
@@ -1799,7 +1824,7 @@ def backtest_section(bt_df: pd.DataFrame) -> str:
                         f' <b style="color:{_c(exc_avg)}">{_pct(exc_avg)}</b>') if pd.notna(exc_avg) else ""
             rows_html += f"""
             <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
-              <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center" data-i18n="{i18n_key}">{lvl}</span>
+              <span style="background:{clr};color:#000;padding:1px 8px;border-radius:2px;font-size:10px;font-weight:bold;min-width:90px;text-align:center" data-i18n="{i18n_key}">{level_display(lvl)}</span>
               <span style="color:var(--muted);font-size:11px">n={len(sub)}</span>
               <span style="font-size:12px"><span style="color:var(--muted)" data-i18n="backtest.avg_ret">Ret. médio 21d</span> <b style="color:{_c(avg)}">{_pct(avg)}</b>{exc_html}</span>
               <span style="font-size:12px"><span style="color:var(--muted)" data-i18n="backtest.win_rate">Win rate</span> <b style="color:{_c(win-0.5)}">{win:.0%}</b></span>
@@ -1898,8 +1923,19 @@ def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
     th = "padding:7px 10px;background:var(--deep);color:var(--champagne);text-align:right;font-size:11px"
     td = "padding:5px 10px;border-bottom:1px solid var(--border);font-size:11px;text-align:right"
 
-    headers = "".join(f'<th style="{th};text-align:{"left" if i < 2 else "right"}">{h}</th>'
-                      for i, h in enumerate(["Símbolo", "Nome", "Qtd.", "Valor", "P&L", "P&L %", "Peso"]))
+    _header_defs = [
+        ("portfolio.symbol", "Símbolo", "left"),
+        ("table.name",       "Nome",    "left"),
+        ("portfolio.qty",    "Qtd.",    "right"),
+        ("portfolio.value",  "Valor",   "right"),
+        ("portfolio.pnl",    "P&L",     "right"),
+        ("portfolio.pnl_pct","P&L %",   "right"),
+        ("portfolio.weight", "Peso",    "right"),
+    ]
+    headers = "".join(
+        f'<th style="{th};text-align:{align}" data-i18n="{key}">{label}</th>'
+        for key, label, align in _header_defs
+    )
     rows_html = ""
     for _, r in df.iterrows():
         sym      = str(r.get("symbol", ""))
@@ -1930,15 +1966,15 @@ def portfolio_section(portfolio_path: Path, cmap: dict) -> str:
   <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span data-i18n="section.portfolio">Portfólio Alpaca</span></h2>
   <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
     <div>
-      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Valor Total</div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em" data-i18n="portfolio.total_value">Valor Total</div>
       <div style="color:var(--champagne);font-size:18px;font-weight:600">${total_value:,.2f}</div>
     </div>
     <div>
-      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">P&L Não Realizado</div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em" data-i18n="portfolio.unrealized_pnl">P&L Não Realizado</div>
       <div style="color:{pl_color};font-size:18px;font-weight:600">{total_pl:+,.2f}</div>
     </div>
     <div>
-      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Posições</div>
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em" data-i18n="portfolio.positions">Posições</div>
       <div style="color:var(--champagne);font-size:18px;font-weight:600">{len(df)}</div>
     </div>
   </div>
@@ -2386,14 +2422,14 @@ def signal_deltas_html(deltas: list[dict]) -> str:
     if not upgrades and not downgrades:
         return ""
 
-    level_colors = {"FORTE COMPRA": "#00FF9D", "COMPRA": "#00D4FF", "POTENCIAL": "#FFB800"}
+    level_colors = {LEVEL_STRONG: "#00FF9D", LEVEL_BUY: "#00D4FF", LEVEL_POTENTIAL: "#FFB800"}
 
     def _pill(level: str | None) -> str:
         if not level:
             return '<span style="color:#4A6080;font-size:0.58rem">—</span>'
         c = level_colors.get(level, "#4A6080")
         return (f'<span style="background:{c};color:#000;padding:1px 6px;border-radius:2px;'
-                f'font-size:0.58rem;font-weight:800">{level}</span>')
+                f'font-size:0.58rem;font-weight:800">{level_display(level)}</span>')
 
     items = ""
     for d in upgrades[:8]:
@@ -2444,8 +2480,8 @@ def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_scor
     site        = "https://nunovinhas-creator.github.io/ET-spotter"
     article_url = f"{site}/analise-diaria.html"
 
-    strong_buys = [s for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY")]
-    buys        = [s for s in signals_all if s["level"] in ("COMPRA", "BUY")]
+    strong_buys = [s for s in signals_all if s["level"] == LEVEL_STRONG]
+    buys        = [s for s in signals_all if s["level"] == LEVEL_BUY]
     n_sb, n_b   = len(strong_buys), len(buys)
 
     regime_color = "#00FF9D" if spy_regime == "BULL" else ("#FF4466" if spy_regime == "BEAR" else "#4A6080")
@@ -2461,11 +2497,15 @@ def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_scor
         score = s.get("score", 0)
         top_etfs_html += f'<span style="color:#00D4FF">{sym}</span><span style="color:#4A6080;font-size:0.68rem"> {score:.2f}</span>  '
 
-    headline_pt = (
-        f"{n_sb} ETF{'s' if n_sb!=1 else ''} em Forte Compra · {n_b} em Compra · Score médio {avg_score:.3f}"
-        if (n_sb + n_b) > 0 else
-        f"Score médio {avg_score:.3f} · Sem sinais de compra hoje"
-    )
+    avg_str = f"{avg_score:.3f}"
+    if (n_sb + n_b) > 0:
+        headline_fb  = f"{n_sb} em Radar Máximo · {n_b} em Destaque · Score médio {avg_str}"
+        headline_key = "highlight.headline"
+        headline_opts = f'{{"strong":{n_sb},"buy":{n_b},"avg":"{avg_str}"}}'
+    else:
+        headline_fb  = f"Score médio {avg_str} · Sem sinais de compra hoje"
+        headline_key = "highlight.headline_no_signals"
+        headline_opts = f'{{"avg":"{avg_str}"}}'
 
     return f"""
 <div style="margin:0 0 18px;background:linear-gradient(135deg,#05080f 0%,#0a111e 100%);
@@ -2474,17 +2514,21 @@ def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_scor
             gap:16px;flex-wrap:wrap">
   <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="color:#FFB800;font-size:0.60rem;font-weight:800;letter-spacing:0.14em">📰 ANÁLISE DO DIA</span>
+      <span style="color:#FFB800;font-size:0.60rem;font-weight:800;letter-spacing:0.14em"
+            data-i18n="highlight.label">📰 ANÁLISE DO DIA</span>
       <span style="color:var(--muted);font-size:0.60rem">{day_fmt}</span>
       {regime_badge}
     </div>
-    <div style="color:var(--text);font-size:0.82rem;font-weight:600">{headline_pt}</div>
+    <div style="color:var(--text);font-size:0.82rem;font-weight:600"
+         data-i18n="{headline_key}"
+         data-i18n-options='{headline_opts}'>{headline_fb}</div>
     <div style="font-size:0.72rem;letter-spacing:0.02em">{top_etfs_html}</div>
   </div>
   <a href="{article_url}" target="_blank" rel="noopener"
      style="flex-shrink:0;background:#FFB800;color:#000;font-weight:800;font-size:0.72rem;
             padding:9px 18px;border-radius:4px;text-decoration:none;white-space:nowrap;
-            letter-spacing:0.04em">
+            letter-spacing:0.04em"
+     data-i18n="highlight.read_more">
     Ler análise →
   </a>
 </div>"""
@@ -2856,8 +2900,8 @@ async function subscribePush() {{
         for cat in cfg.get("categories", [])
         if isinstance(cat, dict)
     ) or 97
-    n_strong_buy = sum(1 for s in signals_all if s["level"] in ("FORTE COMPRA", "STRONG_BUY"))
-    n_buy        = sum(1 for s in signals_all if s["level"] in ("COMPRA", "BUY"))
+    n_strong_buy = sum(1 for s in signals_all if s["level"] == LEVEL_STRONG)
+    n_buy        = sum(1 for s in signals_all if s["level"] == LEVEL_BUY)
 
     avg_score    = float(data["scores_df"]["score"].mean()) if not data["scores_df"].empty and "score" in data["scores_df"].columns else 0.0
     today_iso    = datetime.now(ZoneInfo("Europe/Lisbon")).strftime("%Y-%m-%d")
