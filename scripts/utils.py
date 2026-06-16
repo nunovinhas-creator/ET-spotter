@@ -5,6 +5,7 @@ Abstrai a estrutura do config para que os scripts não dependam do formato JSON.
 
 import json
 import math
+from datetime import date, timedelta
 from pathlib import Path
 
 from constants import (
@@ -16,6 +17,44 @@ from constants import (
 )
 
 _CONFIG_DEFAULT = Path(__file__).parent.parent / "config" / "etfs.json"
+
+
+def _easter(year: int) -> date:
+    """Algoritmo gregoriano anónimo — devolve o Domingo de Páscoa."""
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    ll = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * ll) // 451
+    month = (h + ll - 7 * m + 114) // 31
+    day = (h + ll - 7 * m + 114) % 31 + 1
+    return date(year, month, day)
+
+
+def is_trading_day(dt: date | None = None) -> bool:
+    """True se dt é dia de negociação nas bolsas europeias (LSE/Euronext/Xetra).
+
+    Exclui: fins-de-semana, Ano Novo, Sexta-Feira Santa, Segunda de Páscoa,
+    Natal e Boxing Day.  Cobre a esmagadora maioria dos feriados relevantes
+    para ETFs UCITS — sem dependências externas.
+    """
+    if dt is None:
+        dt = date.today()
+    if dt.weekday() >= 5:          # sábado=5, domingo=6
+        return False
+    easter = _easter(dt.year)
+    non_trading = {
+        date(dt.year, 1, 1),       # Ano Novo
+        easter - timedelta(days=2), # Sexta-Feira Santa
+        easter + timedelta(days=1), # Segunda de Páscoa
+        date(dt.year, 12, 25),     # Natal
+        date(dt.year, 12, 26),     # Boxing Day
+    }
+    return dt not in non_trading
 
 
 def load_config(path: str | Path | None = None) -> dict:

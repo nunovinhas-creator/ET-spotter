@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import (load_config, get_etfs, get_category_map,
+from utils import (load_config, get_etfs, get_category_map, is_trading_day,
                    category_summary, build_buy_signals, build_advisor_candidates,
                    _c, _pct, _etf_row_raw, level_display)
 from generate_charts import plot_scores_bar, plot_category_summary
@@ -396,6 +396,11 @@ def build_html(rows_raw, df_display, cats, date_str, cfg, image_names) -> str:
 # ─── main ─────────────────────────────────────────────────────────────────────
 
 def main():
+    if not is_trading_day():
+        from datetime import date
+        print(f"[SKIP] {date.today()} não é dia de negociação (fim-de-semana ou feriado).")
+        return
+
     cfg = load_config()
     REPORTS.mkdir(parents=True, exist_ok=True)
 
