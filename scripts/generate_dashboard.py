@@ -2982,12 +2982,10 @@ async function subscribePush() {{
 
     # Actualizar para "https://et-spotter.com" quando o domínio estiver comprado e DNS configurado
     site_url     = "https://nunovinhas-creator.github.io/ET-spotter"
-    meta_desc_en = (f"ET-Spotter — daily quantitative ranking of {n_etfs_today} UCITS ETFs "
-                    f"for European investors. Today: {n_strong_buy} strong buy · {n_buy} buy. "
-                    f"Momentum, trend, risk & alpha score. Free, updated daily.")
-    meta_desc_pt = (f"ET-Spotter — ranking quantitativo diário de {n_etfs_today} ETFs UCITS "
-                    f"para investidores europeus. Hoje: {n_strong_buy} forte compra · {n_buy} compra. "
-                    f"Score composto: momentum, tendência, risco e alpha. Grátis, actualizado diariamente.")
+    meta_desc_en = (f"ET-Spotter — daily score from 0 to 1 for {n_etfs_today} European UCITS ETFs. "
+                    f"See which are strongest today. Free, open source, updated daily.")
+    meta_desc_pt = (f"ET-Spotter — nota diária de 0 a 1 para {n_etfs_today} ETFs UCITS europeus. "
+                    f"Vê quais estão mais fortes hoje. Grátis, código aberto, actualizado diariamente.")
     json_ld = json.dumps({
         "@context": "https://schema.org",
         "@type": "WebApplication",
@@ -3022,16 +3020,18 @@ async function subscribePush() {{
   <link rel="alternate" hreflang="x-default" href="{site_url}/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ET-Spotter">
-  <meta property="og:title" content="ET-Spotter · UCITS ETF Scanner — {n_strong_buy} Strong Buy today">
+  <meta property="og:title" content="Que ETFs estão mais fortes hoje? · ET-Spotter">
   <meta property="og:description" content="{meta_desc_en}">
   <meta property="og:url" content="{site_url}/">
-  <meta property="og:image" content="{site_url}/assets/banner.svg">
+  <meta property="og:image" content="{site_url}/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:locale" content="pt_PT">
   <meta property="og:locale:alternate" content="en_GB">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="ET-Spotter · {n_strong_buy} UCITS ETFs with Strong Buy today">
+  <meta name="twitter:title" content="ET-Spotter — nota diária de 0 a 1 para ETFs europeus">
   <meta name="twitter:description" content="{meta_desc_en}">
-  <meta name="twitter:image" content="{site_url}/assets/banner.svg">
+  <meta name="twitter:image" content="{site_url}/assets/og-image.png">
   <script type="application/ld+json">{json_ld}</script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
