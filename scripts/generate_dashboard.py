@@ -211,14 +211,9 @@ BRAND_BANNER_SVG = """\
   <text x="640" y="124"
     font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif"
     font-size="11" font-weight="400" fill="#7c83fd" text-anchor="middle" letter-spacing="7">
-    QUANTITATIVE ETF ANALYSIS · AUTOMATED · OPEN SOURCE
+    OPEN SOURCE · MIT LICENSE · DATA: YFINANCE
   </text>
   <rect x="0" y="142" width="1280" height="1" fill="url(#bb_rule)"/>
-  <text x="640" y="156"
-    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif"
-    font-size="9" font-weight="400" fill="#1e1e1e" text-anchor="middle" letter-spacing="3">
-    97 ETFs UCITS · GITHUB ACTIONS · YFINANCE · MIT LICENSE
-  </text>
 </svg>"""
 
 
@@ -446,7 +441,8 @@ def hero_bar_html(n_etfs: int = 97, n_total: int = 97) -> str:
     cards = ""
     for val, label, sub, sub_key, color, glow, tip, label_key, val_key in stats:
         if sub_key == "hero.universe":
-            sub_html = f'{etf_sub} <span data-i18n="hero.universe">no universo</span>'
+            of_span  = f'<span data-i18n="summary.of">de</span> ' if n_etfs != n_total else ''
+            sub_html = f'{of_span}{n_total} <span data-i18n="hero.universe">no universo</span>'
         else:
             sub_html = f'<span data-i18n="{sub_key}">{sub}</span>'
         val_html = f'<span data-i18n="{val_key}">{val}</span>' if val_key else val
@@ -676,7 +672,7 @@ def overview_grid_html(rows_raw: list[dict], signals: list[dict],
   </div>
 </div>"""
     left_summary = _panel("ETF Analysis Summary", summary_body,
-                           f"Top scorer · {len(rows_raw)} ETFs analisados",
+                           f'Top scorer · {len(rows_raw)} <span data-i18n="summary.etfs_analyzed">ETFs analisados</span>',
                            title_key="panel.etf_summary")
 
     # ── Score history mini-chart ──────────────────────────────────────────────
@@ -921,7 +917,7 @@ def summary_cards_html(signals: list[dict], scores_df: pd.DataFrame) -> str:
   {signal_card("Potencial",    "summary.potential",  n_p,   "#FFB800", "#1A1400", f"score ≥ {CONVICTION_POTENTIAL_SCORE} · aguardar confirmação",        "summary.potential_desc")}
   {signal_card("Score > 0.50", "summary.score_above",n_high,"#7C83FD", "#0F1020", f'<span data-i18n="summary.of">de</span> {len(scores_df)} <span data-i18n="summary.etfs_analyzed">ETFs analisados</span>')}
   {signal_card("Score Médio",  "summary.avg_score",  f"{avg_score:.3f}", "#4D9FFF", "#0A1020", "média cross-sectional", "summary.avg_score_desc")}
-  {signal_card("ML ✓",        "summary.ml_confirmed", n_ml_confirmed, "#A78BFA", "#0E0A1A", "quant + XGBoost confirmados")}
+  {signal_card("ML ✓",        "summary.ml_confirmed", n_ml_confirmed, "#A78BFA", "#0E0A1A", "quant + XGBoost confirmados", "summary.ml_confirmed_desc")}
 </div>"""
 
 
@@ -2414,6 +2410,8 @@ html[lang="pt"] .lang-en-only { display: none !important; }
 
 _MONTHS_PT = ["janeiro","fevereiro","março","abril","maio","junho",
               "julho","agosto","setembro","outubro","novembro","dezembro"]
+_MONTHS_EN = ["January","February","March","April","May","June",
+              "July","August","September","October","November","December"]
 
 def signal_deltas_html(deltas: list[dict]) -> str:
     """Banner compacto com upgrades/downgrades de nível de sinal dia-a-dia."""
@@ -2475,8 +2473,11 @@ def signal_deltas_html(deltas: list[dict]) -> str:
 def daily_highlight_card_html(signals_all: list[dict], spy_regime: str, avg_score: float, today_iso: str) -> str:
     """Destaque da análise diária — aparece no topo do tab Overview."""
     from zoneinfo import ZoneInfo
-    today_obj   = datetime.now(ZoneInfo("Europe/Lisbon"))
-    day_fmt     = f"{today_obj.day} de {_MONTHS_PT[today_obj.month-1]} de {today_obj.year}"
+    today_obj    = datetime.now(ZoneInfo("Europe/Lisbon"))
+    day_fmt_pt   = f"{today_obj.day} de {_MONTHS_PT[today_obj.month-1]} de {today_obj.year}"
+    day_fmt_en   = f"{today_obj.day} {_MONTHS_EN[today_obj.month-1]} {today_obj.year}"
+    day_fmt      = (f'<span class="lang-pt-only">{day_fmt_pt}</span>'
+                    f'<span class="lang-en-only">{day_fmt_en}</span>')
     site        = "https://nunovinhas-creator.github.io/ET-spotter"
     article_url = f"{site}/analise-diaria.html"
 
