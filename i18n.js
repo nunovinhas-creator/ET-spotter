@@ -37,11 +37,14 @@
   /* ── DOM updater ──────────────────────────────────────────── */
 
   function applyTranslations(i18n) {
-    /* text content */
+    /* text content — reads data-i18n-options for interpolation */
     var els = document.querySelectorAll('[data-i18n]');
     for (var i = 0; i < els.length; i++) {
       var key = els[i].getAttribute('data-i18n');
-      var val = i18n.t(key);
+      var optsStr = els[i].getAttribute('data-i18n-options');
+      var opts = {};
+      if (optsStr) { try { opts = JSON.parse(optsStr); } catch (e) {} }
+      var val = i18n.t(key, opts);
       if (val && val !== key) els[i].textContent = val;
     }
     /* placeholder attributes */

@@ -106,6 +106,7 @@
     "potential_desc": "await confirmation",
     "avg_score_desc": "cross-sectional average",
     "ml_confirmed": "ML Confirmed",
+    "ml_confirmed_desc": "quant + XGBoost confirmed",
     "of": "of",
     "etfs_analyzed": "ETFs analysed"
   },
@@ -188,6 +189,15 @@
     "headline": "{{strong}} Top Radar · {{buy}} Highlighted · Avg score {{avg}}",
     "headline_no_signals": "Avg score {{avg}} · No buy signals today",
     "read_more": "Read analysis →"
+  },
+  "subscribe": {
+    "title": "Get the daily report every evening",
+    "desc": "All ETF scores · SPY regime alert · category rotation — free.",
+    "email_ph": "your email",
+    "btn": "Subscribe",
+    "privacy": "No spam. Unsubscribe anytime.",
+    "broker_cta": "Want to act on the signals?",
+    "broker_link": "Open DEGIRO account →"
   },
   "footer": {
     "auto_updated": "⟳ AUTO-UPDATED",
