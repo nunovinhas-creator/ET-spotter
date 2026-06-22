@@ -72,3 +72,23 @@ PARENT=$(git rev-parse origin/gh-pages)
 NEW_COMMIT=$(git commit-tree "$NEW_TREE" -p "$PARENT" -m "chore: deploy dashboard")
 git push origin "${NEW_COMMIT}:refs/heads/gh-pages"
 ```
+
+## Subagentes Claude Code (.claude/agents/)
+
+Quatro subagentes especializados em `ci `.claude/agents/`. Nunca os modificas sem instrução explícita.
+
+| Agente | Modelo | Responsabilidade |
+|--------|--------|-----------------|
+| `data-fetcher` | Haiku | Lê `data/reports/scores_latest.csv` → top-10 ETFs, regime SPY, contagem de sinais MiFID II |
+| `model-runner` | Sonnet | Interpreta `data/models/model_report.txt` + `data/reports/backtest_status.json` → estado XGBoost, gate activo/inactivo |
+| `portfolio-tracker` | Haiku | Lê `data/reports/backtest_signals.csv` → ROI por categoria/período, detecção de supressão por regime |
+| `alert-notifier` | Haiku | Decide envio Telegram: só dispara se sinal RADAR MÁXIMO **e** regime BULL; nunca envia em BEAR |
+
+## Comando /scan
+
+`.claude/commands/scan.md` define o comando `/scan` que orquestra os 4 agentes em sequência (data-fetcher primeiro, os restantes em paralelo) e produz uma tabela de estado consolidada: top ETFs, regime, sinais activos, gate XGBoost, status backtest, e decisão de alerta Telegram.
+
+## Workflow update_readme
+
+`.github/workflows/update_readme.yml` dispara em push quando `data/reports/scores_latest.csv` ou `data/reports/backtest_status.json` mudam. Corre `scripts/generate_readme.py` que regenera as secções dinâmicas do README (top ETFs, regime, data de actualização) delimitadas por marcadores `<!-- ET-SPOTTER:TAG:START/END -->`. Faz commit automático com `[skip ci]`.
+
