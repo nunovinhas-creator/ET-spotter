@@ -51,6 +51,7 @@ def main() -> None:
 
     subset["mom_12_1"] = (1 + subset["ret_252d"]) / (1 + subset["ret_21d"]) - 1
     subset = subset[subset["mom_12_1"] > 0].sort_values("score", ascending=False)
+    subset = subset.head(3)
 
     if subset.empty:
         print("Nenhum ETF em condição de entrada — sem alerta")
