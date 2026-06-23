@@ -68,6 +68,13 @@ jobs:
           EMAIL_TO:       ${{ secrets.EMAIL_TO }}
         run: python scripts/daily_report.py
 
+      - name: Telegram alert — entrada potencial
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_etf_alert.py
+
       - name: Commit report artifacts
         run: |
           git config --global user.name "et-spotter-bot"
