@@ -548,10 +548,7 @@ def articles_section_html() -> str:
 
 
 def subscribe_section_html() -> str:
-    """Email capture (Beehiiv form) + broker affiliate CTA."""
-    broker_href = DEGIRO_AFFILIATE_LINK or "https://www.degiro.eu/"
-    rel_attr    = 'rel="noopener sponsored"' if DEGIRO_AFFILIATE_LINK else 'rel="noopener"'
-
+    """Email capture (Beehiiv form)."""
     return f"""
 <section class="section" id="subscribe-section"
   style="background:linear-gradient(135deg,#08111f 0%,#0d1a2e 100%);
@@ -588,16 +585,6 @@ def subscribe_section_html() -> str:
     <div style="color:var(--muted);font-size:0.68rem;margin-top:10px"
          data-i18n="subscribe.privacy">
       Sem spam. Cancelas quando quiseres.
-    </div>
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ffffff09">
-      <span style="color:var(--muted);font-size:0.70rem" data-i18n="subscribe.broker_cta">
-        Queres agir sobre os sinais?
-      </span>
-      <a href="{broker_href}" target="_blank" {rel_attr}
-         style="color:var(--accent);text-decoration:none;margin-left:6px;font-size:0.70rem;font-weight:600"
-         data-i18n="subscribe.broker_link">
-        Abre conta DEGIRO →
-      </a>
     </div>
   </div>
 </section>"""
