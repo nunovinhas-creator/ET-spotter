@@ -435,10 +435,9 @@ def main():
     email_to = os.getenv("EMAIL_TO", "")
     if email_to:
         send_email(
+            [a.strip() for a in email_to.split(",")],
             f"ET-Spotter – Análise Diária {date_str}",
             html,
-            [a.strip() for a in email_to.split(",")],
-            images=chart_paths,
         )
     else:
         print("[EMAIL] EMAIL_TO não definido.")

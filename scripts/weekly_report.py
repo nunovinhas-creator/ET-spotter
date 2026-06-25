@@ -524,7 +524,7 @@ def main():
         to_list = [a.strip() for a in email_to.split(",") if a.strip()]
         if not to_list:
             continue
-        send_email(subject, html, to_list, images=chart_paths, attachments=attachments)
+        send_email(to_list, subject, html)
 
 
 if __name__ == "__main__":

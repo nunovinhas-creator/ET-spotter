@@ -58,8 +58,7 @@ jobs:
 
       - name: Send weekly report
         env:
-          EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_TO:       ${{ secrets.EMAIL_TO }}
           GENERATE_PDF:   "1"
         run: python scripts/weekly_report.py

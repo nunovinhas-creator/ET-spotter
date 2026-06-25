@@ -451,7 +451,7 @@ def main():
             try:
                 alert_html = build_alert_html(user_alerts, cmap)
                 to_list = [t.strip() for t in email_to.split(",") if t.strip()]
-                send_email(subject, alert_html, to_list)
+                send_email(to_list, subject, alert_html)
                 print(f"[EMAIL] ✓ {user.get('name', email_to)}: {n} alerta(s)")
             except Exception as e:
                 print(f"[EMAIL] ✗ {user.get('name', email_to)}: {e}", file=sys.stderr)

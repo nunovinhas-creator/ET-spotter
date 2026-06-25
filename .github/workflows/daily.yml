@@ -63,8 +63,7 @@ jobs:
 
       - name: Send daily report
         env:
-          EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_TO:       ${{ secrets.EMAIL_TO }}
         run: python scripts/daily_report.py
 
