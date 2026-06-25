@@ -566,8 +566,12 @@ def subscribe_section_html() -> str:
          data-i18n="subscribe.desc">
       Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis.
     </div>
-    <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
-    <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
+    <div style="display:flex;justify-content:center;padding:16px 0">
+      <div style="width:100%;max-width:480px">
+        <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
+        <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
+      </div>
+    </div>
     <div style="color:var(--muted);font-size:0.68rem;margin-top:10px"
          data-i18n="subscribe.privacy">
       Sem spam. Cancelas quando quiseres.
@@ -2773,8 +2777,12 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
     <div class="subscribe-box" style="margin-top:40px">
       <h3>📬 Recebe esta análise por email todos os dias às 22h</h3>
       <p>Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis</p>
-      <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
-      <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
+      <div style="display:flex;justify-content:center;padding:16px 0">
+        <div style="width:100%;max-width:480px">
+          <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
+          <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
+        </div>
+      </div>
       <p class="privacy">Sem spam. Cancelas quando quiseres.</p>
     </div>
 
