@@ -61,22 +61,6 @@ jobs:
           force_orphan: false
           commit_message: "chore: dashboard ${{ github.run_id }}"
 
-      - name: Debug Beehiiv secrets
-        env:
-          BEEHIIV_API_KEY: ${{ secrets.BEEHIIV_API_KEY }}
-          BEEHIIV_PUB_ID: ${{ secrets.BEEHIIV_PUB_ID }}
-        run: |
-          echo "API_KEY vazia? $([ -z "$BEEHIIV_API_KEY" ] && echo SIM || echo NAO)"
-          echo "PUB_ID vazia? $([ -z "$BEEHIIV_PUB_ID" ] && echo SIM || echo NAO)"
-          echo "API_KEY tamanho: ${#BEEHIIV_API_KEY}"
-          echo "PUB_ID tamanho: ${#BEEHIIV_PUB_ID}"
-          curl -s -o /tmp/beehiiv_test.json -w "%{http_code}" \
-            -H "Authorization: Bearer $BEEHIIV_API_KEY" \
-            "https://api.beehiiv.com/v2/publications/$BEEHIIV_PUB_ID/subscriptions?limit=1" \
-            | tee /tmp/beehiiv_status.txt
-          echo ""
-          cat /tmp/beehiiv_test.json
-
       - name: Send daily report
         env:
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
