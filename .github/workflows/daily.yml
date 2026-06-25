@@ -63,8 +63,10 @@ jobs:
 
       - name: Send daily report
         env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO:          ${{ secrets.EMAIL_TO }}
+          BEEHIIV_API_KEY:   ${{ secrets.BEEHIIV_API_KEY }}
+          BEEHIIV_PUB_ID:    ${{ secrets.BEEHIIV_PUB_ID }}
         run: python scripts/daily_report.py
 
       - name: Telegram alert — entrada potencial

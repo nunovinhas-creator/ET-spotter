@@ -432,15 +432,18 @@ def main():
     out.write_text(html, encoding="utf-8")
     print(f"[OK] {out.name}")
 
-    email_to = os.getenv("EMAIL_TO", "")
-    if email_to:
-        send_email(
-            [a.strip() for a in email_to.split(",")],
-            f"ET-Spotter – Análise Diária {date_str}",
-            html,
-        )
+    from beehiiv_subscribers import get_active_subscribers
+
+    subscribers = get_active_subscribers()
+    email_to    = os.getenv("EMAIL_TO", "")
+
+    all_recipients = list(set(subscribers + ([email_to] if email_to else [])))
+
+    if not all_recipients:
+        print("[SKIP] Sem destinatários — EMAIL_TO vazio e sem subscritores Beehiiv")
     else:
-        print("[EMAIL] EMAIL_TO não definido.")
+        print(f"[INFO] A enviar para {len(all_recipients)} destinatário(s)")
+        send_email(all_recipients, f"ET-Spotter – Análise Diária {date_str}", html)
 
 
 if __name__ == "__main__":
