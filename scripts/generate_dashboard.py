@@ -566,22 +566,8 @@ def subscribe_section_html() -> str:
          data-i18n="subscribe.desc">
       Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis.
     </div>
-    <form action="{BEEHIIV_URL}/subscribe" method="POST" target="_blank"
-          style="max-width:520px;margin:0 auto 4px;display:flex;gap:8px;justify-content:center">
-      <input type="email" name="email" required
-             data-i18n-ph="subscribe.email_ph"
-             placeholder="o teu email"
-             style="flex:1;max-width:300px;background:#0a0d17;border:1px solid var(--border);
-                    border-radius:4px;padding:10px 14px;color:var(--text);font-size:0.8rem;
-                    font-family:inherit;outline:none"
-             onfocus="this.style.borderColor='var(--green)'"
-             onblur="this.style.borderColor='var(--border)'">
-      <button type="submit"
-              style="background:var(--green);color:#000;border:none;border-radius:4px;
-                     padding:10px 18px;font-weight:700;font-size:0.78rem;cursor:pointer;
-                     font-family:inherit;white-space:nowrap"
-              data-i18n="subscribe.btn">Subscrever</button>
-    </form>
+    <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
+    <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
     <div style="color:var(--muted);font-size:0.68rem;margin-top:10px"
          data-i18n="subscribe.privacy">
       Sem spam. Cancelas quando quiseres.
@@ -2787,10 +2773,8 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
     <div class="subscribe-box" style="margin-top:40px">
       <h3>📬 Recebe esta análise por email todos os dias às 22h</h3>
       <p>Score de todos os ETFs · alerta de regime SPY · rotação de categorias — grátis</p>
-      <form action="https://et-spotter.beehiiv.com/subscribe" method="POST" target="_blank" class="sub-form">
-        <input type="email" name="email" placeholder="o teu email" required>
-        <button type="submit">Subscrever</button>
-      </form>
+      <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
+      <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
       <p class="privacy">Sem spam. Cancelas quando quiseres.</p>
     </div>
 

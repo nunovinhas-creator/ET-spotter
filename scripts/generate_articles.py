@@ -159,10 +159,8 @@ def _subscribe() -> str:
 <div class="subscribe-box">
   <h3>📬 Sinal diário às 22h — grátis</h3>
   <p>Score de todos os ETFs · alerta de regime SPY · rotação de categorias</p>
-  <form action="{BEEHIIV_URL}/subscribe" method="POST" target="_blank" class="sub-form">
-    <input type="email" name="email" placeholder="o teu email" required>
-    <button type="submit">Subscrever</button>
-  </form>
+  <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="d4e78e22-ed6f-401d-b41b-75f1e9b316fa"></script>
+  <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
   <p class="privacy">Sem spam. Cancelas quando quiseres.</p>
 </div>"""
 
