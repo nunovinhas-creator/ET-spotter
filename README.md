@@ -329,7 +329,7 @@ Os factores do score v3 têm suporte em literatura peer-reviewed publicada em jo
 | ✅ | GoatCounter analytics (privacy-first, sem cookies) |
 | 🔄 | Alertas push Web Push API (VAPID — infra pronta) |
 | 📋 | Subscrição sem fork — email externo serverless |
-| 📋 | Score v4 — factor ML com SHAP explainability |
+| ⛔ | XGBoost ML gate: **Avaliado e parqueado 2026-06-29** ([ver análise](data/models/model_report.txt)) — ROC-AUC 0.534 (aleatório), accuracy 54.3% < baseline 58.8%, 16/17 features redundantes do Score v3.1. Reabrir só com features independentes (sentimento, macro, microestrutura). |
 | 📋 | Backtesting visual interactivo no dashboard |
 | 📋 | Exportação CSV/PDF de relatórios históricos |
 

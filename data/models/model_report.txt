@@ -1,6 +1,42 @@
-============================================================
-ET-Spotter — XGBoost Signal Model — Relatório de Avaliação
-============================================================
+====================================
+=== DECISÃO 2026-06-29: PARQUEADO ===
+====================================
+
+Avaliado a fundo e não integrado. Razões:
+
+1. ROC-AUC 0.534 (quase aleatório; apenas 3.4 pp acima de 50% random)
+   Accuracy 54.3% ABAIXO do baseline trivial 58.8% (prever sempre UP).
+
+2. Redundância estrutural: 16 das 17 features já entram no Score v3.1.
+   Modelo é eco do Score, sem sinal independente. Top 5 features do modelo:
+   - above_sma200 (19.53%) ← no Score
+   - ret_126d (8.12%) ← no Score
+   - vol_21 (5.77%) ← no Score
+   - rs_mom_21 (5.71%) ← no Score
+   - ret_5d (5.40%) ← no Score
+
+3. Win-rate 60% é artefacto, não mérito:
+   - Buy-and-hold tem 58.8% win-rate (base de 58.7% retornos UP naturalmente)
+   - Ganho do modelo: apenas 1.2 pp — dentro do ruído estatístico
+   - O modelo exclui (prob<0.55) as amostras de MAIOR retorno (+1.95% vs +1.56%)
+
+4. Integração PIORARIA o sistema:
+   Gate prob>=0.55 selecciona amostra inferior. Retorno: +1.56% (modelo) vs
+   +1.70% (buy-hold) vs +1.95% (excluído). Integrá-lo seria anti-correlacionado
+   com o objectivo.
+
+5. Avaliação está correcta:
+   - Split temporal: OK (treino <2026-01-01, teste >=2026-01-01)
+   - Construção target: OK (shift forward 21 dias, sem leakage aparente)
+   - Métricas: OK (medidas no test set correcto)
+   - Problema é real: não há sinal a este horizonte (prob<0.55 tem melhor retorno)
+
+Reabrir só com:
+- Features independentes do Score v3.1 (sentimento, dados macro, microestrutura)
+- Test set genuinamente separado do feature engineering do Score
+- Mínimo de avaliação adversarial (refutar a hipótese de poder preditivo)
+
+====================================
 
 Período de teste: 2026-01-01 → fim
 Linhas de teste:  16,637
@@ -23,6 +59,7 @@ ML (prob≥0.55):   retorno +1.56%  win-rate 60.0%  n=10503
 ML (prob<0.55):   retorno +1.95%  (excluídos pelo modelo)
 Rule-based proxy: retorno +0.77%  win-rate 51.5%  n=7416
 Buy-and-hold all: retorno +1.70%  win-rate 58.8%
+
 ── Feature Importance ──
   above_sma200         0.1953  ███████████████████████████████████████
   ret_126d             0.0812  ████████████████
