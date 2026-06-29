@@ -1,5 +1,7 @@
 <img src="docs/assets/banner.svg" width="100%" alt="ET-Spotter — Quantitative ETF Analysis">
 
+📋 Documentação e índice de portfólio: ver repositório privado [`repos-referencia`](https://github.com/nunovinhas-creator/repos-referencia) — referência detalhada em `repos-referencia/ET-Spotter-REFERENCIA.md`.
+
 <div align="center">
 
 <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&weight=500&duration=3000&pause=1000&color=7C83FD&center=true&vCenter=true&repeat=true&width=700&height=40&lines=Email+diario+as+22h+%E2%80%94+zero+custos+de+infra-estrutura;97+ETFs+UCITS+analisados+automaticamente;Score+academico%3A+Jegadeesh+%2B+Ang+%2B+Kakushadze;Open+source+%C2%B7+GitHub+Actions+%C2%B7+sem+servidores" alt="Typing animation">
