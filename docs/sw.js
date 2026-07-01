@@ -1,6 +1,6 @@
 /* ET-Spotter Service Worker — network-first para o dashboard, push handler para alertas */
 
-const CACHE_VERSION = 'et-spotter-1782940600';
+const CACHE_VERSION = 'et-spotter-1782946911';
 const CACHE_URLS    = ['./index.html'];
 
 self.addEventListener('install', e => {
@@ -49,7 +49,7 @@ self.addEventListener('push', e => {
       body:    data.body    || '',
       icon:    './icon-192.png',
       badge:   './icon-192.png',
-      tag:     data.tag     || 'et-spotter-1782940600',
+      tag:     data.tag     || 'et-spotter-1782946911',
       data:    data,
     })
   );
