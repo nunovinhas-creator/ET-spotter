@@ -58,10 +58,13 @@
     var tls = document.querySelectorAll('[data-i18n-title]');
     for (var k = 0; k < tls.length; k++) {
       var tk = tls[k].getAttribute('data-i18n-title');
+      var isBull = tls[k].dataset.regime === 'BULL';
       var tv = i18n.t(tk, {
-        spy:   tls[k].dataset.spy   || '',
-        sma:   tls[k].dataset.sma   || '',
-        arrow: tls[k].dataset.arrow || '>'
+        spy:        tls[k].dataset.spy   || '',
+        sma:        tls[k].dataset.sma   || '',
+        arrow:      tls[k].dataset.arrow || '>',
+        arrow_word: i18n.t(isBull ? 'header.arrow_word_bull' : 'header.arrow_word_bear'),
+        position:   i18n.t(isBull ? 'header.position_above' : 'header.position_below')
       });
       if (tv && tv !== tk) tls[k].title = tv;
     }

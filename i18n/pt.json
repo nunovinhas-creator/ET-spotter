@@ -11,7 +11,11 @@
   "header": {
     "subtitle": "{{count}} ETFs europeus · nota diária de 0 a 1",
     "updated": "Actualizado:",
-    "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY acima da SMA200 (tendência de alta). BEAR = abaixo (tendência de baixa)."
+    "regime_tip": "Mercado {{arrow_word}}: o índice de referência (SPY {{spy}}) está {{position}} da sua média de longo prazo (SMA200 {{sma}}).",
+    "arrow_word_bull": "em alta",
+    "arrow_word_bear": "em baixa",
+    "position_above": "acima",
+    "position_below": "abaixo"
   },
   "panel": {
     "etf_summary": "ETF Analysis Summary",
@@ -88,7 +92,9 @@
     "regime_bear": "mercado em baixa (SPY abaixo da SMA200)",
     "regime_unknown": "regime de mercado indeterminado",
     "top_etf_up": "subiu {{pct}} nos últimos 3 meses",
-    "top_etf_down": "caiu {{pct}} nos últimos 3 meses"
+    "top_etf_down": "caiu {{pct}} nos últimos 3 meses",
+    "one_sentence": "O ET-Spotter dá, todos os dias, uma nota de 0 a 1 a cada ETF UCITS europeu, para mostrar quais estão a ganhar força — de graça, sem conselhos, só dados.",
+    "cta_secondary": "Ver como o score é calculado"
   },
   "ticker": {
     "score_label": "Score médio",
@@ -197,14 +203,46 @@
     "btn": "Subscrever",
     "privacy": "Sem spam. Cancelas quando quiseres.",
     "broker_cta": "Queres agir sobre os sinais?",
-    "broker_link": "Abre conta DEGIRO →"
+    "broker_link": "Abre conta DEGIRO →",
+    "microcopy": "Grátis para sempre. Sem cartão de crédito."
   },
   "footer": {
-    "auto_updated": "⟳ AUTO-UPDATED",
-    "quant_engine": "⚙ QUANT ENGINE",
-    "etf_scanner": "◈ ETF SCANNER",
-    "open_source": "✦ OPEN SOURCE",
+    "auto_updated": "AUTO-UPDATED",
+    "quant_engine": "QUANT ENGINE",
+    "etf_scanner": "ETF SCANNER",
+    "open_source": "OPEN SOURCE",
     "data_source": "ET-Spotter · dados via yfinance · actualização diária",
     "disclaimer": "Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir."
+  },
+  "whyitmatters": {
+    "title": "Porque é que isto importa?",
+    "p1": "Há mais de 90 ETFs europeus disponíveis para comprar, cada um a mover-se de forma diferente todos os dias. Acompanhar todos, sozinho, significa horas a comparar gráficos — ou, mais frequentemente, decidir por instinto e esperar que corra bem.",
+    "p2": "O ET-Spotter resolve isso reduzindo essa complexidade a uma única nota por ETF. Em vez de olhares para dezenas de indicadores, vês um número: quanto mais alto, mais forte o ETF está agora. Uma leitura de 30 segundos substitui uma tarde de análise.",
+    "p3": "Isto não te diz o que comprar — diz-te onde está a força do mercado hoje, para que a tua próxima decisão (rebalancear, manter, reforçar) seja informada por dados, não por adivinhação."
+  },
+  "trust": {
+    "title": "Porque podes confiar nesta nota",
+    "methodology_title": "Como calculamos a nota",
+    "methodology_body": "Cada ETF recebe uma nota entre 0 e 1, calculada a partir de indicadores de momentum, tendência e risco, comparados entre todos os ETFs do universo analisado. A metodologia segue investigação académica publicada sobre momentum e factor investing — não é uma fórmula secreta, nem uma opinião pessoal.",
+    "transparency_title": "Transparência",
+    "transparency_body": "Todos os sinais emitidos ficam registados e são consultáveis — os que se confirmaram e os que não. Não escondemos os sinais que falharam. Quanto mais tempo o ET-Spotter existir, mais longo (e mais verificável) se torna este histórico.",
+    "limitations_title": "Limitações",
+    "limitations_body": "O ET-Spotter descreve o que os dados mostram hoje; não prevê o futuro nem substitui aconselhamento financeiro profissional. A nota é uma medida estatística de força relativa — não uma recomendação de compra ou venda, e não considera a tua situação financeira pessoal."
+  },
+  "forwhom": {
+    "title": "Para quem é isto",
+    "yes_title": "Para quem é o ET-Spotter",
+    "yes_body": "O ET-Spotter é para quem já investe (ou está a começar a investir) em ETFs UCITS europeus e rebalanceia a carteira periodicamente — mensal ou trimestralmente — e quer uma segunda opinião objectiva antes de decidir, sem passar horas a analisar gráficos.",
+    "no_title": "Para quem não é",
+    "no_body": "Se procuras sinais de negociação intradiária, recomendações de compra e venda, ou uma ferramenta de execução de ordens, o ET-Spotter não é para ti — não somos um broker nem um serviço de trading. Se investes em acções individuais, cripto ou outros activos fora do universo de ETFs UCITS europeus, também não é o produto certo para essa necessidade."
+  },
+  "explore": {
+    "title": "Explorar",
+    "dashboard_title": "Ver a tabela completa",
+    "dashboard_body": "Todos os ETFs do universo, com a nota de hoje e o histórico recente, lado a lado. Clica aqui se já sabes o que procuras e queres comparar directamente.",
+    "methodology_title": "Como funciona o score",
+    "methodology_body": "A explicação completa da metodologia — os factores usados, as referências académicas, e o que a nota não faz. Clica aqui se queres perceber o \"porquê\" antes de confiar no número.",
+    "guides_title": "Guias",
+    "guides_body": "Artigos independentes sobre temas concretos. Clica aqui se preferes aprender através de casos práticos em vez de números isolados."
   }
 }
