@@ -49,15 +49,12 @@
   --champagne: oklch(84% 0.035 82);
   --text:      oklch(81% 0.03 82);
   --muted:     oklch(63% 0.024 82);
-  --vermilion: oklch(58% 0.15 35);
 
   /* semantic aliases — used in JS template strings */
   --green:       oklch(68% 0.11 188);
   --light-green: oklch(58% 0.10 188);
   --yellow:      oklch(84% 0.19 80.46);
   --red:         oklch(58% 0.15 35);
-  --orange:      oklch(62% 0.13 50);
-  --blue:        oklch(84% 0.19 80.46);
   --blue-light:  oklch(70% 0.12 188);
 }
 
@@ -104,18 +101,6 @@ header {
   margin-top: 4px;
 }
 .main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
-
-.summary-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
-  margin-bottom: 16px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.card { background: var(--surface); padding: 20px 16px; flex: 1 1 140px; }
 
 .section {
   background: var(--surface);
@@ -229,41 +214,6 @@ footer {
   margin-top: 8px;
 }
 
-/* Hero stat bar */
-.stat-bar {
-  display: flex;
-  align-items: stretch;
-  background: var(--deep);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 12px;
-  flex: 1;
-  background: var(--surface);
-  cursor: default;
-}
-
-/* CTA strip */
-.cta-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  background: oklch(9% 0.012 188);
-  border: 1px solid oklch(22% 0.06 188);
-  border-radius: 2px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-}
-
 /* Signal legend bar */
 .signal-legend {
   display: flex;
@@ -274,33 +224,6 @@ footer {
   border-bottom: 1px solid var(--border);
   margin-bottom: 20px;
 }
-.stat-div {
-  width: 1px;
-  background: var(--border);
-  flex-shrink: 0;
-  align-self: stretch;
-}
-
-/* GitHub link button */
-.gh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 5px 12px;
-  border-radius: 2px;
-  font-size: 0.72rem;
-  font-family: 'Albert Sans', sans-serif;
-  text-decoration: none;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-              border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.gh-btn:hover { color: var(--gold); border-color: var(--gold); }
-
 /* Academic badges */
 .acad-badge {
   display: inline-block;
@@ -386,23 +309,9 @@ footer {
 }
 .nav-tab:hover { color: #8BA4C8; }
 .nav-tab.active { color: #00D4FF; border-bottom-color: #00D4FF; }
-.alert-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid #1E2D4D11;
-}
-.alert-item:last-child { border-bottom: none; padding-bottom: 0; }
-
 @media (max-width: 700px) {
   .db-grid { grid-template-columns: 1fr; }
   .heat-grid { grid-template-columns: repeat(4, 1fr); }
-}
-@media (max-width: 600px) {
-  .stat-bar { flex-wrap: wrap; }
-  .stat-item { flex: 1 1 calc(33% - 2px); min-width: 80px; }
-  .stat-div { display: none; }
 }
 
 /* Live pulse dot */
@@ -489,7 +398,7 @@ html[lang="pt"] .lang-en-only { display: none !important; }
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  17:16 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  17:39 (Lisboa)
       </div>
     </div>
   </div>
