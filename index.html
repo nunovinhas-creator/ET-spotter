@@ -489,7 +489,7 @@ html[lang="pt"] .lang-en-only { display: none !important; }
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  15:26 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  15:33 (Lisboa)
       </div>
     </div>
   </div>
@@ -698,66 +698,54 @@ function switchTab(tab, btn) {
     Ler análise →
   </a>
 </div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 8px">
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #00FF9D44;border-left:3px solid #00FF9D;border-radius:6px">
-          <div style="color:#00FF9D;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #00FF9D">1</div>
-          <div data-i18n="summary.strong_buy" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">Forte Compra</div>
-          <div data-i18n="summary.strong_buy_desc" style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.62 · todos factores alinhados</div>
-          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:1%;height:3px;background:#00FF9D;border-radius:2px;box-shadow:0 0 6px #00FF9D"></div></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px">
+  <div title="score ≥ 0.62 · todos factores alinhados" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">1</span>
+          <span data-i18n="summary.strong_buy" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Forte Compra</span>
+          <span data-i18n="summary.strong_buy_desc" style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em">score ≥ 0.62 · todos factores alinhados</span>
         </div>
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #00D4FF44;border-left:3px solid #00D4FF;border-radius:6px">
-          <div style="color:#00D4FF;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #00D4FF">42</div>
-          <div data-i18n="summary.buy" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">Compra</div>
-          <div data-i18n="summary.buy_desc" style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.54 · sinal construtivo</div>
-          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:72%;height:3px;background:#00D4FF;border-radius:2px;box-shadow:0 0 6px #00D4FF"></div></div>
+  <div title="score ≥ 0.54 · sinal construtivo" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">42</span>
+          <span data-i18n="summary.buy" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Compra</span>
+          <span data-i18n="summary.buy_desc" style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em">score ≥ 0.54 · sinal construtivo</span>
         </div>
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #FFB80044;border-left:3px solid #FFB800;border-radius:6px">
-          <div style="color:#FFB800;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #FFB800">15</div>
-          <div data-i18n="summary.potential" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">Potencial</div>
-          <div data-i18n="summary.potential_desc" style="color:#4A6080;font-size:0.55rem;margin-top:3px">score ≥ 0.48 · aguardar confirmação</div>
-          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:25%;height:3px;background:#FFB800;border-radius:2px;box-shadow:0 0 6px #FFB800"></div></div>
+  <div title="score ≥ 0.48 · aguardar confirmação" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">15</span>
+          <span data-i18n="summary.potential" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Potencial</span>
+          <span data-i18n="summary.potential_desc" style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em">score ≥ 0.48 · aguardar confirmação</span>
         </div>
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #7C83FD44;border-left:3px solid #7C83FD;border-radius:6px">
-          <div style="color:#7C83FD;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #7C83FD">55</div>
-          <div data-i18n="summary.score_above" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">Score > 0.50</div>
-          <div style="color:#4A6080;font-size:0.55rem;margin-top:3px"><span data-i18n="summary.of">de</span> 84 <span data-i18n="summary.etfs_analyzed">ETFs analisados</span></div>
-          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:94%;height:3px;background:#7C83FD;border-radius:2px;box-shadow:0 0 6px #7C83FD"></div></div>
+  <div title="de 84 ETFs analisados" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">55</span>
+          <span data-i18n="summary.score_above" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Score > 0.50</span>
+          <span style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em"><span data-i18n="summary.of">de</span> 84 <span data-i18n="summary.etfs_analyzed">ETFs analisados</span></span>
         </div>
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #4D9FFF44;border-left:3px solid #4D9FFF;border-radius:6px">
-          <div style="color:#4D9FFF;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #4D9FFF">0.554</div>
-          <div data-i18n="summary.avg_score" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">Score Médio</div>
-          <div data-i18n="summary.avg_score_desc" style="color:#4A6080;font-size:0.55rem;margin-top:3px">média cross-sectional</div>
-          
+  <div title="média cross-sectional" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">0.554</span>
+          <span data-i18n="summary.avg_score" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Score Médio</span>
+          <span data-i18n="summary.avg_score_desc" style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em">média cross-sectional</span>
         </div>
-  <div style="flex:1;min-width:120px;padding:16px 14px;
-            background:linear-gradient(135deg,#0D1525,#0A0F1A);
-            border:1px solid #A78BFA44;border-left:3px solid #A78BFA;border-radius:6px">
-          <div style="color:#A78BFA;font-size:36px;font-weight:800;line-height:1;
-                      text-shadow:0 0 16px #A78BFA">37</div>
-          <div data-i18n="summary.ml_confirmed" style="color:#E8F0FF;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-top:6px">ML ✓</div>
-          <div data-i18n="summary.ml_confirmed_desc" style="color:#4A6080;font-size:0.55rem;margin-top:3px">quant + XGBoost confirmados</div>
-          <div style="margin-top:8px;height:3px;background:#1E2D4D;border-radius:2px"><div style="width:63%;height:3px;background:#A78BFA;border-radius:2px;box-shadow:0 0 6px #A78BFA"></div></div>
+  <div title="quant + XGBoost confirmados" style="
+            flex:1;min-width:100px;padding:14px 12px;text-align:center;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="color:var(--patina);font-size:22px;font-weight:700;line-height:1">37</span>
+          <span data-i18n="summary.ml_confirmed" style="color:var(--text);font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">ML ✓</span>
+          <span data-i18n="summary.ml_confirmed_desc" style="color:var(--muted);font-size:0.52rem;letter-spacing:0.02em">quant + XGBoost confirmados</span>
         </div>
 </div>
 <div class="db-grid">
