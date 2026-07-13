@@ -489,7 +489,7 @@ html[lang="pt"] .lang-en-only { display: none !important; }
         </div>
       </div>
       <div style="color:var(--muted);font-size:11px;display:flex;align-items:center">
-        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  14:59 (Lisboa)
+        <span class="live-dot"></span><span data-i18n="header.updated">Actualizado:</span> 13/07/2026  15:07 (Lisboa)
       </div>
     </div>
   </div>
@@ -942,20 +942,7 @@ function switchTab(tab, btn) {
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:6px">Score Composto v3 — metodologia quantitativa</div>
       <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0" style="margin-bottom:8px">Cada ETF recebe um score cross-sectional de 0 a 1, calculado diariamente como média ponderada de 4 factores académicos. O ranking é relativo ao universo: um score de 0.62 significa que o ETF está no percentil superior do universo analisado nesse dia. <b style="color:var(--text)">Não é uma previsão de retorno</b> — é um snapshot quantitativo do alinhamento de factores no momento actual.</p>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">RADAR MÁXIMO</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.62 — percentil superior: momentum 12-1M forte, tendência confirmada (ADX &gt; 25), risco controlado, alpha positivo vs SPY</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">EM DESTAQUE</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.54 — sinal construtivo: momentum médio-alto, preço acima da SMA200, Sharpe aceitável</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">A OBSERVAR</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.48 — sinal incipiente: momentum positivo mas sem confirmação total de tendência ou risco ajustado</span>
-        </div>
-      </div>
+      <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0">Os três níveis de sinal (Radar Máximo, Em Destaque, A Observar) estão explicados na <a href="javascript:void(0)" onclick="switchTab('overview', document.querySelector('.nav-tab[onclick*=overview]')); var lg=document.querySelector('.signal-legend'); if(lg) lg.scrollIntoView({behavior:'smooth'}); return false;" style="color:var(--patina);text-decoration:underline;text-underline-offset:2px">legenda de sinais no Overview</a>.</p>
     </div>
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:6px">Os 4 factores do score composto (pesos fixos)</div>
@@ -1008,20 +995,7 @@ function switchTab(tab, btn) {
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:6px">Composite Score v3 — quantitative methodology</div>
       <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0" style="margin-bottom:8px">Each ETF receives a cross-sectional score from 0 to 1, calculated daily as a weighted average of 4 academic factors. The ranking is relative to the universe: a score of 0.62 means the ETF is in the top percentile of the universe analysed that day. <b style="color:var(--text)">This is not a return forecast</b> — it is a quantitative snapshot of factor alignment at the current moment.</p>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">TOP RADAR</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.62 — top percentile: strong 12-1M momentum, confirmed trend (ADX &gt; 25), controlled risk, positive alpha vs SPY</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--light-green);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">HIGHLIGHTED</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.54 — constructive signal: medium-high momentum, price above SMA200, acceptable Sharpe</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:var(--yellow);color:#000;font-size:0.60rem;font-weight:bold;padding:2px 8px;border-radius:2px;white-space:nowrap">WATCHING</span>
-          <span style="color:var(--muted);font-size:0.70rem">Score ≥ 0.48 — nascent signal: positive momentum without full trend confirmation or adjusted risk</span>
-        </div>
-      </div>
+      <p style="color:var(--muted);font-size:0.72rem;line-height:1.7;margin:0">The three signal levels (Top Radar, Highlighted, Watching) are explained in the <a href="javascript:void(0)" onclick="switchTab('overview', document.querySelector('.nav-tab[onclick*=overview]')); var lg=document.querySelector('.signal-legend'); if(lg) lg.scrollIntoView({behavior:'smooth'}); return false;" style="color:var(--patina);text-decoration:underline;text-underline-offset:2px">signal legend on the Overview tab</a>.</p>
     </div>
     <div>
       <div style="color:var(--patina);font-size:0.62rem;font-weight:bold;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:6px">The 4 factors of the composite score (fixed weights)</div>
