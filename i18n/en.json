@@ -135,7 +135,7 @@
     "ret3m": "Ret.3M",
     "ret5d": "Ret.5d",
     "disclaimer": "AUTO-GENERATED ANALYSIS · DOES NOT CONSTITUTE FINANCIAL ADVICE",
-    "section_desc": "Top 3 ETFs with highest multi-period momentum alignment, trend and relative strength. Based on academic criteria: Jegadeesh & Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze (2015), AQR, Sharpe.",
+    "section_desc": "Top 3 ETFs with highest multi-period momentum alignment, trend and relative strength. Full academic evidence in the Backtest section.",
     "legal": "Technical analysis based on historical evidence. Does not constitute financial advice or guarantee of return."
   },
   "buy": {
