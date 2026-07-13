@@ -24,7 +24,9 @@
     "alerts": "Alertas Activos",
     "recent_scores": "Scores Recentes",
     "heatmap": "Heatmap de ETFs",
-    "signals": "sinais"
+    "signals": "sinais",
+    "alerts_desc": "Os sinais activos de hoje — ticker, nível e métricas completas — estão na secção \"Scores & Alertas\".",
+    "alerts_link": "Ver todos os sinais activos →"
   },
   "kpi": {
     "spy_regime": "Regime SPY",
