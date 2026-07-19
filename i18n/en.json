@@ -11,11 +11,7 @@
   "header": {
     "subtitle": "{{count}} European ETFs · daily score 0 to 1",
     "updated": "Updated:",
-    "regime_tip": "Market {{arrow_word}}: the benchmark index (SPY {{spy}}) is {{position}} its long-term average (SMA200 {{sma}}).",
-    "arrow_word_bull": "rising",
-    "arrow_word_bear": "falling",
-    "position_above": "above",
-    "position_below": "below"
+    "regime_tip": "SPY {{spy}} {{arrow}} SMA200 {{sma}}. BULL = SPY above 200-day SMA (uptrend). BEAR = below (downtrend)."
   },
   "panel": {
     "etf_summary": "ETF Analysis Summary",
@@ -24,9 +20,7 @@
     "alerts": "Active Alerts",
     "recent_scores": "Recent Scores",
     "heatmap": "ETF Heatmap",
-    "signals": "signals",
-    "alerts_desc": "Today's active signals — ticker, level and full metrics — are in the \"Scores & Alerts\" section.",
-    "alerts_link": "See all active signals →"
+    "signals": "signals"
   },
   "kpi": {
     "spy_regime": "SPY Regime",
@@ -94,9 +88,7 @@
     "regime_bear": "bear market (SPY below 200-day SMA)",
     "regime_unknown": "market regime undetermined",
     "top_etf_up": "up {{pct}} over the past 3 months",
-    "top_etf_down": "down {{pct}} over the past 3 months",
-    "one_sentence": "ET-Spotter gives every European UCITS ETF a daily score from 0 to 1, to show which are gaining strength — free, no advice, just data.",
-    "cta_secondary": "See how the score is calculated"
+    "top_etf_down": "down {{pct}} over the past 3 months"
   },
   "ticker": {
     "score_label": "Avg score",
@@ -135,7 +127,7 @@
     "ret3m": "Ret.3M",
     "ret5d": "Ret.5d",
     "disclaimer": "AUTO-GENERATED ANALYSIS · DOES NOT CONSTITUTE FINANCIAL ADVICE",
-    "section_desc": "Top 3 ETFs with highest multi-period momentum alignment, trend and relative strength. Full academic evidence in the Backtest section.",
+    "section_desc": "Top 3 ETFs with highest multi-period momentum alignment, trend and relative strength. Based on academic criteria: Jegadeesh & Titman (1993), Faber (2007), Antonacci (2014), Ang et al. (2006), Kakushadze (2015), AQR, Sharpe.",
     "legal": "Technical analysis based on historical evidence. Does not constitute financial advice or guarantee of return."
   },
   "buy": {
@@ -205,46 +197,14 @@
     "btn": "Subscribe",
     "privacy": "No spam. Unsubscribe anytime.",
     "broker_cta": "Want to act on the signals?",
-    "broker_link": "Open DEGIRO account →",
-    "microcopy": "Free forever. No credit card."
+    "broker_link": "Open DEGIRO account →"
   },
   "footer": {
-    "auto_updated": "AUTO-UPDATED",
-    "quant_engine": "QUANT ENGINE",
-    "etf_scanner": "ETF SCANNER",
-    "open_source": "OPEN SOURCE",
+    "auto_updated": "⟳ AUTO-UPDATED",
+    "quant_engine": "⚙ QUANT ENGINE",
+    "etf_scanner": "◈ ETF SCANNER",
+    "open_source": "✦ OPEN SOURCE",
     "data_source": "ET-Spotter · data via yfinance · daily update",
     "disclaimer": "Technical information and backtest results — does not constitute financial advice. Signals identify periods of statistical convergence of multiple factors; they do not predict future prices. Always consult a professional before investing."
-  },
-  "whyitmatters": {
-    "title": "Why does this matter?",
-    "p1": "There are over 90 European ETFs available to buy, each moving differently every day. Tracking all of them alone means hours comparing charts — or, more often, deciding by instinct and hoping it works out.",
-    "p2": "ET-Spotter reduces that complexity to a single score per ETF. Instead of scanning dozens of indicators, you see one number: the higher it is, the stronger the ETF is right now. A 30-second read replaces an afternoon of analysis.",
-    "p3": "This doesn't tell you what to buy — it tells you where the market's strength is today, so your next decision (rebalance, hold, add) is informed by data, not guesswork."
-  },
-  "trust": {
-    "title": "Why you can trust this score",
-    "methodology_title": "How the score is calculated",
-    "methodology_body": "Each ETF gets a score between 0 and 1, calculated from momentum, trend and risk indicators, compared across every ETF in the analysed universe. The methodology follows published academic research on momentum and factor investing — it's not a secret formula, and not a personal opinion.",
-    "transparency_title": "Transparency",
-    "transparency_body": "Every signal we issue is logged and reviewable — the ones that worked out and the ones that didn't. We don't hide the signals that failed. The longer ET-Spotter runs, the longer (and more verifiable) this track record becomes.",
-    "limitations_title": "Limitations",
-    "limitations_body": "ET-Spotter describes what the data shows today; it doesn't predict the future and doesn't replace professional financial advice. The score is a statistical measure of relative strength — not a buy or sell recommendation, and it doesn't account for your personal financial situation."
-  },
-  "forwhom": {
-    "title": "Who this is for",
-    "yes_title": "Who ET-Spotter is for",
-    "yes_body": "ET-Spotter is for people who already invest (or are starting to invest) in European UCITS ETFs and rebalance their portfolio periodically — monthly or quarterly — and want an objective second opinion before deciding, without spending hours analysing charts.",
-    "no_title": "Who it isn't for",
-    "no_body": "If you're looking for intraday trading signals, buy/sell recommendations, or an order-execution tool, ET-Spotter isn't for you — we're not a broker or a trading service. If you invest in individual stocks, crypto or other assets outside the European UCITS ETF universe, this isn't the right product for that need either."
-  },
-  "explore": {
-    "title": "Explore",
-    "dashboard_title": "See the full table",
-    "dashboard_body": "Every ETF in the universe, with today's score and recent history, side by side. Click here if you already know what you're looking for and want to compare directly.",
-    "methodology_title": "How the score works",
-    "methodology_body": "The full methodology explained — the factors used, the academic references, and what the score doesn't do. Click here if you want to understand the \"why\" before trusting the number.",
-    "guides_title": "Guides",
-    "guides_body": "Independent articles on specific topics. Click here if you'd rather learn through practical examples than isolated numbers."
   }
 }
