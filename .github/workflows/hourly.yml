@@ -58,3 +58,11 @@ jobs:
             git add data/ docs/
             git diff --cached --quiet || git commit -m "chore: hourly data update $(date -u '+%Y-%m-%d %H:%M') UTC"
           done
+
+      - name: Deploy dashboard to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./docs
+          keep_files: false
