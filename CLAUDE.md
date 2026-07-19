@@ -16,13 +16,24 @@ script que afeta o dashboard, o HTML tem de acompanhar.
 
 ## Deploy automático para GitHub Pages
 
-Após qualquer commit que altere `docs/index.html`, `docs/sw.js` ou `docs/manifest.json`,
-faz **sempre** o deploy directo para o branch `gh-pages` sem precisar de ser pedido.
+Desde 2026-07-19, o deploy para `gh-pages` é **automático**: os workflows
+`daily.yml`, `hourly.yml` e `weekly.yml` têm um passo final
+`peaceiris/actions-gh-pages@v4` que espelha `docs/` inteiro (incluindo
+`docs/assets/`) para o branch `gh-pages` sempre que correm. Não é preciso
+nenhuma acção manual — isto corrigiu um problema em que o site ficava
+desactualizado sempre que nenhuma sessão Claude Code corria o deploy manual
+(o `gh-pages` ficou parado em 13/07/2026 enquanto o `main` continuava a
+actualizar-se diariamente via GitHub Actions).
 
-**IMPORTANTE**: O deploy deve incluir TODOS os ficheiros de `docs/` — não só os 4 core.
+Se precisares de forçar um deploy fora do ciclo normal (ex: testar uma
+alteração local ao dashboard antes do próximo workflow correr), usa o
+procedimento manual abaixo como *fallback* — mas nota que o próximo workflow
+agendado vai sobrepor-se de qualquer forma.
+
+**IMPORTANTE**: O deploy manual deve incluir TODOS os ficheiros de `docs/` — não só os 4 core.
 Nunca omitir as páginas de artigos (`analise-diaria.html`, etc.) nem o `i18n/`.
 
-Procedimento (git plumbing — usar ficheiros temporários para os `printf`, NÃO pipeline directo):
+Procedimento manual (git plumbing — usar ficheiros temporários para os `printf`, NÃO pipeline directo):
 
 ```bash
 git fetch origin gh-pages
