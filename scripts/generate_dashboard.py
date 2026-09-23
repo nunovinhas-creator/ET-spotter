@@ -1780,18 +1780,22 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   allocation_rows = []
   for _, cycle in simulation_df.iterrows():
     for allocation in json.loads(cycle["allocation_details"]):
+      score_display = f"{allocation['score']:.4f}" if allocation.get("score") is not None else "—"
+      volatility_display = f"{allocation['volatility_21'] * 100:.2f}%" if allocation.get("volatility_21") is not None else "—"
+      rebalance_display = "Executado" if bool(cycle["rebalance_executed"]) else "Dentro da banda"
       allocation_rows.append(
         "<tr>"
         f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>até {html_mod.escape(str(cycle['cycle_end'])[:10])}</small></td>"
         f"<td><strong>{html_mod.escape(allocation['ticker'])}</strong><br><small>{html_mod.escape(allocation['name'])}</small></td>"
-        f"<td>{allocation['score']:.4f}</td>"
-        f"<td>{allocation['volatility_21'] * 100:.2f}%</td>"
+        f"<td>{score_display}</td>"
+        f"<td>{volatility_display}</td>"
         f"<td>{allocation['weight'] * 100:.1f}%</td>"
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
         f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
         f"<td>€{float(cycle['friction_cost_eur']):,.2f}</td>"
         f"<td>{html_mod.escape(str(cycle['market_regime']))}</td>"
         f"<td>{float(cycle['exposure']) * 100:.0f}%</td>"
+        f"<td>{rebalance_display}<br><small>desvio {float(cycle['max_weight_deviation']) * 100:.1f}%</small></td>"
         "</tr>"
       )
   allocation_table = "".join(allocation_rows)
@@ -1812,6 +1816,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Ponderação: inversa à volatilidade histórica de 21 dias (os ativos mais estáveis recebem maior peso).</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Threshold de rebalanceamento: {summary['rebalance_threshold'] * 100:.1f}% · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   <div style="display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
@@ -1851,7 +1856,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th>
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th><th style="padding:8px">Estado</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>
