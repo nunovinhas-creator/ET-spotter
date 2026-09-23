@@ -1785,6 +1785,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
         f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>até {html_mod.escape(str(cycle['cycle_end'])[:10])}</small></td>"
         f"<td><strong>{html_mod.escape(allocation['ticker'])}</strong><br><small>{html_mod.escape(allocation['name'])}</small></td>"
         f"<td>{allocation['score']:.4f}</td>"
+        f"<td>{allocation['volatility_21'] * 100:.2f}%</td>"
         f"<td>{allocation['weight'] * 100:.1f}%</td>"
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
         f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
@@ -1810,6 +1811,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
     <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Ponderação: inversa à volatilidade histórica de 21 dias (os ativos mais estáveis recebem maior peso).</div>
   <div style="display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
@@ -1849,7 +1851,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th>
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>

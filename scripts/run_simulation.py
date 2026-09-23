@@ -56,7 +56,7 @@ def run_backtest(
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
 
-    required_columns = {"date", "etf", "score", "ret_1d"}
+    required_columns = {"date", "etf", "score", "ret_1d", "vol_21"}
     missing_columns = required_columns.difference(df.columns)
     if missing_columns:
         raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
@@ -91,6 +91,11 @@ def run_backtest(
             market_regime = "BULL" if benchmark_close > benchmark_sma200 else "BEAR"
         exposure = 0.0 if market_regime == "BEAR" else 1.0
         holdings = selected_holdings if exposure else set()
+        volatility = selection.set_index("etf")["vol_21"].abs().replace(0, float("nan"))
+        volatility = volatility.replace([float("inf"), float("-inf")], float("nan"))
+        volatility = volatility.fillna(volatility.median()).fillna(1.0)
+        inverse_volatility = 1 / volatility
+        risk_parity_weights = inverse_volatility / inverse_volatility.sum()
         turnover = 0.0 if holdings == previous_holdings else 1 - len(holdings & previous_holdings) / 3
         friction_cost_rate = transaction_cost * turnover
         gross_daily_returns = (
@@ -100,8 +105,8 @@ def run_backtest(
             .reindex(columns=sorted(selected_holdings))
         )
         selected_asset_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
-        asset_cycle_returns = selected_asset_returns * exposure
-        gross_cycle_return = asset_cycle_returns.mean()
+        asset_cycle_returns = selected_asset_returns * risk_parity_weights * exposure
+        gross_cycle_return = asset_cycle_returns.sum()
         risk_free_cycle_return = (1 + risk_free_rate_annual) ** (rebalance_every / 252) - 1
         portfolio_value_before = portfolio_value
         friction_cost_eur = portfolio_value_before * friction_cost_rate
@@ -111,8 +116,10 @@ def run_backtest(
                 "ticker": ticker,
                 "name": etf_names.get(ticker, ticker),
                 "score": round(float(selection.loc[selection["etf"] == ticker, "score"].iloc[0]), 4),
-                "weight": exposure / len(selected_holdings),
-                "contribution": float(asset_cycle_returns[ticker] / len(selected_holdings)),
+                "volatility_21": round(float(volatility[ticker]), 6),
+                "weight": float(risk_parity_weights[ticker] * exposure),
+                "contribution": float(asset_cycle_returns[ticker]),
+                "weighting": "inverse_volatility",
                 "active": bool(exposure),
             }
             for ticker in sorted(selected_holdings)
@@ -192,6 +199,7 @@ def run_backtest(
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
     print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
+    print("Ponderação: inversa à volatilidade histórica de 21 dias")
 
     output_path = Path("data/reports/simulation_results.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
