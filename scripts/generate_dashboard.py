@@ -1747,11 +1747,12 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
         return ""
 
   summary = simulation_df.iloc[0]
+  current = simulation_df.iloc[-1]
   chart_data = {
     "labels": simulation_df["cycle_end"].astype(str).tolist(),
     "datasets": [
       {
-        "label": "Estratégia Top 3 (€)",
+                "label": "Estratégia com filtro SMA200 (€)",
         "data": simulation_df["portfolio_value"].round(2).tolist(),
         "borderColor": "#00D4FF",
         "backgroundColor": "rgba(0, 212, 255, 0.12)",
@@ -1788,6 +1789,8 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
         f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
         f"<td>€{float(cycle['friction_cost_eur']):,.2f}</td>"
+        f"<td>{html_mod.escape(str(cycle['market_regime']))}</td>"
+        f"<td>{float(cycle['exposure']) * 100:.0f}%</td>"
         "</tr>"
       )
   allocation_table = "".join(allocation_rows)
@@ -1807,12 +1810,13 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
     <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
-  <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;margin-bottom:16px">
+  <div style="display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
   {metric_card("Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
   {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
   {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
+  {metric_card("SMA200 atual", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", "#FFB800")}
   </div>
   <div style="position:relative;height:260px">
     <canvas id="simulationChart"></canvas>
@@ -1845,7 +1849,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th>
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>

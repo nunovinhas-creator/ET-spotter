@@ -28,13 +28,17 @@ def _load_etf_names() -> dict[str, str]:
     }
 
 
-def _load_benchmark_returns(dates: list[pd.Timestamp]) -> pd.Series:
+def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
     benchmark_path = Path(__file__).parent.parent / "data" / "daily" / f"{BENCHMARK_TICKER}.csv"
     if not benchmark_path.exists():
-        return pd.Series(0.0, index=dates)
+        return pd.DataFrame(index=dates, data={"close": float("nan"), "ret_1d": 0.0, "sma200": float("nan")})
     benchmark = pd.read_csv(benchmark_path, parse_dates=["Date"])
-    benchmark = benchmark.set_index("Date")["close"].pct_change()
-    return benchmark.reindex(dates).fillna(0.0)
+    benchmark = benchmark.set_index("Date")[["close"]]
+    benchmark["ret_1d"] = benchmark["close"].pct_change().fillna(0.0)
+    benchmark["sma200"] = benchmark["close"].rolling(200, min_periods=200).mean()
+    benchmark = benchmark.reindex(dates).ffill()
+    benchmark["ret_1d"] = benchmark["ret_1d"].fillna(0.0)
+    return benchmark
 
 
 def run_backtest(
@@ -60,7 +64,7 @@ def run_backtest(
     df_clean = df.dropna(subset=["score", "ret_1d"]).copy()
     etf_names = _load_etf_names()
     trading_dates = sorted(df_clean["date"].unique())
-    benchmark_returns = _load_benchmark_returns(trading_dates)
+    benchmark_data = _load_benchmark_data(trading_dates)
     cycles = []
     previous_holdings = set()
     portfolio_value = INITIAL_CAPITAL
@@ -74,19 +78,29 @@ def run_backtest(
             .sort_values("score", ascending=False)
             .head(3)
         )
-        holdings = set(selection["etf"])
-        if len(holdings) != 3:
+        selected_holdings = set(selection["etf"])
+        if len(selected_holdings) != 3:
             continue
 
-        turnover = 1.0 if not previous_holdings else 1 - len(holdings & previous_holdings) / 3
+        benchmark_row = benchmark_data.loc[start_date]
+        benchmark_close = benchmark_row["close"]
+        benchmark_sma200 = benchmark_row["sma200"]
+        if pd.isna(benchmark_sma200) or pd.isna(benchmark_close):
+            market_regime = "UNKNOWN"
+        else:
+            market_regime = "BULL" if benchmark_close > benchmark_sma200 else "BEAR"
+        exposure = 0.0 if market_regime == "BEAR" else 1.0
+        holdings = selected_holdings if exposure else set()
+        turnover = 0.0 if holdings == previous_holdings else 1 - len(holdings & previous_holdings) / 3
         friction_cost_rate = transaction_cost * turnover
         gross_daily_returns = (
-            df_clean[df_clean["date"].isin(cycle_dates) & df_clean["etf"].isin(holdings)]
+            df_clean[df_clean["date"].isin(cycle_dates) & df_clean["etf"].isin(selected_holdings)]
             .pivot_table(index="date", columns="etf", values="ret_1d")
             .reindex(cycle_dates)
-            .reindex(columns=sorted(holdings))
+            .reindex(columns=sorted(selected_holdings))
         )
-        asset_cycle_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
+        selected_asset_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
+        asset_cycle_returns = selected_asset_returns * exposure
         gross_cycle_return = asset_cycle_returns.mean()
         risk_free_cycle_return = (1 + risk_free_rate_annual) ** (rebalance_every / 252) - 1
         portfolio_value_before = portfolio_value
@@ -97,12 +111,13 @@ def run_backtest(
                 "ticker": ticker,
                 "name": etf_names.get(ticker, ticker),
                 "score": round(float(selection.loc[selection["etf"] == ticker, "score"].iloc[0]), 4),
-                "weight": 1 / len(holdings),
-                "contribution": float(asset_cycle_returns[ticker] / len(holdings)),
+                "weight": exposure / len(selected_holdings),
+                "contribution": float(asset_cycle_returns[ticker] / len(selected_holdings)),
+                "active": bool(exposure),
             }
-            for ticker in sorted(holdings)
+            for ticker in sorted(selected_holdings)
         ]
-        benchmark_cycle_return = benchmark_returns.loc[cycle_dates].add(1).prod() - 1
+        benchmark_cycle_return = benchmark_data.loc[cycle_dates, "ret_1d"].fillna(0).add(1).prod() - 1
         portfolio_value *= 1 + net_cycle_return
         benchmark_value = INITIAL_CAPITAL if not cycles else cycles[-1]["benchmark_value"]
         benchmark_value *= 1 + benchmark_cycle_return
@@ -111,8 +126,12 @@ def run_backtest(
                 "cycle": cycle_number,
                 "date": start_date,
                 "cycle_end": cycle_dates[-1],
-                "holdings": ",".join(sorted(holdings)),
+                "holdings": ",".join(sorted(holdings)) if holdings else "CASH",
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
+                "market_regime": market_regime,
+                "benchmark_close": benchmark_close,
+                "benchmark_sma200": benchmark_sma200,
+                "exposure": exposure,
                 "turnover": turnover,
                 "friction_cost_rate": friction_cost_rate,
                 "friction_cost_eur": friction_cost_eur,
@@ -157,6 +176,9 @@ def run_backtest(
         "sortino_ratio": sortino_ratio,
         "transaction_cost_per_round": transaction_cost,
         "risk_free_rate_annual": risk_free_rate_annual,
+        "bull_cycles": int((portfolio_perf["market_regime"] == "BULL").sum()),
+        "bear_cycles": int((portfolio_perf["market_regime"] == "BEAR").sum()),
+        "average_exposure": portfolio_perf["exposure"].mean(),
     }
     for key, value in summary.items():
         portfolio_perf[key] = value
@@ -169,6 +191,7 @@ def run_backtest(
     print(f"Max Drawdown da estratégia: {max_drawdown * 100:.2f}%")
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
+    print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
 
     output_path = Path("data/reports/simulation_results.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
