@@ -2,7 +2,7 @@ name: Weekly Report
 
 on:
   schedule:
-    - cron: "0 9 * * 1"    # segunda-feira 10h Lisboa durante o horário de inverno
+    - cron: "0 18 * * 5"   # sexta-feira 19h Lisboa durante o horário de verão
   workflow_dispatch:
 
 concurrency:
