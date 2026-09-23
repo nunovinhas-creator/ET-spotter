@@ -341,12 +341,13 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
     <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
     <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
+    <button class="nav-tab" onclick="switchTab('simulation',this)">Simulação</button>
     <button class="nav-tab" onclick="switchTab('guides',this)" data-i18n="nav.guides">Guias</button>
   </nav>
 </header>
 <script>
 function switchTab(tab, btn) {{
-  ['overview','signals','reports','guides'].forEach(function(t) {{
+  ['overview','signals','reports','simulation','guides'].forEach(function(t) {{
     var el = document.getElementById('tab-'+t);
     if (el) el.style.display = t === tab ? '' : 'none';
   }});
@@ -2983,12 +2984,15 @@ async function subscribePush() {{
         _GLOW_DIVIDER,
         history_chart_section(data["hist_df"], data["scores_df"]),
         _GLOW_DIVIDER,
-        simulation_chart_section(data["simulation_df"]),
-        _GLOW_DIVIDER,
         backtest_section(data["bt_df"]),
         portfolio_section(PORTFOLIO, data["cmap"]),
         _GLOW_DIVIDER,
         etf_table_section(data["scores_df"], data["cmap"], metadata),
+        '</div>',
+
+        # ── Tab: Simulação ───────────────────────────────────────────────────
+        '<div id="tab-simulation" style="display:none">',
+        simulation_chart_section(data["simulation_df"]),
         '</div>',
 
         # ── Tab: Guias ────────────────────────────────────────────────────────
