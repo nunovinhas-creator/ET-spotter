@@ -2,7 +2,7 @@ name: Weekly Report
 
 on:
   schedule:
-    - cron: "0 21 * * 5"   # sexta-feira 22h Lisboa — após fecho US em todas as estações
+    - cron: "0 9 * * 1"    # segunda-feira 10h Lisboa durante o horário de inverno
   workflow_dispatch:
 
 concurrency:
@@ -47,6 +47,12 @@ jobs:
 
       - name: Generate dashboard
         run: python scripts/generate_dashboard.py
+
+      - name: Send weekly simulation summary to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_weekly_simulation_summary.py
 
       - name: Send weekly report
         env:
