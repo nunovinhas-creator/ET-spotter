@@ -66,6 +66,10 @@ def load_data(cfg: dict) -> dict:
     bt_path = REPORTS / "backtest_signals.csv"
     bt_df = pd.read_csv(bt_path) if bt_path.exists() else pd.DataFrame()
 
+    # evolução da carteira simulada (opcional)
+    simulation_path = REPORTS / "simulation_results.csv"
+    simulation_df = pd.read_csv(simulation_path) if simulation_path.exists() else pd.DataFrame()
+
     # delta_score: day-over-day change per ETF from history
     delta_map: dict[str, float] = {}
     signal_deltas: list[dict] = []
@@ -126,6 +130,7 @@ def load_data(cfg: dict) -> dict:
         "cats":          cats,
         "hist_df":       hist_df,
         "bt_df":         bt_df,
+        "simulation_df": simulation_df,
         "cmap":          cmap,
         "spy_close":     spy_close,
         "spy_sma200":    spy_sma200,
@@ -1735,6 +1740,59 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 </section>"""
 
 
+def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
+    if simulation_df.empty or not {"cycle_end", "portfolio_value"}.issubset(simulation_df.columns):
+        return ""
+
+    chart_data = {
+        "labels": simulation_df["cycle_end"].astype(str).tolist(),
+        "datasets": [{
+            "label": "Valor da carteira (€)",
+            "data": simulation_df["portfolio_value"].round(2).tolist(),
+            "borderColor": "#00D4FF",
+            "backgroundColor": "rgba(0, 212, 255, 0.12)",
+            "fill": True,
+            "tension": 0.25,
+            "pointRadius": 3,
+            "pointBackgroundColor": "#FFB800",
+            "borderWidth": 2,
+        }],
+    }
+    chart_json = json.dumps(chart_data, ensure_ascii=False)
+    return f"""
+<section class="section">
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Evolução da carteira simulada</span></h2>
+  <div style="position:relative;height:260px">
+    <canvas id="simulationChart"></canvas>
+  </div>
+  <script>
+    (function() {{
+      const ctx = document.getElementById("simulationChart").getContext("2d");
+      new Chart(ctx, {{
+        type: "line",
+        data: {chart_json},
+        options: {{
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {{ mode: "index", intersect: false }},
+          scales: {{
+            x: {{ ticks: {{ color:"oklch(63% 0.024 82)", maxTicksLimit:8, font:{{size:10}} }},
+                   grid: {{ color:"oklch(15% 0.008 95)" }} }},
+            y: {{ ticks: {{ color:"oklch(63% 0.024 82)", font:{{size:10}},
+                   callback: value => "€" + Number(value).toLocaleString("pt-PT") }},
+                   grid: {{ color:"oklch(15% 0.008 95)" }} }}
+          }},
+          plugins: {{
+            legend: {{ labels: {{ color:"oklch(81% 0.03 82)", font:{{size:11}} }} }},
+            tooltip: {{ callbacks: {{ label: context => " €" + Number(context.parsed.y).toLocaleString("pt-PT", {{minimumFractionDigits:2}}) }} }}
+          }}
+        }}
+      }});
+    }})();
+  </script>
+</section>"""
+
+
 def backtest_section(bt_df: pd.DataFrame) -> str:
     # Ler status do backtest — mostrar painel de acumulação se necessário
     status_path = REPORTS / "backtest_status.json"
@@ -2815,6 +2873,9 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def generate_dashboard(cfg: dict) -> None:
+    from run_simulation import run_backtest
+
+    run_backtest()
     data = load_data(cfg)
     if not data:
         print("[SKIP] Sem dados para o dashboard.")
@@ -2921,6 +2982,8 @@ async function subscribePush() {{
         '<div id="tab-reports" style="display:none">',
         _GLOW_DIVIDER,
         history_chart_section(data["hist_df"], data["scores_df"]),
+        _GLOW_DIVIDER,
+        simulation_chart_section(data["simulation_df"]),
         _GLOW_DIVIDER,
         backtest_section(data["bt_df"]),
         portfolio_section(PORTFOLIO, data["cmap"]),
