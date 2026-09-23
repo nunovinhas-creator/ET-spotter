@@ -1742,27 +1742,71 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 
 
 def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
-    if simulation_df.empty or not {"cycle_end", "portfolio_value"}.issubset(simulation_df.columns):
+  required = {"date", "cycle_end", "portfolio_value", "allocation_details"}
+  if simulation_df.empty or not required.issubset(simulation_df.columns):
         return ""
 
-    chart_data = {
-        "labels": simulation_df["cycle_end"].astype(str).tolist(),
-        "datasets": [{
-            "label": "Valor da carteira (€)",
-            "data": simulation_df["portfolio_value"].round(2).tolist(),
-            "borderColor": "#00D4FF",
-            "backgroundColor": "rgba(0, 212, 255, 0.12)",
-            "fill": True,
-            "tension": 0.25,
-            "pointRadius": 3,
-            "pointBackgroundColor": "#FFB800",
-            "borderWidth": 2,
-        }],
-    }
-    chart_json = json.dumps(chart_data, ensure_ascii=False)
-    return f"""
+  summary = simulation_df.iloc[0]
+  chart_data = {
+    "labels": simulation_df["cycle_end"].astype(str).tolist(),
+    "datasets": [
+      {
+        "label": "Estratégia Top 3 (€)",
+        "data": simulation_df["portfolio_value"].round(2).tolist(),
+        "borderColor": "#00D4FF",
+        "backgroundColor": "rgba(0, 212, 255, 0.12)",
+        "fill": True,
+        "tension": 0.25,
+        "pointRadius": 3,
+        "pointBackgroundColor": "#FFB800",
+        "borderWidth": 2,
+      },
+      {
+        "label": f"{summary.get('benchmark_ticker', 'Benchmark')} (€)",
+        "data": simulation_df.get("benchmark_value", pd.Series(dtype=float)).round(2).tolist(),
+        "borderColor": "#FFB800",
+        "backgroundColor": "transparent",
+        "fill": False,
+        "tension": 0.25,
+        "pointRadius": 2,
+        "borderWidth": 2,
+        "borderDash": [5, 4],
+      },
+    ],
+  }
+  chart_json = json.dumps(chart_data, ensure_ascii=False)
+  allocation_rows = []
+  for _, cycle in simulation_df.iterrows():
+    for allocation in json.loads(cycle["allocation_details"]):
+      allocation_rows.append(
+        "<tr>"
+        f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>até {html_mod.escape(str(cycle['cycle_end'])[:10])}</small></td>"
+        f"<td><strong>{html_mod.escape(allocation['ticker'])}</strong><br><small>{html_mod.escape(allocation['name'])}</small></td>"
+        f"<td>{allocation['score']:.4f}</td>"
+        f"<td>{allocation['weight'] * 100:.1f}%</td>"
+        f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
+        "</tr>"
+      )
+  allocation_table = "".join(allocation_rows)
+
+  def metric_card(label: str, value: str, color: str) -> str:
+    return (
+      f'<div style="background:#090E1A;border:1px solid #1E2D4D;border-radius:5px;padding:14px 16px">'
+      f'<div style="color:{color};font-size:1.18rem;font-weight:700">{value}</div>'
+      f'<div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-top:4px">{label}</div>'
+      "</div>"
+    )
+
+  return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Evolução da carteira simulada</span></h2>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Simulação Top 3 · Performance e alocações</span></h2>
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;margin-bottom:16px">
+  {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
+  {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
+  {metric_card("Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
+  {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
+  {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
+  </div>
   <div style="position:relative;height:260px">
     <canvas id="simulationChart"></canvas>
   </div>
@@ -1791,6 +1835,14 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
       }});
     }})();
   </script>
+  <div style="overflow-x:auto;margin-top:18px">
+    <table style="width:100%;border-collapse:collapse;font-size:.74rem">
+      <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th>
+      </tr></thead>
+      <tbody>{allocation_table}</tbody>
+    </table>
+  </div>
 </section>"""
 
 
