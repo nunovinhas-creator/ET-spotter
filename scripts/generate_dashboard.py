@@ -1775,6 +1775,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
     ],
   }
   chart_json = json.dumps(chart_data, ensure_ascii=False)
+  export_csv_json = json.dumps(simulation_df.to_csv(index=False), ensure_ascii=False)
   allocation_rows = []
   for _, cycle in simulation_df.iterrows():
     for allocation in json.loads(cycle["allocation_details"]):
@@ -1785,6 +1786,8 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
         f"<td>{allocation['score']:.4f}</td>"
         f"<td>{allocation['weight'] * 100:.1f}%</td>"
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
+        f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
+        f"<td>€{float(cycle['friction_cost_eur']):,.2f}</td>"
         "</tr>"
       )
   allocation_table = "".join(allocation_rows)
@@ -1799,7 +1802,11 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
 
   return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Simulação Top 3 · Performance e alocações</span></h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>Simulação Top 3 · Performance e alocações</span></h2>
+    <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
+  </div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
@@ -1838,11 +1845,25 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th>
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>
   </div>
+  <script>
+    (function() {{
+      const csv = {export_csv_json};
+      document.getElementById("simulationExport").addEventListener("click", function() {{
+        const blob = new Blob([csv], {{ type: "text/csv;charset=utf-8;" }});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "simulation_results.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      }});
+    }})();
+  </script>
 </section>"""
 
 

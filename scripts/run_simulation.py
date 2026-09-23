@@ -7,6 +7,7 @@ import pandas as pd
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.002
+RISK_FREE_RATE_ANNUAL = 0.03
 BENCHMARK_TICKER = "VWCE.DE"
 
 
@@ -39,11 +40,14 @@ def _load_benchmark_returns(dates: list[pd.Timestamp]) -> pd.Series:
 def run_backtest(
     transaction_cost: float = TRANSACTION_COST_PER_ROUND,
     rebalance_every: int = REBALANCE_EVERY_TRADING_DAYS,
+    risk_free_rate_annual: float = RISK_FREE_RATE_ANNUAL,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
     if rebalance_every < 1:
         raise ValueError("rebalance_every must be at least 1")
+    if risk_free_rate_annual < 0:
+        raise ValueError("risk_free_rate_annual must be non-negative")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -75,6 +79,7 @@ def run_backtest(
             continue
 
         turnover = 1.0 if not previous_holdings else 1 - len(holdings & previous_holdings) / 3
+        friction_cost_rate = transaction_cost * turnover
         gross_daily_returns = (
             df_clean[df_clean["date"].isin(cycle_dates) & df_clean["etf"].isin(holdings)]
             .pivot_table(index="date", columns="etf", values="ret_1d")
@@ -83,7 +88,10 @@ def run_backtest(
         )
         asset_cycle_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
         gross_cycle_return = asset_cycle_returns.mean()
-        net_cycle_return = (1 + gross_cycle_return) * (1 - transaction_cost * turnover) - 1
+        risk_free_cycle_return = (1 + risk_free_rate_annual) ** (rebalance_every / 252) - 1
+        portfolio_value_before = portfolio_value
+        friction_cost_eur = portfolio_value_before * friction_cost_rate
+        net_cycle_return = (1 + gross_cycle_return) * (1 - friction_cost_rate) - 1
         allocation_details = [
             {
                 "ticker": ticker,
@@ -106,8 +114,12 @@ def run_backtest(
                 "holdings": ",".join(sorted(holdings)),
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "turnover": turnover,
+                "friction_cost_rate": friction_cost_rate,
+                "friction_cost_eur": friction_cost_eur,
                 "gross_cycle_return": gross_cycle_return,
                 "strategy_ret": net_cycle_return,
+                "risk_free_cycle_return": risk_free_cycle_return,
+                "excess_return": net_cycle_return - risk_free_cycle_return,
                 "portfolio_value": portfolio_value,
                 "benchmark_ticker": BENCHMARK_TICKER,
                 "benchmark_cycle_return": benchmark_cycle_return,
@@ -126,10 +138,10 @@ def run_backtest(
     max_drawdown = portfolio_perf["drawdown"].min()
     cumulative_return = portfolio_perf["portfolio_value"].iloc[-1] / INITIAL_CAPITAL - 1
     annualization = (252 / rebalance_every) ** 0.5
-    cycle_std = portfolio_perf["strategy_ret"].std(ddof=1)
-    sharpe_ratio = portfolio_perf["strategy_ret"].mean() / cycle_std * annualization if cycle_std else 0.0
-    downside_deviation = portfolio_perf["strategy_ret"].clip(upper=0).pow(2).mean() ** 0.5
-    sortino_ratio = portfolio_perf["strategy_ret"].mean() / downside_deviation * annualization if downside_deviation else 0.0
+    cycle_std = portfolio_perf["excess_return"].std(ddof=1)
+    sharpe_ratio = portfolio_perf["excess_return"].mean() / cycle_std * annualization if cycle_std else 0.0
+    downside_deviation = portfolio_perf["excess_return"].clip(upper=0).pow(2).mean() ** 0.5
+    sortino_ratio = portfolio_perf["excess_return"].mean() / downside_deviation * annualization if downside_deviation else 0.0
     real_rebalances = int((portfolio_perf["turnover"].iloc[1:] > 0).sum())
     analysis_start = portfolio_perf["date"].min().strftime("%Y-%m-%d")
     analysis_end = portfolio_perf["cycle_end"].max().strftime("%Y-%m-%d")
@@ -144,6 +156,7 @@ def run_backtest(
         "sharpe_ratio": sharpe_ratio,
         "sortino_ratio": sortino_ratio,
         "transaction_cost_per_round": transaction_cost,
+        "risk_free_rate_annual": risk_free_rate_annual,
     }
     for key, value in summary.items():
         portfolio_perf[key] = value
