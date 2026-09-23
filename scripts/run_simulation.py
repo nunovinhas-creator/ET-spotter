@@ -10,6 +10,7 @@ TRANSACTION_COST_PER_ROUND = 0.002
 RISK_FREE_RATE_ANNUAL = 0.03
 BENCHMARK_TICKER = "VWCE.DE"
 REBALANCE_THRESHOLD = 0.05
+STRESS_SCENARIO_COUNT = 5
 
 
 def _history_path() -> Path:
@@ -40,6 +41,42 @@ def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
     benchmark = benchmark.reindex(dates).ffill()
     benchmark["ret_1d"] = benchmark["ret_1d"].fillna(0.0)
     return benchmark
+
+
+def _historical_stress_scenarios(
+    alpha_cycle: float,
+    beta: float,
+    risk_free_cycle_return: float,
+    rebalance_every: int,
+) -> pd.DataFrame:
+    benchmark_path = Path(__file__).parent.parent / "data" / "daily" / f"{BENCHMARK_TICKER}.csv"
+    if not benchmark_path.exists():
+        return pd.DataFrame()
+    benchmark = pd.read_csv(benchmark_path, parse_dates=["Date"]).set_index("Date")
+    rolling_return = benchmark["close"].pct_change(rebalance_every).dropna().sort_values()
+    selected = []
+    for end_date, benchmark_return in rolling_return.items():
+        if all(abs((end_date - previous_date).days) >= rebalance_every for previous_date, _ in selected):
+            selected.append((end_date, benchmark_return))
+        if len(selected) == STRESS_SCENARIO_COUNT:
+            break
+
+    scenarios = []
+    for scenario_number, (end_date, benchmark_return) in enumerate(selected, start=1):
+        start_position = benchmark.index.get_loc(end_date) - rebalance_every
+        start_date = benchmark.index[max(0, start_position)]
+        estimated_strategy_return = risk_free_cycle_return + alpha_cycle + beta * (benchmark_return - risk_free_cycle_return)
+        scenarios.append(
+            {
+                "scenario": scenario_number,
+                "window_start": start_date.strftime("%Y-%m-%d"),
+                "window_end": end_date.strftime("%Y-%m-%d"),
+                "benchmark_return": benchmark_return,
+                "estimated_strategy_return": estimated_strategy_return,
+                "stress_level": "SEVERO" if benchmark_return <= -0.20 else "FORTE",
+            }
+        )
+    return pd.DataFrame(scenarios)
 
 
 def run_backtest(
@@ -195,6 +232,14 @@ def run_backtest(
     sharpe_ratio = portfolio_perf["excess_return"].mean() / cycle_std * annualization if cycle_std else 0.0
     downside_deviation = portfolio_perf["excess_return"].clip(upper=0).pow(2).mean() ** 0.5
     sortino_ratio = portfolio_perf["excess_return"].mean() / downside_deviation * annualization if downside_deviation else 0.0
+    benchmark_excess = portfolio_perf["benchmark_cycle_return"] - portfolio_perf["risk_free_cycle_return"]
+    benchmark_variance = benchmark_excess.var(ddof=1)
+    beta = portfolio_perf["excess_return"].cov(benchmark_excess) / benchmark_variance if benchmark_variance else 0.0
+    alpha_cycle = portfolio_perf["excess_return"].mean() - beta * benchmark_excess.mean()
+    jensen_alpha_annual = alpha_cycle * (252 / rebalance_every)
+    stress_scenarios = _historical_stress_scenarios(
+        alpha_cycle, beta, portfolio_perf["risk_free_cycle_return"].iloc[0], rebalance_every
+    )
     real_rebalances = int(portfolio_perf["rebalance_executed"].sum())
     cost_saving_cycles = int(portfolio_perf["cost_saving"].sum())
     analysis_start = portfolio_perf["date"].min().strftime("%Y-%m-%d")
@@ -209,6 +254,8 @@ def run_backtest(
         "cumulative_return": cumulative_return,
         "sharpe_ratio": sharpe_ratio,
         "sortino_ratio": sortino_ratio,
+        "jensen_alpha_annual": jensen_alpha_annual,
+        "beta": beta,
         "transaction_cost_per_round": transaction_cost,
         "risk_free_rate_annual": risk_free_rate_annual,
         "bull_cycles": int((portfolio_perf["market_regime"] == "BULL").sum()),
@@ -228,6 +275,7 @@ def run_backtest(
     print(f"Max Drawdown da estratégia: {max_drawdown * 100:.2f}%")
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
+    print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
     print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
     print("Ponderação: inversa à volatilidade histórica de 21 dias")
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
@@ -235,7 +283,10 @@ def run_backtest(
     output_path = Path("data/reports/simulation_results.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     portfolio_perf.to_csv(output_path, index=False)
+    stress_path = output_path.parent / "simulation_stress.csv"
+    stress_scenarios.to_csv(stress_path, index=False)
     print(f"\nResultados gravados em {output_path}")
+    print(f"Stress tests gravados em {stress_path}")
     return portfolio_perf
 
 

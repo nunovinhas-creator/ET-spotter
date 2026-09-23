@@ -69,6 +69,8 @@ def load_data(cfg: dict) -> dict:
     # evolução da carteira simulada (opcional)
     simulation_path = REPORTS / "simulation_results.csv"
     simulation_df = pd.read_csv(simulation_path) if simulation_path.exists() else pd.DataFrame()
+    stress_path = REPORTS / "simulation_stress.csv"
+    stress_df = pd.read_csv(stress_path) if stress_path.exists() else pd.DataFrame()
 
     # delta_score: day-over-day change per ETF from history
     delta_map: dict[str, float] = {}
@@ -131,6 +133,7 @@ def load_data(cfg: dict) -> dict:
         "hist_df":       hist_df,
         "bt_df":         bt_df,
         "simulation_df": simulation_df,
+        "stress_df":     stress_df,
         "cmap":          cmap,
         "spy_close":     spy_close,
         "spy_sma200":    spy_sma200,
@@ -1741,7 +1744,7 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 </section>"""
 
 
-def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
+def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFrame) -> str:
   required = {"date", "cycle_end", "portfolio_value", "allocation_details"}
   if simulation_df.empty or not required.issubset(simulation_df.columns):
         return ""
@@ -1799,6 +1802,16 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
         "</tr>"
       )
   allocation_table = "".join(allocation_rows)
+  stress_rows = "".join(
+    "<tr>"
+    f"<td>{int(row['scenario'])}</td>"
+    f"<td>{html_mod.escape(str(row['window_start']))} → {html_mod.escape(str(row['window_end']))}</td>"
+    f"<td>{float(row['benchmark_return']) * 100:.2f}%</td>"
+    f"<td>{float(row['estimated_strategy_return']) * 100:.2f}%</td>"
+    f"<td>{html_mod.escape(str(row['stress_level']))}</td>"
+    "</tr>"
+    for _, row in stress_df.iterrows()
+  )
 
   def metric_card(label: str, value: str, color: str) -> str:
     return (
@@ -1817,13 +1830,15 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Ponderação: inversa à volatilidade histórica de 21 dias (os ativos mais estáveis recebem maior peso).</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Threshold de rebalanceamento: {summary['rebalance_threshold'] * 100:.1f}% · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
-  <div style="display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-bottom:16px">
+  <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
   {metric_card("Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
   {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
   {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
   {metric_card("SMA200 atual", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", "#FFB800")}
+  {metric_card("Alpha Jensen", f"{summary['jensen_alpha_annual'] * 100:+.2f}%", "#FF4466")}
+  {metric_card("Beta VWCE", f"{summary['beta']:.2f}", "#4D9FFF")}
   </div>
   <div style="position:relative;height:260px">
     <canvas id="simulationChart"></canvas>
@@ -1860,6 +1875,18 @@ def simulation_chart_section(simulation_df: pd.DataFrame) -> str:
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>
+  </div>
+  <div style="margin-top:22px">
+    <h3 style="color:#E8F0FF;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Testes de Stress Histórico</h3>
+    <div style="color:#7183A6;font-size:.68rem;margin-bottom:8px">Piores janelas móveis de 21 sessões do VWCE; retorno da estratégia estimado por Alpha/Beta condicionais.</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.74rem">
+        <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
+          <th style="padding:8px">Cenário</th><th style="padding:8px">Janela</th><th style="padding:8px">VWCE</th><th style="padding:8px">Estratégia estimada</th><th style="padding:8px">Severidade</th>
+        </tr></thead>
+        <tbody>{stress_rows or '<tr><td colspan="5" style="padding:8px;color:#7183A6">Sem dados históricos de stress disponíveis.</td></tr>'}</tbody>
+      </table>
+    </div>
   </div>
   <script>
     (function() {{
@@ -3076,7 +3103,7 @@ async function subscribePush() {{
 
         # ── Tab: Simulação ───────────────────────────────────────────────────
         '<div id="tab-simulation" style="display:none">',
-        simulation_chart_section(data["simulation_df"]),
+        simulation_chart_section(data["simulation_df"], data["stress_df"]),
         '</div>',
 
         # ── Tab: Guias ────────────────────────────────────────────────────────
