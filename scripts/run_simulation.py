@@ -16,6 +16,10 @@ TARGET_VOLATILITY = 0.12
 FRACTIONAL_KELLY = 0.25
 VIX_STRESS_LEVEL = 28.0
 DEFAULT_CATEGORY_CAP = 0.25
+ENSEMBLE_V3_WEIGHT = 0.6
+ENSEMBLE_XGB_WEIGHT = 0.4
+REPORT_PATH = Path("data/reports/simulation_results.csv")
+LEGACY_REPORT_PATH = Path("data/reports/simulation_legacy_incomplete.csv")
 
 
 def _history_path() -> Path:
@@ -106,6 +110,38 @@ def _capped_weights(
     return result.to_dict()
 
 
+def _archive_incomplete_report() -> None:
+    """Retain old cycles separately so they cannot enter the public track-record."""
+    if not REPORT_PATH.exists():
+        return
+    old = pd.read_csv(REPORT_PATH)
+    incomplete = False
+    for details in old.get("allocation_details", pd.Series(dtype=str)).dropna():
+        for allocation in json.loads(details):
+            if any(
+                key not in allocation or pd.isna(allocation.get(key))
+                for key in ("score_v3", "score_final", "weight")
+            ):
+                incomplete = True
+                break
+            if "xgb_proba" not in allocation and allocation.get("ml_prob") is None:
+                incomplete = True
+                break
+        if incomplete:
+            break
+    if incomplete:
+        old["track_record_status"] = "LEGACY_INCOMPLETE"
+        old["ensemble_active"] = False
+        LEGACY_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        old.to_csv(LEGACY_REPORT_PATH, index=False)
+
+
+def _reconstruct_score_v3(df: pd.DataFrame) -> pd.Series:
+    components = {"_momentum": 0.35, "_trend": 0.25, "_risk": 0.25, "_alpha_quality": 0.15}
+    reconstructed = sum(df[column].fillna(0) * weight for column, weight in components.items())
+    return df["score_v3"].where(df["score_v3"].notna(), reconstructed.round(6))
+
+
 def _historical_stress_scenarios(
     alpha_cycle: float,
     beta: float,
@@ -169,14 +205,30 @@ def run_backtest(
     etf_names = _load_etf_names()
     etf_metadata = _load_etf_metadata()
     if "score_v3" not in df_clean.columns:
-        df_clean["score_v3"] = df_clean["score"]
-    if "ml_prob" in df_clean.columns:
-        ensemble_mask = df_clean["score_v3"].notna() & df_clean["ml_prob"].notna()
-        df_clean.loc[ensemble_mask, "score"] = (
-            0.6 * df_clean.loc[ensemble_mask, "score_v3"]
-            + 0.4 * df_clean.loc[ensemble_mask, "ml_prob"]
-        )
-    trading_dates = sorted(df_clean["date"].unique())
+        df_clean["score_v3"] = float("nan")
+    df_clean["score_v3"] = _reconstruct_score_v3(df_clean)
+    df_clean["xgb_proba"] = df_clean.get("ml_prob", pd.Series(float("nan"), index=df_clean.index))
+    model_available = df_clean["xgb_proba"].notna().any()
+    df_clean["score_final"] = df_clean["score_v3"]
+    ensemble_mask = df_clean["score_v3"].notna() & df_clean["xgb_proba"].notna()
+    df_clean.loc[ensemble_mask, "score_final"] = (
+        ENSEMBLE_V3_WEIGHT * df_clean.loc[ensemble_mask, "score_v3"]
+        + ENSEMBLE_XGB_WEIGHT * df_clean.loc[ensemble_mask, "xgb_proba"]
+    ).round(6)
+
+    def _date_is_eligible(date: pd.Timestamp) -> bool:
+        candidates = df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)
+        if len(candidates) != MAX_POSITIONS or candidates["score_v3"].isna().any():
+            return False
+        return not model_available or candidates["xgb_proba"].notna().all()
+
+    all_dates = sorted(df_clean["date"].unique())
+    eligible_dates = [date for date in all_dates if _date_is_eligible(date)]
+    if not eligible_dates:
+        raise ValueError("No complete ensemble dates available for the public track-record")
+    ensemble_active_from = pd.Timestamp(eligible_dates[0]).strftime("%Y-%m-%d")
+    trading_dates = [date for date in all_dates if date >= eligible_dates[0]]
+    _archive_incomplete_report()
     benchmark_data = _load_benchmark_data(trading_dates)
     cycles = []
     current_weights: dict[str, float] = {}
@@ -189,11 +241,15 @@ def run_backtest(
         cycle_dates = trading_dates[start_index:end_index]
         selection = (
             df_clean[df_clean["date"] == start_date]
-            .sort_values("score", ascending=False)
+            .sort_values("score_final", ascending=False)
             .head(MAX_POSITIONS)
         )
         selected_holdings = set(selection["etf"])
-        if len(selected_holdings) != MAX_POSITIONS:
+        if (
+            len(selected_holdings) != MAX_POSITIONS
+            or selection["score_v3"].isna().any()
+            or (model_available and selection["xgb_proba"].isna().any())
+        ):
             continue
 
         benchmark_row = benchmark_data.loc[start_date]
@@ -212,7 +268,7 @@ def run_backtest(
         volatility = selection.set_index("etf")["vol_21"].abs().replace(0, float("nan"))
         volatility = volatility.replace([float("inf"), float("-inf")], float("nan"))
         volatility = volatility.fillna(volatility.median()).fillna(1.0)
-        score_strength = (selection.set_index("etf")["score"] / selection["score"].max()).clip(0.5, 1.0)
+        score_strength = (selection.set_index("etf")["score_final"] / selection["score_final"].max()).clip(0.5, 1.0)
         kelly_multiplier = {}
         for ticker in selected_holdings:
             history = asset_returns_history.get(ticker, [])
@@ -253,9 +309,10 @@ def run_backtest(
             {
                 "ticker": ticker,
                 "name": etf_names.get(ticker, ticker),
-                "score": (round(float(selection.loc[selection["etf"] == ticker, "score"].iloc[0]), 4) if ticker in selected_holdings else None),
+                "score": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in selected_holdings else None),
                 "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in selected_holdings else None),
-                "ml_prob": (round(float(selection.loc[selection["etf"] == ticker, "ml_prob"].iloc[0]), 4) if ticker in selected_holdings and "ml_prob" in selection.columns and pd.notna(selection.loc[selection["etf"] == ticker, "ml_prob"].iloc[0]) else None),
+                "xgb_proba": (round(float(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]), 4) if ticker in selected_holdings and pd.notna(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]) else None),
+                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in selected_holdings else None),
                 "volatility_21": (round(float(volatility[ticker]), 6) if ticker in volatility else None),
                 "target_weight": float(target_weights.get(ticker, 0.0)),
                 "weight": float(active_weights.get(ticker, 0.0)),
@@ -280,6 +337,7 @@ def run_backtest(
                 "target_holdings": ",".join(sorted(selected_holdings)) if target_weights else "CASH",
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "market_regime": market_regime,
+                "regime": market_regime,
                 "benchmark_close": benchmark_close,
                 "benchmark_sma200": benchmark_sma200,
                 "vix_level": vix_level,
@@ -291,6 +349,7 @@ def run_backtest(
                 "turnover": turnover,
                 "friction_cost_rate": friction_cost_rate,
                 "friction_cost_eur": friction_cost_eur,
+                "cost_eur": friction_cost_eur,
                 "gross_cycle_return": gross_cycle_return,
                 "strategy_ret": net_cycle_return,
                 "risk_free_cycle_return": risk_free_cycle_return,
@@ -299,6 +358,9 @@ def run_backtest(
                 "benchmark_ticker": BENCHMARK_TICKER,
                 "benchmark_cycle_return": benchmark_cycle_return,
                 "benchmark_value": benchmark_value,
+                "ensemble_active_from": ensemble_active_from,
+                "ensemble_version": "score_v3_60_xgb_40",
+                "track_record_status": "VALID_ENSEMBLE_60_40",
             }
         )
         end_asset_values = pd.Series(active_weights) * (1 + active_asset_returns)
@@ -337,6 +399,9 @@ def run_backtest(
     cost_saving_cycles = int(portfolio_perf["cost_saving"].sum())
     analysis_start = portfolio_perf["date"].min().strftime("%Y-%m-%d")
     analysis_end = portfolio_perf["cycle_end"].max().strftime("%Y-%m-%d")
+    legacy_cycles_excluded = (
+        len(pd.read_csv(LEGACY_REPORT_PATH)) if LEGACY_REPORT_PATH.exists() else 0
+    )
     summary = {
         "analysis_start": analysis_start,
         "analysis_end": analysis_end,
@@ -363,6 +428,9 @@ def run_backtest(
         "vix_stress_level": VIX_STRESS_LEVEL,
         "ensemble_score_weight_v3": 0.6,
         "ensemble_score_weight_xgb": 0.4,
+        "ensemble_active_from": ensemble_active_from,
+        "legacy_cycles_excluded": legacy_cycles_excluded,
+        "track_record_status": "VALID_ENSEMBLE_60_40",
         "cost_model": "30 bps round-trip: 5 bps commission + 15 bps spread + 10 bps slippage",
     }
     for key, value in summary.items():

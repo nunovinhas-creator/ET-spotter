@@ -69,6 +69,8 @@ def load_data(cfg: dict) -> dict:
     # evolução da carteira simulada (opcional)
     simulation_path = REPORTS / "simulation_results.csv"
     simulation_df = pd.read_csv(simulation_path) if simulation_path.exists() else pd.DataFrame()
+    legacy_path = REPORTS / "simulation_legacy_incomplete.csv"
+    legacy_df = pd.read_csv(legacy_path) if legacy_path.exists() else pd.DataFrame()
     stress_path = REPORTS / "simulation_stress.csv"
     stress_df = pd.read_csv(stress_path) if stress_path.exists() else pd.DataFrame()
 
@@ -133,6 +135,7 @@ def load_data(cfg: dict) -> dict:
         "hist_df":       hist_df,
         "bt_df":         bt_df,
         "simulation_df": simulation_df,
+        "legacy_simulation_df": legacy_df,
         "stress_df":     stress_df,
         "cmap":          cmap,
         "spy_close":     spy_close,
@@ -1785,7 +1788,8 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
     for allocation in json.loads(cycle["allocation_details"]):
       score_display = f"{allocation['score']:.4f}" if allocation.get("score") is not None else "—"
       score_v3_display = f"{allocation['score_v3']:.4f}" if allocation.get("score_v3") is not None else "—"
-      ml_display = f"{allocation['ml_prob']:.3f}" if allocation.get("ml_prob") is not None else "—"
+      xgb_proba = allocation.get("xgb_proba", allocation.get("ml_prob"))
+      ml_display = f"{xgb_proba:.3f}" if xgb_proba is not None else "—"
       volatility_display = f"{allocation['volatility_21'] * 100:.2f}%" if allocation.get("volatility_21") is not None else "—"
       rebalance_display = "Executado" if bool(cycle["rebalance_executed"]) else "Dentro da banda"
       allocation_rows.append(
@@ -1833,6 +1837,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria.</div>
+  <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_status', 'não validado')))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Threshold de rebalanceamento: {summary['rebalance_threshold'] * 100:.1f}% · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
