@@ -73,3 +73,15 @@ Com apenas 2 ciclos, **o resultado depende fortemente da data de início**. A ca
 - Com dados corrigidos, a Política C **não cumpre** os critérios usados nas decisões anteriores (MaxDD ≤ 8%, turnover ≤ 40%), e fica abaixo do VWCE.DE. As conclusões de `track_record_analysis.md`, `score_smoothing_analysis.md`, `score_persistence_analysis.md` e `max_drawdown_fix.md` usavam dados com fins de semana e devem ser revistas antes de qualquer nova decisão.
 - O backtest de sinais (`backtest_signals.py`) passa de 117 para 74 dias de histórico. Volta ao estado `A_ACUMULAR` (74/85 dias), porque os fins de semana estavam a contar como dias.
 - Sharpe/Sortino com 2 ciclos não têm significado (Sortino = 0 sem ciclos negativos).
+
+## Adenda: AIGA.L e PHPT.L truncados
+
+**Causa:** o batch do Yahoo devolveu intermitentemente só a última barra destes dois tickers: AIGA.L desde julho, PHPT.L desde meados de setembro. `fetch_daily.py` sobrescrevia o ficheiro sem verificar, apagando ~2 anos de histórico.
+
+**Correção em `fetch_daily.py`:** um download que começa mais de 10 dias depois do histórico existente é tratado como truncado. É repetido individualmente e, se continuar curto, fundido com o histórico existente. O ficheiro nunca é encurtado.
+
+**Reconstrução:** o ambiente desta sessão não tem acesso ao Yahoo Finance (proxy 403). Os ficheiros foram reconstruídos a partir das 289 (AIGA.L) e 305 (PHPT.L) versões guardadas no histórico git. Cada versão truncada continha a barra real desse dia. Por data fica a versão mais recente.
+- AIGA.L: 575 barras, de 2024-06-03 a 2026-09-23. Fica um buraco de 04/09 a 15/09 (6 dias úteis).
+- PHPT.L: 585 barras, de 2024-06-03 a 2026-09-23, completo.
+
+**Download completo pendente:** corre o workflow manual `Refetch Prices` (`refetch_prices.yml`, input `AIGA.L PHPT.L`). Chama `scripts/refetch_symbols.py`, que valida o resultado (sem duplicados, sem fins de semana, ≥ 400 barras, sem buracos > 5 dias úteis) e falha se o ficheiro continuar incompleto.

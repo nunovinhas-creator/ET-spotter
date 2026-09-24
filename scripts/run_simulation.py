@@ -22,7 +22,8 @@ MIN_SELL_SCORE = 0.40
 REBALANCE_CYCLE_INTERVAL = 2
 DEFAULT_POLICY_NAME = "C"
 # 1 = score_final cru; 2 = média de score_final(t) e score_final(t-1) do ciclo anterior.
-SCORE_SMOOTHING_CYCLES = 1
+# Oficial desde 2026-09-24: Política C + score suavizado (ver policy_evaluation_clean.md).
+SCORE_SMOOTHING_CYCLES = 2
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")

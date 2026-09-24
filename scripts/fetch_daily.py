@@ -1,6 +1,9 @@
 """
 Recolhe 2 anos de dados diários OHLCV para todos os símbolos via yfinance.
-Guarda em data/daily/SYMBOL.csv (sobrescreve).
+Guarda em data/daily/SYMBOL.csv. Um download completo sobrescreve o ficheiro;
+um download truncado (o Yahoo por vezes devolve só a última barra) é repetido
+individualmente e, se continuar curto, é fundido com o histórico existente em vez
+de o apagar.
 
 yfinance usa auto_adjust=True por omissão — preços já ajustados para splits e dividendos.
 Este módulo valida explicitamente que os dados não contêm anomalias de ajustamento.
@@ -18,6 +21,32 @@ from paths import DATA_DAILY
 
 # Limiar para detectar movimento suspeito num único dia (possível split não ajustado)
 SPLIT_THRESHOLD = 0.40
+# Download considerado truncado se começar mais do que isto depois do histórico existente
+TRUNCATION_TOLERANCE_DAYS = 10
+OHLCV = ["open", "high", "low", "close", "volume"]
+
+
+def _existing_history(symbol: str) -> pd.DataFrame:
+    path = DATA_DAILY / f"{symbol}.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(path, index_col=0, parse_dates=True)
+    return df[[c for c in OHLCV if c in df.columns]].dropna(subset=["close"])
+
+
+def is_truncated(new: pd.DataFrame, existing: pd.DataFrame) -> bool:
+    """True se o download cobre muito menos histórico do que o ficheiro atual."""
+    if existing.empty:
+        return False
+    if new.empty:
+        return True
+    return new.index.min() > existing.index.min() + pd.Timedelta(days=TRUNCATION_TOLERANCE_DAYS)
+
+
+def merge_with_existing(new: pd.DataFrame, existing: pd.DataFrame) -> pd.DataFrame:
+    """Mantém as barras antigas e dá prioridade às novas nas datas em comum."""
+    merged = pd.concat([existing[existing.index < new.index.min()], new])
+    return merged[~merged.index.duplicated(keep="last")].sort_index()
 
 
 def validate_splits(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
@@ -159,9 +188,21 @@ def main():
                 print(f"[ERRO] {symbol}: {e}", file=sys.stderr)
         failed = retry_failed
 
-    # Persiste resultados
+    # Persiste resultados, sem nunca encurtar o histórico existente
     ok_count = 0
     for symbol, df in results.items():
+        existing = _existing_history(symbol)
+        if is_truncated(df, existing):
+            print(f"[WARN] {symbol}: download truncado ({len(df)} registos desde {df.index.min().date()}), a repetir individualmente")
+            try:
+                retry = fetch_daily(symbol)
+                if len(retry) > len(df):
+                    df = retry
+            except Exception as e:
+                print(f"[ERRO retry] {symbol}: {e}", file=sys.stderr)
+            if is_truncated(df, existing):
+                df = merge_with_existing(df, existing)
+                print(f"[WARN] {symbol}: continua truncado — fundido com o histórico existente")
         df.to_csv(DATA_DAILY / f"{symbol}.csv")
         print(f"[OK] {symbol} ({len(df)} registos)")
         ok_count += 1

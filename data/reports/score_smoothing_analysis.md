@@ -1,5 +1,7 @@
 # Suavização do score_final: comparação sob a Política C
 
+> **Atualização:** com dados corrigidos, a suavização passou a ser a configuração oficial (`SCORE_SMOOTHING_CYCLES = 2`). Ver `policy_evaluation_clean.md`.
+
 > **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
 
 **Período:** `VALID_ENSEMBLE_60_40`, de 2026-06-09 a 2026-09-24 (3 ciclos de ~42 dias, 2 transições).
