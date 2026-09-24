@@ -21,6 +21,7 @@ MAX_NEW_POSITIONS = 3
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
+VALID_REPORT_PATH = Path("data/reports/simulation_results_valid_ensemble.csv")
 LEGACY_REPORT_PATH = Path("data/reports/simulation_legacy_incomplete.csv")
 
 
@@ -140,8 +141,9 @@ def _archive_incomplete_report() -> None:
 
 def _reconstruct_score_v3(df: pd.DataFrame) -> pd.Series:
     components = {"_momentum": 0.35, "_trend": 0.25, "_risk": 0.25, "_alpha_quality": 0.15}
-    reconstructed = sum(df[column].fillna(0) * weight for column, weight in components.items())
-    return df["score_v3"].where(df["score_v3"].notna(), reconstructed.round(6))
+    complete = df[list(components)].notna().all(axis=1)
+    reconstructed = sum(df[column] * weight for column, weight in components.items()).round(6)
+    return df["score_v3"].where(df["score_v3"].notna(), reconstructed.where(complete))
 
 
 def _historical_stress_scenarios(
@@ -188,6 +190,10 @@ def run_backtest(
     min_holding_cycles: int = MIN_HOLDING_CYCLES,
     max_new_positions: int | None = MAX_NEW_POSITIONS,
     persist_output: bool = True,
+    start_date: str | None = None,
+    require_ensemble: bool = False,
+    output_path: Path = REPORT_PATH,
+    track_record_scope: str = "FULL_HISTORY",
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -229,15 +235,27 @@ def run_backtest(
         candidates = df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)
         if len(candidates) != MAX_POSITIONS or candidates["score_v3"].isna().any():
             return False
-        return not model_available or candidates["xgb_proba"].notna().all()
+        return not require_ensemble or candidates["xgb_proba"].notna().all()
 
     all_dates = sorted(df_clean["date"].unique())
     eligible_dates = [date for date in all_dates if _date_is_eligible(date)]
     if not eligible_dates:
         raise ValueError("No complete ensemble dates available for the public track-record")
-    ensemble_active_from = pd.Timestamp(eligible_dates[0]).strftime("%Y-%m-%d")
-    trading_dates = [date for date in all_dates if date >= eligible_dates[0]]
-    _archive_incomplete_report()
+    ensemble_dates = [
+        date
+        for date in all_dates
+        if len(df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)) == MAX_POSITIONS
+        and df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)["xgb_proba"].notna().all()
+    ]
+    ensemble_active_from = pd.Timestamp(ensemble_dates[0]).strftime("%Y-%m-%d") if ensemble_dates else "UNAVAILABLE"
+    first_date = pd.Timestamp(start_date) if start_date else pd.Timestamp(eligible_dates[0])
+    trading_dates = [date for date in all_dates if date >= first_date and _date_is_eligible(date)]
+    if require_ensemble:
+        trading_dates = [date for date in trading_dates if pd.Timestamp(date) >= pd.Timestamp(ensemble_active_from)]
+    if not trading_dates:
+        raise ValueError(f"No eligible dates for {track_record_scope}")
+    if persist_output and output_path == REPORT_PATH:
+        _archive_incomplete_report()
     benchmark_data = _load_benchmark_data(trading_dates)
     cycles = []
     current_weights: dict[str, float] = {}
@@ -245,10 +263,13 @@ def run_backtest(
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
 
-    for cycle_number, start_index in enumerate(range(0, len(trading_dates), rebalance_every), start=1):
+    for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, rebalance_every), start=1):
         start_date = trading_dates[start_index]
-        end_index = min(start_index + rebalance_every, len(trading_dates))
-        cycle_dates = trading_dates[start_index:end_index]
+        end_index = min(start_index + rebalance_every + 1, len(trading_dates))
+        # The signal is observed at start_date; returns begin on the next date.
+        cycle_dates = trading_dates[start_index + 1:end_index]
+        if not cycle_dates:
+            continue
         ranking_selection = (
             df_clean[df_clean["date"] == start_date]
             .sort_values("score_final", ascending=False)
@@ -258,7 +279,7 @@ def run_backtest(
         if (
             len(selected_holdings) != MAX_POSITIONS
             or ranking_selection["score_v3"].isna().any()
-            or (model_available and ranking_selection["xgb_proba"].isna().any())
+            or (require_ensemble and ranking_selection["xgb_proba"].isna().any())
         ):
             continue
 
@@ -402,7 +423,10 @@ def run_backtest(
                 "max_new_positions": max_new_positions,
                 "ensemble_active_from": ensemble_active_from,
                 "ensemble_version": "score_v3_60_xgb_40",
-                "track_record_status": "VALID_ENSEMBLE_60_40",
+                "track_record_status": "VALID_ENSEMBLE_60_40" if require_ensemble else (
+                    "VALID_ENSEMBLE_60_40" if pd.Timestamp(start_date) >= pd.Timestamp(ensemble_active_from) and ranking_selection["xgb_proba"].notna().all() else "PRE_ENSEMBLE"
+                ),
+                "track_record_scope": track_record_scope,
             }
         )
         end_asset_values = pd.Series(active_weights) * (1 + active_asset_returns)
@@ -478,7 +502,8 @@ def run_backtest(
         "ensemble_score_weight_xgb": 0.4,
         "ensemble_active_from": ensemble_active_from,
         "legacy_cycles_excluded": legacy_cycles_excluded,
-        "track_record_status": "VALID_ENSEMBLE_60_40",
+        "track_record_summary_status": track_record_scope,
+        "track_record_scope": track_record_scope,
         "cost_model": "30 bps round-trip: 5 bps commission + 15 bps spread + 10 bps slippage",
     }
     for key, value in summary.items():
@@ -499,7 +524,6 @@ def run_backtest(
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
 
     if persist_output:
-        output_path = REPORT_PATH
         output_path.parent.mkdir(parents=True, exist_ok=True)
         portfolio_perf.to_csv(output_path, index=False)
         stress_path = output_path.parent / "simulation_stress.csv"
@@ -510,4 +534,13 @@ def run_backtest(
 
 
 if __name__ == "__main__":
-    run_backtest()
+    run_backtest(
+        output_path=REPORT_PATH,
+        track_record_scope="FULL_HISTORY",
+    )
+    run_backtest(
+        start_date="2026-06-09",
+        require_ensemble=True,
+        output_path=VALID_REPORT_PATH,
+        track_record_scope="VALID_ENSEMBLE_60_40",
+    )

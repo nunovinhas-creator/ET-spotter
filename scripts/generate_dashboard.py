@@ -69,6 +69,8 @@ def load_data(cfg: dict) -> dict:
     # evolução da carteira simulada (opcional)
     simulation_path = REPORTS / "simulation_results.csv"
     simulation_df = pd.read_csv(simulation_path) if simulation_path.exists() else pd.DataFrame()
+    valid_simulation_path = REPORTS / "simulation_results_valid_ensemble.csv"
+    valid_simulation_df = pd.read_csv(valid_simulation_path) if valid_simulation_path.exists() else pd.DataFrame()
     legacy_path = REPORTS / "simulation_legacy_incomplete.csv"
     legacy_df = pd.read_csv(legacy_path) if legacy_path.exists() else pd.DataFrame()
     stress_path = REPORTS / "simulation_stress.csv"
@@ -135,6 +137,7 @@ def load_data(cfg: dict) -> dict:
         "hist_df":       hist_df,
         "bt_df":         bt_df,
         "simulation_df": simulation_df,
+        "valid_simulation_df": valid_simulation_df,
         "legacy_simulation_df": legacy_df,
         "stress_df":     stress_df,
         "cmap":          cmap,
@@ -1747,7 +1750,11 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 </section>"""
 
 
-def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFrame) -> str:
+def simulation_chart_section(
+  simulation_df: pd.DataFrame,
+  stress_df: pd.DataFrame,
+  title: str = "Track-record · Score v3 + XGBoost",
+) -> str:
   required = {"date", "cycle_end", "portfolio_value", "allocation_details"}
   if simulation_df.empty or not required.issubset(simulation_df.columns):
         return ""
@@ -1832,12 +1839,12 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
   return f"""
 <section class="section">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>Track-record · Score v3 + XGBoost</span></h2>
+    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>{html_mod.escape(title)}</span></h2>
     <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria.</div>
-  <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_status', 'não validado')))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
+  <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regras de rotação: threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
@@ -3113,7 +3120,16 @@ async function subscribePush() {{
 
         # ── Tab: Simulação ───────────────────────────────────────────────────
         '<div id="tab-simulation" style="display:none">',
-        simulation_chart_section(data["simulation_df"], data["stress_df"]),
+        simulation_chart_section(
+          data["simulation_df"],
+          data["stress_df"],
+          "Histórico completo · PRE_ENSEMBLE + VALID_ENSEMBLE",
+        ),
+        simulation_chart_section(
+          data["valid_simulation_df"],
+          data["stress_df"],
+          "Track-record fiável · VALID_ENSEMBLE_60_40 desde 2026-06-09",
+        ),
         '</div>',
 
         # ── Tab: Guias ────────────────────────────────────────────────────────
