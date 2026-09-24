@@ -1,5 +1,7 @@
 # Suavização do score_final: comparação sob a Política C
 
+> **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
+
 **Período:** `VALID_ENSEMBLE_60_40`, de 2026-06-09 a 2026-09-24 (3 ciclos de ~42 dias, 2 transições).
 **Política C em ambas as variantes:** threshold 12% · holding mínimo 3 ciclos · máx. 2 novas posições · máx. 7 posições · venda só com score < 0,40 · rebalance a cada 2 ciclos · custos 30 bps round-trip.
 

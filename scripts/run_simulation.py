@@ -62,22 +62,42 @@ def _load_etf_metadata() -> dict[str, dict]:
     }
 
 
-def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
-    benchmark_path = Path(__file__).parent.parent / "data" / "daily" / f"{BENCHMARK_TICKER}.csv"
-    if not benchmark_path.exists():
-        return pd.DataFrame(index=dates, data={"close": float("nan"), "ret_1d": 0.0, "sma200": float("nan")})
-    benchmark = pd.read_csv(benchmark_path, parse_dates=["Date"])
-    benchmark = benchmark.set_index("Date")[["close"]]
-    benchmark["ret_1d"] = benchmark["close"].pct_change().fillna(0.0)
-    benchmark["sma200"] = benchmark["close"].rolling(200, min_periods=200).mean()
-    vix_path = Path(__file__).parent.parent / "data" / "daily" / "VIX.csv"
-    if vix_path.exists():
-        vix = pd.read_csv(vix_path, index_col=0, parse_dates=True)
-        benchmark["vix"] = vix["close"].reindex(dates).ffill()
-    else:
-        benchmark["vix"] = float("nan")
-    benchmark = benchmark.reindex(dates).ffill()
-    benchmark["ret_1d"] = benchmark["ret_1d"].fillna(0.0)
+def _read_daily_close(ticker: str) -> pd.Series:
+    path = Path(__file__).parent.parent / "data" / "daily" / f"{ticker}.csv"
+    if not path.exists():
+        return pd.Series(dtype=float)
+    daily = pd.read_csv(path, index_col=0, parse_dates=True)
+    daily.index = pd.to_datetime(daily.index).normalize()
+    daily = daily[~daily.index.duplicated(keep="last")].sort_index()
+    return daily["close"].astype(float) if "close" in daily.columns else pd.Series(dtype=float)
+
+
+def _daily_returns_on_calendar(close: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
+    """Retornos diários no calendário de dias úteis: forward-fill só do preço, 0% sem negociação."""
+    if close.empty:
+        return pd.Series(0.0, index=calendar)
+    prices = close.reindex(close.index.union(calendar)).ffill().reindex(calendar)
+    return prices.pct_change(fill_method=None).fillna(0.0)
+
+
+def _load_price_returns(tickers: list[str], calendar: pd.DatetimeIndex) -> pd.DataFrame:
+    return pd.DataFrame(
+        {ticker: _daily_returns_on_calendar(_read_daily_close(ticker), calendar) for ticker in tickers},
+        index=calendar,
+    )
+
+
+def _load_benchmark_data(calendar: pd.DatetimeIndex) -> pd.DataFrame:
+    close = _read_daily_close(BENCHMARK_TICKER)
+    if close.empty:
+        return pd.DataFrame(index=calendar, data={"close": float("nan"), "ret_1d": 0.0, "sma200": float("nan")})
+    benchmark = pd.DataFrame(index=calendar)
+    benchmark["close"] = close.reindex(close.index.union(calendar)).ffill().reindex(calendar)
+    benchmark["ret_1d"] = _daily_returns_on_calendar(close, calendar)
+    sma200 = close.rolling(200, min_periods=200).mean()
+    benchmark["sma200"] = sma200.reindex(sma200.index.union(calendar)).ffill().reindex(calendar)
+    vix = _read_daily_close("VIX")
+    benchmark["vix"] = vix.reindex(vix.index.union(calendar)).ffill().reindex(calendar) if not vix.empty else float("nan")
     return benchmark
 
 
@@ -235,6 +255,8 @@ def run_backtest(
         raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
 
     df_clean = df.dropna(subset=["score", "ret_1d"]).copy()
+    # Só dias úteis contam como datas de sinal (ver data_quality_weekend_fix.md).
+    df_clean = df_clean[df_clean["date"].dt.dayofweek < 5]
     etf_names = _load_etf_names()
     etf_metadata = _load_etf_metadata()
     if "score_v3" not in df_clean.columns:
@@ -274,7 +296,11 @@ def run_backtest(
         raise ValueError(f"No eligible dates for {track_record_scope}")
     if persist_output and output_path == REPORT_PATH:
         _archive_incomplete_report()
-    benchmark_data = _load_benchmark_data(trading_dates)
+    # Retornos vêm dos preços diários finais num calendário contínuo de dias úteis,
+    # não do ret_1d do histórico de scores (que tinha fins de semana repetidos e falhas).
+    business_days = pd.bdate_range(trading_dates[0], trading_dates[-1])
+    benchmark_data = _load_benchmark_data(business_days)
+    price_returns = _load_price_returns(sorted(df_clean["etf"].unique()), business_days)
     cycles = []
     current_weights: dict[str, float] = {}
     holding_age: dict[str, int] = {}
@@ -290,7 +316,7 @@ def run_backtest(
         start_date = trading_dates[start_index]
         end_index = min(start_index + cycle_span + 1, len(trading_dates))
         # The signal is observed at start_date; returns begin on the next date.
-        cycle_dates = trading_dates[start_index + 1:end_index]
+        cycle_dates = list(business_days[(business_days > start_date) & (business_days <= trading_dates[end_index - 1])])
         if not cycle_dates:
             continue
         day_scores = df_clean[df_clean["date"] == start_date].copy()
@@ -379,12 +405,7 @@ def run_backtest(
             else 0.0
         )
         friction_cost_rate = transaction_cost * turnover
-        gross_daily_returns = (
-            df_clean[df_clean["date"].isin(cycle_dates) & df_clean["etf"].isin(active_holdings)]
-            .pivot_table(index="date", columns="etf", values="ret_1d")
-            .reindex(cycle_dates)
-            .reindex(columns=sorted(active_holdings))
-        )
+        gross_daily_returns = price_returns.reindex(index=cycle_dates, columns=sorted(active_holdings))
         active_asset_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
         weighted_daily_returns = gross_daily_returns.fillna(0).mul(pd.Series(active_weights), axis=1).sum(axis=1)
         gross_cycle_return = (1 + weighted_daily_returns).prod() - 1

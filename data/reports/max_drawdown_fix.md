@@ -1,5 +1,7 @@
 # Correção do cálculo do Max Drawdown do simulador
 
+> **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
+
 ## Problema
 
 `run_simulation.py` calculava o MaxDD só com os valores de **fim de ciclo** e sem o capital inicial. O pico de referência começava no fim do 1.º ciclo. Por isso uma perda de −2,09% no 1.º ciclo aparecia como MaxDD 0,00%, e as quedas dentro de cada ciclo (~42 dias) ficavam invisíveis.

@@ -75,6 +75,7 @@ def build_snapshot(cfg: dict) -> pd.DataFrame:
 
         rows.append({
             "etf":          symbol,
+            "bar_date":     pd.Timestamp(df.index[-1]).normalize(),
             "close":        _safe(last.get("close")),
             "ret_1d":       _safe(last.get("ret_1d")),
             "ret_5d":       _safe(last.get("ret_5d")),
@@ -256,6 +257,18 @@ def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
     return snap
 
 
+def _close_and_return_on(symbol: str, date: pd.Timestamp) -> tuple[float, float]:
+    """Preço e retorno de um ETF num dia útil (forward-fill do preço, 0% sem negociação)."""
+    df = pd.read_csv(DATA_DAILY / f"{symbol}.csv", index_col=0, parse_dates=True)
+    df.index = pd.to_datetime(df.index).normalize()
+    close = df["close"][~df.index.duplicated(keep="last")].sort_index()
+    calendar = pd.bdate_range(date - pd.offsets.BDay(1), date)
+    prices = close.reindex(close.index.union(calendar)).ffill().reindex(calendar)
+    if pd.isna(prices.iloc[-1]):
+        return float("nan"), float("nan")  # ETF ainda sem cotação nesta data
+    return float(prices.iloc[-1]), float(prices.pct_change(fill_method=None).fillna(0.0).iloc[-1])
+
+
 def persist_scores(snap: pd.DataFrame) -> None:
     """Guarda scores_latest.csv e appenda a scores_history.csv."""
     REPORTS.mkdir(parents=True, exist_ok=True)
@@ -271,9 +284,22 @@ def persist_scores(snap: pd.DataFrame) -> None:
     out.to_csv(REPORTS / "scores_latest.csv", index=False)
 
     # ── Histórico diário ──────────────────────────────────────────────────────
-    today = pd.Timestamp.now().date().isoformat()
-    hist  = snap.copy()
-    hist["date"] = today
+    # A data do histórico é a data de mercado do snapshot (a barra diária da
+    # maioria dos ETFs), não a data do relógio. Antes, as corridas de fim de
+    # semana e as horárias antes do fetch diário gravavam a barra anterior com a
+    # data de hoje, o que repetia o ret_1d de sexta no fim de semana. ETFs com
+    # outra última barra (feriado no seu mercado, fetch parcial) ficam com o
+    # retorno calculado a partir dos preços nessa data: preço com forward-fill,
+    # 0% sem negociação.
+    hist = snap.copy()
+    bar_dates = pd.to_datetime(hist["bar_date"])
+    market_date = bar_dates.mode().max()
+    for idx in hist.index[bar_dates != market_date]:
+        close, ret = _close_and_return_on(hist.at[idx, "etf"], market_date)
+        hist.at[idx, "close"] = close
+        hist.at[idx, "ret_1d"] = ret
+    hist["date"] = market_date.date().isoformat()
+    hist = hist.drop(columns=["bar_date"])
 
     if SCORES_HIST.exists():
         existing = pd.read_csv(SCORES_HIST)

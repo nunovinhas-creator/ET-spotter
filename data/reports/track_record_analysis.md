@@ -1,5 +1,7 @@
 # ET-Spotter: políticas de baixa frequência
 
+> **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
+
 **Universo de comparação:** apenas `VALID_ENSEMBLE_60_40`, desde 2026-06-09.  
 **Custos:** 30 bps round-trip.  
 **Look-ahead:** retornos começam no dia seguinte ao sinal.  
