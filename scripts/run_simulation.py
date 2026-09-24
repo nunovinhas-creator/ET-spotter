@@ -9,13 +9,15 @@ REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.003
 RISK_FREE_RATE_ANNUAL = 0.03
 BENCHMARK_TICKER = "VWCE.DE"
-REBALANCE_THRESHOLD = 0.05
+REBALANCE_THRESHOLD = 0.08
 STRESS_SCENARIO_COUNT = 5
 MAX_POSITIONS = 8
 TARGET_VOLATILITY = 0.12
 FRACTIONAL_KELLY = 0.25
 VIX_STRESS_LEVEL = 28.0
 DEFAULT_CATEGORY_CAP = 0.25
+MIN_HOLDING_CYCLES = 2
+MAX_NEW_POSITIONS = 3
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
@@ -183,6 +185,9 @@ def run_backtest(
     rebalance_every: int = REBALANCE_EVERY_TRADING_DAYS,
     risk_free_rate_annual: float = RISK_FREE_RATE_ANNUAL,
     rebalance_threshold: float = REBALANCE_THRESHOLD,
+    min_holding_cycles: int = MIN_HOLDING_CYCLES,
+    max_new_positions: int | None = MAX_NEW_POSITIONS,
+    persist_output: bool = True,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -192,6 +197,10 @@ def run_backtest(
         raise ValueError("risk_free_rate_annual must be non-negative")
     if not 0 <= rebalance_threshold <= 1:
         raise ValueError("rebalance_threshold must be between 0 and 1")
+    if min_holding_cycles < 0:
+        raise ValueError("min_holding_cycles must be non-negative")
+    if max_new_positions is not None and max_new_positions < 1:
+        raise ValueError("max_new_positions must be positive when provided")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -232,6 +241,7 @@ def run_backtest(
     benchmark_data = _load_benchmark_data(trading_dates)
     cycles = []
     current_weights: dict[str, float] = {}
+    holding_age: dict[str, int] = {}
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
 
@@ -239,17 +249,45 @@ def run_backtest(
         start_date = trading_dates[start_index]
         end_index = min(start_index + rebalance_every, len(trading_dates))
         cycle_dates = trading_dates[start_index:end_index]
-        selection = (
+        ranking_selection = (
             df_clean[df_clean["date"] == start_date]
             .sort_values("score_final", ascending=False)
             .head(MAX_POSITIONS)
         )
-        selected_holdings = set(selection["etf"])
+        selected_holdings = set(ranking_selection["etf"])
         if (
             len(selected_holdings) != MAX_POSITIONS
-            or selection["score_v3"].isna().any()
-            or (model_available and selection["xgb_proba"].isna().any())
+            or ranking_selection["score_v3"].isna().any()
+            or (model_available and ranking_selection["xgb_proba"].isna().any())
         ):
+            continue
+
+        current_holdings = {ticker for ticker, weight in current_weights.items() if weight > 0}
+        initial_allocation = not current_holdings
+        score_by_ticker = ranking_selection.set_index("etf")["score_final"].to_dict()
+        forced_exits = {
+            ticker
+            for ticker in current_holdings
+            if ticker not in score_by_ticker or score_by_ticker[ticker] < 0.35
+        }
+        locked_holdings = {
+            ticker
+            for ticker in current_holdings - forced_exits
+            if holding_age.get(ticker, 0) < min_holding_cycles
+        }
+        retained_selected = current_holdings.intersection(selected_holdings) - forced_exits
+        retained_holdings = locked_holdings | retained_selected
+        available_slots = max(0, MAX_POSITIONS - len(retained_holdings))
+        new_candidates = [ticker for ticker in ranking_selection["etf"] if ticker not in current_holdings]
+        if max_new_positions is not None and current_holdings:
+            new_candidates = new_candidates[:max_new_positions]
+        target_holdings = retained_holdings | set(new_candidates[:available_slots])
+        if not current_holdings:
+            target_holdings = selected_holdings
+        selection = df_clean[
+            (df_clean["date"] == start_date) & df_clean["etf"].isin(target_holdings)
+        ].copy()
+        if len(selection) != len(target_holdings) or selection["score_v3"].isna().any():
             continue
 
         benchmark_row = benchmark_data.loc[start_date]
@@ -270,7 +308,7 @@ def run_backtest(
         volatility = volatility.fillna(volatility.median()).fillna(1.0)
         score_strength = (selection.set_index("etf")["score_final"] / selection["score_final"].max()).clip(0.5, 1.0)
         kelly_multiplier = {}
-        for ticker in selected_holdings:
+        for ticker in target_holdings:
             history = asset_returns_history.get(ticker, [])
             hit_rate = sum(value > 0 for value in history) / len(history) if history else 0.5
             kelly_fraction = FRACTIONAL_KELLY * max(0.0, 2 * hit_rate - 1)
@@ -283,7 +321,7 @@ def run_backtest(
             (abs(current_weights.get(ticker, 0.0) - target_weights.get(ticker, 0.0)) for ticker in weight_keys),
             default=1.0,
         )
-        rebalance_executed = not current_weights or max_weight_deviation > rebalance_threshold
+        rebalance_executed = not current_weights or max_weight_deviation >= rebalance_threshold
         active_weights = target_weights if rebalance_executed else current_weights.copy()
         active_holdings = {ticker for ticker, weight in active_weights.items() if weight > 0}
         turnover = (
@@ -309,10 +347,10 @@ def run_backtest(
             {
                 "ticker": ticker,
                 "name": etf_names.get(ticker, ticker),
-                "score": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in selected_holdings else None),
-                "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in selected_holdings else None),
-                "xgb_proba": (round(float(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]), 4) if ticker in selected_holdings and pd.notna(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]) else None),
-                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in selected_holdings else None),
+                "score": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
+                "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in target_holdings else None),
+                "xgb_proba": (round(float(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]), 4) if ticker in target_holdings and pd.notna(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]) else None),
+                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
                 "volatility_21": (round(float(volatility[ticker]), 6) if ticker in volatility else None),
                 "target_weight": float(target_weights.get(ticker, 0.0)),
                 "weight": float(active_weights.get(ticker, 0.0)),
@@ -322,7 +360,7 @@ def run_backtest(
                 "category": etf_metadata.get(ticker, {}).get("category_name", "Other"),
                 "active": bool(active_weights.get(ticker, 0.0)),
             }
-            for ticker in sorted(set(selected_holdings) | set(active_holdings))
+            for ticker in sorted(set(target_holdings) | set(active_holdings))
         ]
         benchmark_cycle_return = benchmark_data.loc[cycle_dates, "ret_1d"].fillna(0).add(1).prod() - 1
         portfolio_value *= 1 + net_cycle_return
@@ -334,7 +372,7 @@ def run_backtest(
                 "date": start_date,
                 "cycle_end": cycle_dates[-1],
                 "holdings": ",".join(sorted(active_holdings)) if active_holdings else "CASH",
-                "target_holdings": ",".join(sorted(selected_holdings)) if target_weights else "CASH",
+                "target_holdings": ",".join(sorted(target_holdings)) if target_weights else "CASH",
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "market_regime": market_regime,
                 "regime": market_regime,
@@ -358,6 +396,10 @@ def run_backtest(
                 "benchmark_ticker": BENCHMARK_TICKER,
                 "benchmark_cycle_return": benchmark_cycle_return,
                 "benchmark_value": benchmark_value,
+                "new_positions": 0 if initial_allocation else len(set(active_holdings) - current_holdings),
+                "initial_positions": len(active_holdings) if initial_allocation else 0,
+                "min_holding_cycles": min_holding_cycles,
+                "max_new_positions": max_new_positions,
                 "ensemble_active_from": ensemble_active_from,
                 "ensemble_version": "score_v3_60_xgb_40",
                 "track_record_status": "VALID_ENSEMBLE_60_40",
@@ -369,6 +411,10 @@ def run_backtest(
             ticker: float(value / total_growth)
             for ticker, value in end_asset_values.items()
             if value > 0
+        }
+        holding_age = {
+            ticker: holding_age.get(ticker, 0) + 1
+            for ticker in current_weights
         }
         for ticker, asset_return in active_asset_returns.items():
             asset_returns_history.setdefault(ticker, []).append(float(asset_return))
@@ -423,6 +469,8 @@ def run_backtest(
         "rebalance_threshold": rebalance_threshold,
         "cost_saving_cycles": cost_saving_cycles,
         "max_positions": MAX_POSITIONS,
+        "min_holding_cycles": min_holding_cycles,
+        "max_new_positions": max_new_positions,
         "target_volatility": TARGET_VOLATILITY,
         "fractional_kelly": FRACTIONAL_KELLY,
         "vix_stress_level": VIX_STRESS_LEVEL,
@@ -450,13 +498,14 @@ def run_backtest(
     print(f"Regime: BULL exige VWCE > SMA200 e VIX < {VIX_STRESS_LEVEL:.0f}; BEAR/STRESS ficam em cash")
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
 
-    output_path = Path("data/reports/simulation_results.csv")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    portfolio_perf.to_csv(output_path, index=False)
-    stress_path = output_path.parent / "simulation_stress.csv"
-    stress_scenarios.to_csv(stress_path, index=False)
-    print(f"\nResultados gravados em {output_path}")
-    print(f"Stress tests gravados em {stress_path}")
+    if persist_output:
+        output_path = REPORT_PATH
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        portfolio_perf.to_csv(output_path, index=False)
+        stress_path = output_path.parent / "simulation_stress.csv"
+        stress_scenarios.to_csv(stress_path, index=False)
+        print(f"\nResultados gravados em {output_path}")
+        print(f"Stress tests gravados em {stress_path}")
     return portfolio_perf
 
 
