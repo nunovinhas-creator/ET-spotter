@@ -1,76 +1,59 @@
-# ET-Spotter: track-record completo e ensemble
+# ET-Spotter: políticas de baixa frequência
 
-**Regras aplicadas em ambos os escopos:** threshold 8%, holding mínimo 2 ciclos, máximo 3 novas posições por rotação, máximo 8 posições e custos de 30 bps round-trip.  
-**Look-ahead:** o sinal é observado na data do ciclo e os retornos começam apenas no dia de dados seguinte.
+**Universo de comparação:** apenas `VALID_ENSEMBLE_60_40`, desde 2026-06-09.  
+**Custos:** 30 bps round-trip.  
+**Look-ahead:** retornos começam no dia seguinte ao sinal.  
+**Limite de seleção:** máximo 8 posições em A; 7 em B/C.
 
-## Escopos publicados
+## Comparação A/B/C
 
-### Histórico completo
+| Política | Regras principais | Bruto | Líquido | MaxDD | Turnover médio | Custos | Correlação média | Posições médias |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| A | 8% · 2 ciclos · 3 novas · 8 posições | +2,66% | +1,82% | -5,13% | 54,4% | €82,78 | 64,9% | 7,2 |
+| B | 12% · 3 ciclos · 2 novas · 7 posições · venda <0,40 | +7,14% | +6,82% | -5,97% | 20,0% | €30,00 | 75,6% | 7,0 |
+| **C vencedora** | **B + rebalance a cada 2 ciclos (~42 dias)** | **+7,25%** | **+6,93%** | **0,00%** | **33,3%** | **€30,00** | **73,2%** | **7,0** |
 
-Fonte: `simulation_results.csv`  
-Período: 2026-06-03 a 2026-09-24  
-Ciclos: 6, dos quais 1 `PRE_ENSEMBLE` e 5 `VALID_ENSEMBLE_60_40`.
+Todas as políticas respeitaram `MaxDD <= 8%`. B e C respeitaram também turnover <=45%; C teve o melhor retorno líquido e foi escolhida.
 
-| Métrica | Resultado |
-|---|---:|
-| Retorno bruto composto | -19,96% |
-| Retorno líquido | **-21,14%** |
-| Max drawdown | -7,12% |
-| Sharpe | -1,85 |
-| Turnover médio | 82,6% |
-| Custos totais | €128,45 |
-| Correlação média | 70,6% |
-| VWCE.DE buy-and-hold | +3,87% |
-| CSPX.L buy-and-hold | +2,75% |
+## Política aplicada
 
-O histórico começa em 2026-06-03 porque é a primeira data em que os quatro sub-scores necessários para reconstruir o score v3 estão completos. Os dias anteriores têm score bruto, mas não têm componentes suficientes para uma reconstrução auditável.
+A Política C está agora nos defaults de produção:
 
-### Ensemble fiável
+- threshold de rebalanceamento: `12%`;
+- holding mínimo: `3` ciclos;
+- máximo de `2` novas posições por ciclo de rebalanceamento;
+- máximo de `7` posições;
+- venda apenas quando `score_final < 0,40` ou quando necessário para respeitar o limite de posições;
+- rebalanceamento a cada `2` ciclos, aproximadamente 42 dias;
+- custos de `30 bps` round-trip.
 
-Fonte: `simulation_results_valid_ensemble.csv`  
-Período: 2026-06-09 a 2026-09-24  
-Todos os ciclos têm score v3, `xgb_proba`, score final e pesos persistidos.
+A alocação inicial é bootstrap e pode abrir as posições máximas; o limite de novas posições aplica-se às rotações seguintes.
 
-| Métrica | Resultado |
-|---|---:|
-| Número de ciclos | 5 |
-| Retorno bruto composto | +5,08% |
-| Retorno líquido | **+3,76%** |
-| Max drawdown | -4,82% |
-| Sharpe | +0,42 |
-| Turnover médio | 84,2% |
-| Custos totais | €130,06 |
-| Correlação média | 63,9% |
-| VWCE.DE buy-and-hold | +6,90% |
-| CSPX.L buy-and-hold | +6,20% |
+## Output oficial C
 
-O ensemble fiável teve retorno positivo, mas ficou atrás de VWCE.DE em 3,14 pontos percentuais e de CSPX.L em 2,44 pontos percentuais.
+O ficheiro `simulation_results_valid_ensemble.csv` contém 3 ciclos de 2026-06-09 a 2026-09-24:
 
-## Rastreabilidade
+- retorno bruto: +7,25%;
+- retorno líquido: **+6,93%**;
+- MaxDD: 0,00%;
+- turnover médio: 33,3%;
+- custos: €30,00;
+- correlação média: 73,2%;
+- posições médias: 7,0.
 
-Cada ciclo grava:
+No mesmo período, os benchmarks tiveram:
 
-- `score_v3`, reconstruído apenas quando os quatro sub-scores estão presentes;
-- `xgb_proba`, ou `null` no ciclo `PRE_ENSEMBLE`;
-- `score_final`;
-- pesos alvo e pesos ativos;
-- regime e exposição;
-- turnover e custos;
-- `track_record_status` e `track_record_scope`.
+- VWCE.DE: +6,90%;
+- CSPX.L: +6,20%.
 
-O ciclo `PRE_ENSEMBLE` é mostrado no histórico completo, mas não entra em `simulation_results_valid_ensemble.csv` nem deve ser usado para medir o desempenho do ensemble 60/40.
+A vantagem sobre VWCE.DE é de apenas cerca de 0,03 pontos percentuais e baseia-se em três ciclos; não é evidência suficiente de edge persistente.
 
-## Conclusões
+## Histórico completo
 
-1. O histórico disponível com qualidade suficiente para score v3 começa em 2026-06-03; não há dados auditáveis anteriores no `scores_history.csv`.
-2. A remoção do look-ahead reduziu materialmente o resultado face ao backtest anterior, tornando esta versão a referência correta.
-3. O track-record fiável tem apenas cinco ciclos, ainda insuficientes para concluir que o ensemble tem edge persistente.
-4. O turnover continua elevado, cerca de 84% por ciclo, e os custos retiraram aproximadamente 1,30 pontos percentuais ao retorno bruto no período fiável.
-5. Todos os ciclos observados foram `BULL`; não há validação empírica de `BEAR` ou `STRESS`, e o VIX continua sem dados locais.
+`simulation_results.csv` continua a separar o período completo. Com a frequência de 42 dias, contém 3 ciclos desde 2026-06-03: um `PRE_ENSEMBLE` e dois `VALID_ENSEMBLE_60_40`. O retorno agregado é negativo porque inclui o ciclo pré-ensemble; este valor não deve ser usado para avaliar a Política C.
 
-## Próximos passos
+Todos os ciclos persistem score v3, `xgb_proba`, score final, pesos, regime, exposição, turnover, custos, política e escopo. O ciclo `PRE_ENSEMBLE` tem `xgb_proba = null` e aparece apenas no histórico completo.
 
-- Acumular mais ciclos sem alterar a definição do track-record.
-- Adicionar dados VIX e validar regimes adversos.
-- Executar walk-forward com janelas temporais maiores.
-- Manter sempre os ficheiros `FULL_HISTORY` e `VALID_ENSEMBLE_60_40` separados.
+## Conclusão
+
+A Política C é a vencedora no sample disponível porque reduz a frequência de rebalanceamento e mantém turnover abaixo de 45%, mas a amostra efetiva tem apenas três ciclos. É necessário acumular dados antes de concluir que a melhoria face a B ou VWCE.DE é estrutural.

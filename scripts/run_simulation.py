@@ -9,15 +9,18 @@ REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.003
 RISK_FREE_RATE_ANNUAL = 0.03
 BENCHMARK_TICKER = "VWCE.DE"
-REBALANCE_THRESHOLD = 0.08
+REBALANCE_THRESHOLD = 0.12
 STRESS_SCENARIO_COUNT = 5
-MAX_POSITIONS = 8
+MAX_POSITIONS = 7
 TARGET_VOLATILITY = 0.12
 FRACTIONAL_KELLY = 0.25
 VIX_STRESS_LEVEL = 28.0
 DEFAULT_CATEGORY_CAP = 0.25
-MIN_HOLDING_CYCLES = 2
-MAX_NEW_POSITIONS = 3
+MIN_HOLDING_CYCLES = 3
+MAX_NEW_POSITIONS = 2
+MIN_SELL_SCORE = 0.40
+REBALANCE_CYCLE_INTERVAL = 2
+DEFAULT_POLICY_NAME = "C"
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
@@ -194,6 +197,10 @@ def run_backtest(
     require_ensemble: bool = False,
     output_path: Path = REPORT_PATH,
     track_record_scope: str = "FULL_HISTORY",
+    max_positions: int = MAX_POSITIONS,
+    min_sell_score: float = MIN_SELL_SCORE,
+    rebalance_cycle_interval: int = REBALANCE_CYCLE_INTERVAL,
+    policy_name: str = DEFAULT_POLICY_NAME,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -207,6 +214,12 @@ def run_backtest(
         raise ValueError("min_holding_cycles must be non-negative")
     if max_new_positions is not None and max_new_positions < 1:
         raise ValueError("max_new_positions must be positive when provided")
+    if max_positions < 1:
+        raise ValueError("max_positions must be positive")
+    if not 0 <= min_sell_score <= 1:
+        raise ValueError("min_sell_score must be between 0 and 1")
+    if rebalance_cycle_interval < 1:
+        raise ValueError("rebalance_cycle_interval must be positive")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -232,8 +245,8 @@ def run_backtest(
     ).round(6)
 
     def _date_is_eligible(date: pd.Timestamp) -> bool:
-        candidates = df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)
-        if len(candidates) != MAX_POSITIONS or candidates["score_v3"].isna().any():
+        candidates = df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(max_positions)
+        if len(candidates) != max_positions or candidates["score_v3"].isna().any():
             return False
         return not require_ensemble or candidates["xgb_proba"].notna().all()
 
@@ -244,8 +257,8 @@ def run_backtest(
     ensemble_dates = [
         date
         for date in all_dates
-        if len(df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)) == MAX_POSITIONS
-        and df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(MAX_POSITIONS)["xgb_proba"].notna().all()
+        if len(df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(max_positions)) == max_positions
+        and df_clean[df_clean["date"] == date].sort_values("score_final", ascending=False).head(max_positions)["xgb_proba"].notna().all()
     ]
     ensemble_active_from = pd.Timestamp(ensemble_dates[0]).strftime("%Y-%m-%d") if ensemble_dates else "UNAVAILABLE"
     first_date = pd.Timestamp(start_date) if start_date else pd.Timestamp(eligible_dates[0])
@@ -263,9 +276,10 @@ def run_backtest(
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
 
-    for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, rebalance_every), start=1):
+    cycle_span = rebalance_every * rebalance_cycle_interval
+    for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, cycle_span), start=1):
         start_date = trading_dates[start_index]
-        end_index = min(start_index + rebalance_every + 1, len(trading_dates))
+        end_index = min(start_index + cycle_span + 1, len(trading_dates))
         # The signal is observed at start_date; returns begin on the next date.
         cycle_dates = trading_dates[start_index + 1:end_index]
         if not cycle_dates:
@@ -273,11 +287,11 @@ def run_backtest(
         ranking_selection = (
             df_clean[df_clean["date"] == start_date]
             .sort_values("score_final", ascending=False)
-            .head(MAX_POSITIONS)
+            .head(max_positions)
         )
         selected_holdings = set(ranking_selection["etf"])
         if (
-            len(selected_holdings) != MAX_POSITIONS
+            len(selected_holdings) != max_positions
             or ranking_selection["score_v3"].isna().any()
             or (require_ensemble and ranking_selection["xgb_proba"].isna().any())
         ):
@@ -286,10 +300,11 @@ def run_backtest(
         current_holdings = {ticker for ticker, weight in current_weights.items() if weight > 0}
         initial_allocation = not current_holdings
         score_by_ticker = ranking_selection.set_index("etf")["score_final"].to_dict()
+        score_lookup = df_clean[df_clean["date"] == start_date].set_index("etf")["score_final"].to_dict()
         forced_exits = {
             ticker
             for ticker in current_holdings
-            if ticker not in score_by_ticker or score_by_ticker[ticker] < 0.35
+            if ticker not in score_lookup or score_lookup[ticker] < min_sell_score
         }
         locked_holdings = {
             ticker
@@ -297,8 +312,10 @@ def run_backtest(
             if holding_age.get(ticker, 0) < min_holding_cycles
         }
         retained_selected = current_holdings.intersection(selected_holdings) - forced_exits
-        retained_holdings = locked_holdings | retained_selected
-        available_slots = max(0, MAX_POSITIONS - len(retained_holdings))
+        retained_holdings = (locked_holdings | retained_selected) if min_sell_score <= 0.35 else (current_holdings - forced_exits)
+        if len(retained_holdings) > max_positions:
+            retained_holdings = set(sorted(retained_holdings, key=lambda ticker: score_lookup.get(ticker, 0), reverse=True)[:max_positions])
+        available_slots = max(0, max_positions - len(retained_holdings))
         new_candidates = [ticker for ticker in ranking_selection["etf"] if ticker not in current_holdings]
         if max_new_positions is not None and current_holdings:
             new_candidates = new_candidates[:max_new_positions]
@@ -393,6 +410,7 @@ def run_backtest(
                 "date": start_date,
                 "cycle_end": cycle_dates[-1],
                 "holdings": ",".join(sorted(active_holdings)) if active_holdings else "CASH",
+                "positions_count": len(active_holdings),
                 "target_holdings": ",".join(sorted(target_holdings)) if target_weights else "CASH",
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "market_regime": market_regime,
@@ -421,6 +439,10 @@ def run_backtest(
                 "initial_positions": len(active_holdings) if initial_allocation else 0,
                 "min_holding_cycles": min_holding_cycles,
                 "max_new_positions": max_new_positions,
+                "max_positions": max_positions,
+                "min_sell_score": min_sell_score,
+                "rebalance_cycle_interval": rebalance_cycle_interval,
+                "policy_name": policy_name,
                 "ensemble_active_from": ensemble_active_from,
                 "ensemble_version": "score_v3_60_xgb_40",
                 "track_record_status": "VALID_ENSEMBLE_60_40" if require_ensemble else (
@@ -492,9 +514,12 @@ def run_backtest(
         "average_exposure": portfolio_perf["exposure"].mean(),
         "rebalance_threshold": rebalance_threshold,
         "cost_saving_cycles": cost_saving_cycles,
-        "max_positions": MAX_POSITIONS,
+        "max_positions": max_positions,
         "min_holding_cycles": min_holding_cycles,
         "max_new_positions": max_new_positions,
+        "min_sell_score": min_sell_score,
+        "rebalance_cycle_interval": rebalance_cycle_interval,
+        "policy_name": policy_name,
         "target_volatility": TARGET_VOLATILITY,
         "fractional_kelly": FRACTIONAL_KELLY,
         "vix_stress_level": VIX_STRESS_LEVEL,
