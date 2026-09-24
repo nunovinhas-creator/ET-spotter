@@ -7,6 +7,8 @@
 
 ## Comparação A/B/C
 
+> **Nota (correção de MaxDD):** os MaxDD abaixo foram medidos só em fins de ciclo, sem o capital inicial. Com o cálculo corrigido (equity curve diária desde €10.000, ver `max_drawdown_fix.md`), C fica em −7,72% e B em −7,86%. Ambas continuam ≤ 8%.
+
 | Política | Regras principais | Bruto | Líquido | MaxDD | Turnover médio | Custos | Correlação média | Posições médias |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | A | 8% · 2 ciclos · 3 novas · 8 posições | +2,66% | +1,82% | -5,13% | 54,4% | €82,78 | 64,9% | 7,2 |

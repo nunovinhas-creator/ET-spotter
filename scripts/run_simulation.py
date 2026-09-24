@@ -281,6 +281,9 @@ def run_backtest(
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
     previous_cycle_scores: dict[str, float] = {}
+    # Equity curve diária ancorada no capital inicial (dia 0 = data do 1.º sinal),
+    # para que o MaxDD inclua a perda entre o capital inicial e o fim do 1.º ciclo.
+    equity_curve: list[dict] = []
 
     cycle_span = rebalance_every * rebalance_cycle_interval
     for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, cycle_span), start=1):
@@ -410,6 +413,16 @@ def run_backtest(
             for ticker in sorted(set(target_holdings) | set(active_holdings))
         ]
         benchmark_cycle_return = benchmark_data.loc[cycle_dates, "ret_1d"].fillna(0).add(1).prod() - 1
+        if not equity_curve:
+            equity_curve.append({"date": start_date, "equity": INITIAL_CAPITAL, "point": "initial_capital"})
+        # Custos debitados no início do ciclo, depois composição diária (fecha em portfolio_value).
+        equity_after_cost = portfolio_value_before * (1 - friction_cost_rate)
+        equity_curve.append({"date": start_date, "equity": equity_after_cost, "point": "after_costs"})
+        daily_equity = equity_after_cost * (1 + weighted_daily_returns).cumprod()
+        equity_curve.extend(
+            {"date": date, "equity": float(value), "point": "daily"} for date, value in daily_equity.items()
+        )
+        equity_curve_so_far = pd.Series([point["equity"] for point in equity_curve])
         portfolio_value *= 1 + net_cycle_return
         benchmark_value = INITIAL_CAPITAL if not cycles else cycles[-1]["benchmark_value"]
         benchmark_value *= 1 + benchmark_cycle_return
@@ -442,6 +455,8 @@ def run_backtest(
                 "risk_free_cycle_return": risk_free_cycle_return,
                 "excess_return": net_cycle_return - risk_free_cycle_return,
                 "portfolio_value": portfolio_value,
+                "drawdown": portfolio_value / equity_curve_so_far.max() - 1,
+                "max_drawdown_to_date": float((equity_curve_so_far / equity_curve_so_far.cummax() - 1).min()),
                 "benchmark_ticker": BENCHMARK_TICKER,
                 "benchmark_cycle_return": benchmark_cycle_return,
                 "benchmark_value": benchmark_value,
@@ -481,9 +496,13 @@ def run_backtest(
         raise ValueError("No valid 21-day portfolio cycles could be calculated")
 
     portfolio_perf["cumulative_return"] = portfolio_perf["portfolio_value"] / INITIAL_CAPITAL
-    running_max = portfolio_perf["portfolio_value"].cummax()
-    portfolio_perf["drawdown"] = portfolio_perf["portfolio_value"] / running_max - 1
-    max_drawdown = portfolio_perf["drawdown"].min()
+    # MaxDD sobre a equity curve diária completa, a partir dos €10.000 iniciais.
+    # (Antes era medido só entre valores de fim de ciclo, ignorando o capital inicial.)
+    equity_df = pd.DataFrame(equity_curve)
+    equity_df["drawdown"] = equity_df["equity"] / equity_df["equity"].cummax() - 1
+    max_drawdown = float(equity_df["drawdown"].min())
+    cycle_end_equity = pd.concat([pd.Series([INITIAL_CAPITAL]), portfolio_perf["portfolio_value"]], ignore_index=True)
+    max_drawdown_cycle_end = float((cycle_end_equity / cycle_end_equity.cummax() - 1).min())
     cumulative_return = portfolio_perf["portfolio_value"].iloc[-1] / INITIAL_CAPITAL - 1
     annualization = (252 / rebalance_every) ** 0.5
     cycle_std = portfolio_perf["excess_return"].std(ddof=1)
@@ -512,6 +531,8 @@ def run_backtest(
         "average_cycle_return_net": portfolio_perf["strategy_ret"].mean(),
         "final_portfolio_value": portfolio_perf["portfolio_value"].iloc[-1],
         "max_drawdown": max_drawdown,
+        "max_drawdown_cycle_end": max_drawdown_cycle_end,
+        "max_drawdown_method": "daily_equity_from_initial_capital",
         "cumulative_return": cumulative_return,
         "sharpe_ratio": sharpe_ratio,
         "sortino_ratio": sortino_ratio,
@@ -551,7 +572,7 @@ def run_backtest(
     print(f"Número de rebalanceamentos reais: {real_rebalances}")
     print(f"Retorno médio por ciclo ajustado a custos: {summary['average_cycle_return_net'] * 100:.2f}%")
     print(f"Valor final do portfólio (base 10.000€): {summary['final_portfolio_value']:.2f}€")
-    print(f"Max Drawdown da estratégia: {max_drawdown * 100:.2f}%")
+    print(f"Max Drawdown da estratégia (diário, desde €{INITIAL_CAPITAL:,.0f}): {max_drawdown * 100:.2f}% | só fim de ciclo: {max_drawdown_cycle_end * 100:.2f}%")
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
     print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
@@ -563,6 +584,9 @@ def run_backtest(
     if persist_output:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         portfolio_perf.to_csv(output_path, index=False)
+        equity_path = output_path.with_name(f"{output_path.stem}_equity.csv")
+        equity_df.to_csv(equity_path, index=False)
+        print(f"Equity curve diária gravada em {equity_path}")
         stress_path = output_path.parent / "simulation_stress.csv"
         stress_scenarios.to_csv(stress_path, index=False)
         print(f"\nResultados gravados em {output_path}")

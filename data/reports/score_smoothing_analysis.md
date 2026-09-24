@@ -16,7 +16,7 @@ Implementado em `scripts/run_simulation.py` com o parâmetro `score_smoothing_cy
 |---|---:|---:|
 | Retorno bruto | +5,98% | +5,98% |
 | Retorno líquido | +5,66% | +5,66% |
-| MaxDD | 0,00% | 0,00% |
+| MaxDD (diário, desde €10.000) | −7,72% | −7,72% |
 | Turnover médio | 33,3% | 33,3% |
 | Custos | €30,00 | €30,00 |
 | Correlação média das posições | 70,0% | 70,0% |
@@ -37,4 +37,4 @@ Ambas as variantes cumprem MaxDD ≤ 8% e turnover ≤ 40%, com retorno líquido
 
 ## Nota lateral
 
-O `max_drawdown` do simulador é calculado a partir do valor no fim do 1.º ciclo, sem incluir o capital inicial de €10.000. Por isso a perda de -2,09% do 1.º ciclo aparece como MaxDD 0,00%. Isto não altera a decisão (ambas as variantes ficam bem abaixo de 8%), mas convém corrigir numa alteração separada.
+O MaxDD desta tabela já usa o cálculo corrigido (equity curve diária desde os €10.000 iniciais; ver `max_drawdown_fix.md`). Antes aparecia 0,00%. Ambas as variantes continuam a cumprir MaxDD ≤ 8%, e a decisão mantém-se.
