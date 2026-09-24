@@ -21,6 +21,8 @@ MAX_NEW_POSITIONS = 2
 MIN_SELL_SCORE = 0.40
 REBALANCE_CYCLE_INTERVAL = 2
 DEFAULT_POLICY_NAME = "C"
+# 1 = score_final cru; 2 = média de score_final(t) e score_final(t-1) do ciclo anterior.
+SCORE_SMOOTHING_CYCLES = 1
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
@@ -201,6 +203,7 @@ def run_backtest(
     min_sell_score: float = MIN_SELL_SCORE,
     rebalance_cycle_interval: int = REBALANCE_CYCLE_INTERVAL,
     policy_name: str = DEFAULT_POLICY_NAME,
+    score_smoothing_cycles: int = SCORE_SMOOTHING_CYCLES,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -220,6 +223,8 @@ def run_backtest(
         raise ValueError("min_sell_score must be between 0 and 1")
     if rebalance_cycle_interval < 1:
         raise ValueError("rebalance_cycle_interval must be positive")
+    if score_smoothing_cycles not in (1, 2):
+        raise ValueError("score_smoothing_cycles must be 1 or 2")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -275,6 +280,7 @@ def run_backtest(
     holding_age: dict[str, int] = {}
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
+    previous_cycle_scores: dict[str, float] = {}
 
     cycle_span = rebalance_every * rebalance_cycle_interval
     for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, cycle_span), start=1):
@@ -284,11 +290,15 @@ def run_backtest(
         cycle_dates = trading_dates[start_index + 1:end_index]
         if not cycle_dates:
             continue
-        ranking_selection = (
-            df_clean[df_clean["date"] == start_date]
-            .sort_values("score_final", ascending=False)
-            .head(max_positions)
-        )
+        day_scores = df_clean[df_clean["date"] == start_date].copy()
+        day_scores["score_raw"] = day_scores["score_final"]
+        if score_smoothing_cycles == 2:
+            # score_suave = média de score_final(t) e score_final(t-1); sem t-1 usa t.
+            day_scores["score_final"] = (
+                day_scores["score_raw"] + day_scores["etf"].map(previous_cycle_scores).fillna(day_scores["score_raw"])
+            ) / 2
+        previous_cycle_scores = day_scores.set_index("etf")["score_raw"].to_dict()
+        ranking_selection = day_scores.sort_values("score_final", ascending=False).head(max_positions)
         selected_holdings = set(ranking_selection["etf"])
         if (
             len(selected_holdings) != max_positions
@@ -300,7 +310,7 @@ def run_backtest(
         current_holdings = {ticker for ticker, weight in current_weights.items() if weight > 0}
         initial_allocation = not current_holdings
         score_by_ticker = ranking_selection.set_index("etf")["score_final"].to_dict()
-        score_lookup = df_clean[df_clean["date"] == start_date].set_index("etf")["score_final"].to_dict()
+        score_lookup = day_scores.set_index("etf")["score_final"].to_dict()
         forced_exits = {
             ticker
             for ticker in current_holdings
@@ -322,9 +332,7 @@ def run_backtest(
         target_holdings = retained_holdings | set(new_candidates[:available_slots])
         if not current_holdings:
             target_holdings = selected_holdings
-        selection = df_clean[
-            (df_clean["date"] == start_date) & df_clean["etf"].isin(target_holdings)
-        ].copy()
+        selection = day_scores[day_scores["etf"].isin(target_holdings)].copy()
         if len(selection) != len(target_holdings) or selection["score_v3"].isna().any():
             continue
 
@@ -388,7 +396,8 @@ def run_backtest(
                 "score": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
                 "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in target_holdings else None),
                 "xgb_proba": (round(float(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]), 4) if ticker in target_holdings and pd.notna(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]) else None),
-                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
+                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_raw"].iloc[0]), 4) if ticker in target_holdings else None),
+                "score_ranking": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
                 "volatility_21": (round(float(volatility[ticker]), 6) if ticker in volatility else None),
                 "target_weight": float(target_weights.get(ticker, 0.0)),
                 "weight": float(active_weights.get(ticker, 0.0)),
@@ -412,6 +421,7 @@ def run_backtest(
                 "holdings": ",".join(sorted(active_holdings)) if active_holdings else "CASH",
                 "positions_count": len(active_holdings),
                 "target_holdings": ",".join(sorted(target_holdings)) if target_weights else "CASH",
+                "ranking_top": ",".join(ranking_selection["etf"]),
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "market_regime": market_regime,
                 "regime": market_regime,
@@ -443,6 +453,7 @@ def run_backtest(
                 "min_sell_score": min_sell_score,
                 "rebalance_cycle_interval": rebalance_cycle_interval,
                 "policy_name": policy_name,
+                "score_smoothing_cycles": score_smoothing_cycles,
                 "ensemble_active_from": ensemble_active_from,
                 "ensemble_version": "score_v3_60_xgb_40",
                 "track_record_status": "VALID_ENSEMBLE_60_40" if require_ensemble else (
@@ -520,6 +531,7 @@ def run_backtest(
         "min_sell_score": min_sell_score,
         "rebalance_cycle_interval": rebalance_cycle_interval,
         "policy_name": policy_name,
+        "score_smoothing_cycles": score_smoothing_cycles,
         "target_volatility": TARGET_VOLATILITY,
         "fractional_kelly": FRACTIONAL_KELLY,
         "vix_stress_level": VIX_STRESS_LEVEL,
