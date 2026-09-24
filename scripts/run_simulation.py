@@ -6,11 +6,16 @@ import pandas as pd
 
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
-TRANSACTION_COST_PER_ROUND = 0.002
+TRANSACTION_COST_PER_ROUND = 0.003
 RISK_FREE_RATE_ANNUAL = 0.03
 BENCHMARK_TICKER = "VWCE.DE"
 REBALANCE_THRESHOLD = 0.05
 STRESS_SCENARIO_COUNT = 5
+MAX_POSITIONS = 8
+TARGET_VOLATILITY = 0.12
+FRACTIONAL_KELLY = 0.25
+VIX_STRESS_LEVEL = 28.0
+DEFAULT_CATEGORY_CAP = 0.25
 
 
 def _history_path() -> Path:
@@ -30,6 +35,21 @@ def _load_etf_names() -> dict[str, str]:
     }
 
 
+def _load_etf_metadata() -> dict[str, dict]:
+    config_path = Path(__file__).parent.parent / "config" / "etfs.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    return {
+        etf["ticker"]: {
+            "name": etf.get("name", etf["ticker"]),
+            "category_id": category.get("id", "other"),
+            "category_name": category.get("name", "Other"),
+            "category_cap": category.get("max_weight", DEFAULT_CATEGORY_CAP),
+        }
+        for category in config.get("categories", [])
+        for etf in category.get("etfs", [])
+    }
+
+
 def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
     benchmark_path = Path(__file__).parent.parent / "data" / "daily" / f"{BENCHMARK_TICKER}.csv"
     if not benchmark_path.exists():
@@ -38,9 +58,52 @@ def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
     benchmark = benchmark.set_index("Date")[["close"]]
     benchmark["ret_1d"] = benchmark["close"].pct_change().fillna(0.0)
     benchmark["sma200"] = benchmark["close"].rolling(200, min_periods=200).mean()
+    vix_path = Path(__file__).parent.parent / "data" / "daily" / "VIX.csv"
+    if vix_path.exists():
+        vix = pd.read_csv(vix_path, index_col=0, parse_dates=True)
+        benchmark["vix"] = vix["close"].reindex(dates).ffill()
+    else:
+        benchmark["vix"] = float("nan")
     benchmark = benchmark.reindex(dates).ffill()
     benchmark["ret_1d"] = benchmark["ret_1d"].fillna(0.0)
     return benchmark
+
+
+def _capped_weights(
+    raw_weights: pd.Series,
+    metadata: dict[str, dict],
+    exposure: float,
+) -> dict[str, float]:
+    """Normalise weights while respecting a cap for every ETF category."""
+    if raw_weights.empty or exposure <= 0:
+        return {ticker: 0.0 for ticker in raw_weights.index}
+
+    remaining = raw_weights.astype(float).clip(lower=0).copy()
+    result = pd.Series(0.0, index=remaining.index)
+    open_tickers = set(remaining.index)
+    remaining_exposure = exposure
+    for _ in range(len(remaining) + 1):
+        if not open_tickers or remaining_exposure <= 1e-9:
+            break
+        open_series = remaining.loc[sorted(open_tickers)]
+        allocation = open_series / open_series.sum() * remaining_exposure
+        capped = []
+        for ticker, weight in allocation.items():
+            cap = float(metadata.get(ticker, {}).get("category_cap", DEFAULT_CATEGORY_CAP))
+            category = metadata.get(ticker, {}).get("category_id", "other")
+            category_weight = result.loc[
+                [t for t in result.index if metadata.get(t, {}).get("category_id", "other") == category]
+            ].sum()
+            if weight + category_weight > cap + 1e-9:
+                capped.append((ticker, max(0.0, cap - category_weight)))
+        if not capped:
+            result.loc[sorted(open_tickers)] = allocation
+            break
+        for ticker, weight in capped:
+            result[ticker] = weight
+            remaining_exposure -= weight
+            open_tickers.remove(ticker)
+    return result.to_dict()
 
 
 def _historical_stress_scenarios(
@@ -104,10 +167,20 @@ def run_backtest(
 
     df_clean = df.dropna(subset=["score", "ret_1d"]).copy()
     etf_names = _load_etf_names()
+    etf_metadata = _load_etf_metadata()
+    if "score_v3" not in df_clean.columns:
+        df_clean["score_v3"] = df_clean["score"]
+    if "ml_prob" in df_clean.columns:
+        ensemble_mask = df_clean["score_v3"].notna() & df_clean["ml_prob"].notna()
+        df_clean.loc[ensemble_mask, "score"] = (
+            0.6 * df_clean.loc[ensemble_mask, "score_v3"]
+            + 0.4 * df_clean.loc[ensemble_mask, "ml_prob"]
+        )
     trading_dates = sorted(df_clean["date"].unique())
     benchmark_data = _load_benchmark_data(trading_dates)
     cycles = []
     current_weights: dict[str, float] = {}
+    asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
 
     for cycle_number, start_index in enumerate(range(0, len(trading_dates), rebalance_every), start=1):
@@ -117,25 +190,38 @@ def run_backtest(
         selection = (
             df_clean[df_clean["date"] == start_date]
             .sort_values("score", ascending=False)
-            .head(3)
+            .head(MAX_POSITIONS)
         )
         selected_holdings = set(selection["etf"])
-        if len(selected_holdings) != 3:
+        if len(selected_holdings) != MAX_POSITIONS:
             continue
 
         benchmark_row = benchmark_data.loc[start_date]
         benchmark_close = benchmark_row["close"]
         benchmark_sma200 = benchmark_row["sma200"]
+        vix_level = benchmark_row.get("vix", float("nan"))
         if pd.isna(benchmark_sma200) or pd.isna(benchmark_close):
             market_regime = "UNKNOWN"
+        elif not pd.isna(vix_level) and vix_level >= VIX_STRESS_LEVEL:
+            market_regime = "STRESS"
+        elif benchmark_close > benchmark_sma200:
+            market_regime = "BULL"
         else:
-            market_regime = "BULL" if benchmark_close > benchmark_sma200 else "BEAR"
-        exposure = 0.0 if market_regime == "BEAR" else 1.0
+            market_regime = "BEAR"
+        exposure = 1.0 if market_regime == "BULL" else 0.0
         volatility = selection.set_index("etf")["vol_21"].abs().replace(0, float("nan"))
         volatility = volatility.replace([float("inf"), float("-inf")], float("nan"))
         volatility = volatility.fillna(volatility.median()).fillna(1.0)
-        inverse_volatility = 1 / volatility
-        target_weights = (inverse_volatility / inverse_volatility.sum() * exposure).to_dict()
+        score_strength = (selection.set_index("etf")["score"] / selection["score"].max()).clip(0.5, 1.0)
+        kelly_multiplier = {}
+        for ticker in selected_holdings:
+            history = asset_returns_history.get(ticker, [])
+            hit_rate = sum(value > 0 for value in history) / len(history) if history else 0.5
+            kelly_fraction = FRACTIONAL_KELLY * max(0.0, 2 * hit_rate - 1)
+            kelly_multiplier[ticker] = 0.5 + kelly_fraction
+        raw_weights = (TARGET_VOLATILITY / volatility) * score_strength
+        raw_weights = raw_weights * pd.Series(kelly_multiplier)
+        target_weights = _capped_weights(raw_weights, etf_metadata, exposure)
         weight_keys = set(current_weights) | set(target_weights)
         max_weight_deviation = max(
             (abs(current_weights.get(ticker, 0.0) - target_weights.get(ticker, 0.0)) for ticker in weight_keys),
@@ -168,11 +254,15 @@ def run_backtest(
                 "ticker": ticker,
                 "name": etf_names.get(ticker, ticker),
                 "score": (round(float(selection.loc[selection["etf"] == ticker, "score"].iloc[0]), 4) if ticker in selected_holdings else None),
+                "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in selected_holdings else None),
+                "ml_prob": (round(float(selection.loc[selection["etf"] == ticker, "ml_prob"].iloc[0]), 4) if ticker in selected_holdings and "ml_prob" in selection.columns and pd.notna(selection.loc[selection["etf"] == ticker, "ml_prob"].iloc[0]) else None),
                 "volatility_21": (round(float(volatility[ticker]), 6) if ticker in volatility else None),
                 "target_weight": float(target_weights.get(ticker, 0.0)),
                 "weight": float(active_weights.get(ticker, 0.0)),
                 "contribution": float(active_asset_returns.get(ticker, 0.0) * active_weights.get(ticker, 0.0)),
-                "weighting": "inverse_volatility",
+                "weighting": "volatility_targeted_fractional_kelly",
+                "kelly_multiplier": float(kelly_multiplier.get(ticker, 0.0)),
+                "category": etf_metadata.get(ticker, {}).get("category_name", "Other"),
                 "active": bool(active_weights.get(ticker, 0.0)),
             }
             for ticker in sorted(set(selected_holdings) | set(active_holdings))
@@ -192,6 +282,7 @@ def run_backtest(
                 "market_regime": market_regime,
                 "benchmark_close": benchmark_close,
                 "benchmark_sma200": benchmark_sma200,
+                "vix_level": vix_level,
                 "exposure": exposure,
                 "max_weight_deviation": max_weight_deviation,
                 "rebalance_threshold": rebalance_threshold,
@@ -217,6 +308,8 @@ def run_backtest(
             for ticker, value in end_asset_values.items()
             if value > 0
         }
+        for ticker, asset_return in active_asset_returns.items():
+            asset_returns_history.setdefault(ticker, []).append(float(asset_return))
 
     portfolio_perf = pd.DataFrame(cycles)
     if portfolio_perf.empty:
@@ -259,15 +352,23 @@ def run_backtest(
         "transaction_cost_per_round": transaction_cost,
         "risk_free_rate_annual": risk_free_rate_annual,
         "bull_cycles": int((portfolio_perf["market_regime"] == "BULL").sum()),
-        "bear_cycles": int((portfolio_perf["market_regime"] == "BEAR").sum()),
+        "bear_cycles": int((portfolio_perf["market_regime"].isin(["BEAR", "STRESS"])).sum()),
+        "stress_cycles": int((portfolio_perf["market_regime"] == "STRESS").sum()),
         "average_exposure": portfolio_perf["exposure"].mean(),
         "rebalance_threshold": rebalance_threshold,
         "cost_saving_cycles": cost_saving_cycles,
+        "max_positions": MAX_POSITIONS,
+        "target_volatility": TARGET_VOLATILITY,
+        "fractional_kelly": FRACTIONAL_KELLY,
+        "vix_stress_level": VIX_STRESS_LEVEL,
+        "ensemble_score_weight_v3": 0.6,
+        "ensemble_score_weight_xgb": 0.4,
+        "cost_model": "30 bps round-trip: 5 bps commission + 15 bps spread + 10 bps slippage",
     }
     for key, value in summary.items():
         portfolio_perf[key] = value
 
-    print("=== RELATÓRIO DE SIMULAÇÃO (TOP 3 ETFs por Score v3) ===")
+    print("=== RELATÓRIO DE SIMULAÇÃO (SCORE v3 + XGBOOST) ===")
     print(f"Período analisado: {analysis_start} a {analysis_end}")
     print(f"Número de rebalanceamentos reais: {real_rebalances}")
     print(f"Retorno médio por ciclo ajustado a custos: {summary['average_cycle_return_net'] * 100:.2f}%")
@@ -277,7 +378,8 @@ def run_backtest(
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
     print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
     print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
-    print("Ponderação: inversa à volatilidade histórica de 21 dias")
+    print(f"Ponderação: alvo de volatilidade {TARGET_VOLATILITY * 100:.0f}% + Kelly fracionário {FRACTIONAL_KELLY:.2f} + caps por categoria")
+    print(f"Regime: BULL exige VWCE > SMA200 e VIX < {VIX_STRESS_LEVEL:.0f}; BEAR/STRESS ficam em cash")
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
 
     output_path = Path("data/reports/simulation_results.csv")

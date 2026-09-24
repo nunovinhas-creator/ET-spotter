@@ -1784,6 +1784,8 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
   for _, cycle in simulation_df.iterrows():
     for allocation in json.loads(cycle["allocation_details"]):
       score_display = f"{allocation['score']:.4f}" if allocation.get("score") is not None else "—"
+      score_v3_display = f"{allocation['score_v3']:.4f}" if allocation.get("score_v3") is not None else "—"
+      ml_display = f"{allocation['ml_prob']:.3f}" if allocation.get("ml_prob") is not None else "—"
       volatility_display = f"{allocation['volatility_21'] * 100:.2f}%" if allocation.get("volatility_21") is not None else "—"
       rebalance_display = "Executado" if bool(cycle["rebalance_executed"]) else "Dentro da banda"
       allocation_rows.append(
@@ -1791,6 +1793,8 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
         f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>até {html_mod.escape(str(cycle['cycle_end'])[:10])}</small></td>"
         f"<td><strong>{html_mod.escape(allocation['ticker'])}</strong><br><small>{html_mod.escape(allocation['name'])}</small></td>"
         f"<td>{score_display}</td>"
+        f"<td>{score_v3_display}</td>"
+        f"<td>{ml_display}</td>"
         f"<td>{volatility_display}</td>"
         f"<td>{allocation['weight'] * 100:.1f}%</td>"
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
@@ -1824,11 +1828,12 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
   return f"""
 <section class="section">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>Simulação Top 3 · Performance e alocações</span></h2>
+    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>Track-record · Score v3 + XGBoost</span></h2>
     <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Ponderação: inversa à volatilidade histórica de 21 dias (os ativos mais estáveis recebem maior peso).</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria.</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Threshold de rebalanceamento: {summary['rebalance_threshold'] * 100:.1f}% · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
@@ -1871,7 +1876,7 @@ def simulation_chart_section(simulation_df: pd.DataFrame, stress_df: pd.DataFram
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score v3</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th><th style="padding:8px">Estado</th>
+        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score final</th><th style="padding:8px">Score v3</th><th style="padding:8px">XGBoost</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th><th style="padding:8px">Estado</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>

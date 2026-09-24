@@ -178,12 +178,15 @@ def compute_scores(snap: pd.DataFrame, cfg: dict | None = None) -> pd.DataFrame:
 
     # ── Final score v3.1 ──────────────────────────────────────────────────────
     # Pesos configuráveis (fallback: 35% momentum · 25% trend · 25% risk · 15% alpha)
-    snap["score"] = (
+    snap["score_v3"] = (
         w_mom   * momentum
         + w_trend * trend
         + w_risk  * risk
         + w_alpha * alpha_quality
     ).round(6)
+    # Keep the rule-based score visible: the ML ensemble is applied after
+    # compute_ml_score() so missing models never change the v3 behaviour.
+    snap["score"] = snap["score_v3"]
 
     # Guardar sub-scores para auditoria/debug
     snap["_momentum"]      = momentum.round(4)
@@ -223,6 +226,7 @@ def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
     model_path = Path(__file__).parent.parent / "data" / "models" / "xgb_signal.pkl"
     if not model_path.exists():
         snap["ml_prob"] = np.nan
+        snap["score"] = snap["score_v3"]
         return snap
 
     try:
@@ -231,6 +235,7 @@ def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
     except (ModuleNotFoundError, ImportError) as e:
         print(f"[SKIP] ML score: {e}")
         snap["ml_prob"] = np.nan
+        snap["score"] = snap["score_v3"]
         return snap
 
     model    = bundle["model"]
@@ -242,10 +247,12 @@ def compute_ml_score(snap: pd.DataFrame) -> pd.DataFrame:
     missing = [c for c in features if c not in snap.columns]
     if missing:
         snap["ml_prob"] = np.nan
+        snap["score"] = snap["score_v3"]
         return snap
 
     X = snap[features].fillna(0)
     snap["ml_prob"] = model.predict_proba(X)[:, 1].round(3)
+    snap["score"] = (0.6 * snap["score_v3"] + 0.4 * snap["ml_prob"]).round(6)
     return snap
 
 
@@ -257,7 +264,7 @@ def persist_scores(snap: pd.DataFrame) -> None:
         "etf", "close", "ret_1d", "ret_5d", "ret_21d", "ret_63d", "ret_126d", "ret_252d",
         "vol_21", "sharpe_63", "rsi", "adx", "rs_positive", "rs_mom_21", "rs_mom_63",
         "calmar_63", "trend_sma", "macd_bullish", "above_sma200", "drawdown",
-        "score", "score_pct", "ml_prob",
+        "score", "score_v3", "score_pct", "ml_prob",
         "_momentum", "_trend", "_risk", "_alpha_quality",
     ]
     out = snap[[c for c in cols if c in snap.columns]].sort_values("score", ascending=False)
@@ -290,8 +297,8 @@ def main():
         return
 
     snap = compute_scores(snap, cfg)
-    snap = compute_score_percentile(snap)
     snap = compute_ml_score(snap)
+    snap = compute_score_percentile(snap)
 
     # Guarda scores nos ficheiros diários individuais
     for _, row in snap.iterrows():
