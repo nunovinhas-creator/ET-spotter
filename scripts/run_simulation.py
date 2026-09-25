@@ -21,6 +21,9 @@ MAX_NEW_POSITIONS = 2
 MIN_SELL_SCORE = 0.40
 REBALANCE_CYCLE_INTERVAL = 2
 DEFAULT_POLICY_NAME = "C"
+# 1 = score_final cru; 2 = média de score_final(t) e score_final(t-1) do ciclo anterior.
+# Oficial desde 2026-09-24: Política C + score suavizado (ver policy_evaluation_clean.md).
+SCORE_SMOOTHING_CYCLES = 2
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
@@ -60,22 +63,42 @@ def _load_etf_metadata() -> dict[str, dict]:
     }
 
 
-def _load_benchmark_data(dates: list[pd.Timestamp]) -> pd.DataFrame:
-    benchmark_path = Path(__file__).parent.parent / "data" / "daily" / f"{BENCHMARK_TICKER}.csv"
-    if not benchmark_path.exists():
-        return pd.DataFrame(index=dates, data={"close": float("nan"), "ret_1d": 0.0, "sma200": float("nan")})
-    benchmark = pd.read_csv(benchmark_path, parse_dates=["Date"])
-    benchmark = benchmark.set_index("Date")[["close"]]
-    benchmark["ret_1d"] = benchmark["close"].pct_change().fillna(0.0)
-    benchmark["sma200"] = benchmark["close"].rolling(200, min_periods=200).mean()
-    vix_path = Path(__file__).parent.parent / "data" / "daily" / "VIX.csv"
-    if vix_path.exists():
-        vix = pd.read_csv(vix_path, index_col=0, parse_dates=True)
-        benchmark["vix"] = vix["close"].reindex(dates).ffill()
-    else:
-        benchmark["vix"] = float("nan")
-    benchmark = benchmark.reindex(dates).ffill()
-    benchmark["ret_1d"] = benchmark["ret_1d"].fillna(0.0)
+def _read_daily_close(ticker: str) -> pd.Series:
+    path = Path(__file__).parent.parent / "data" / "daily" / f"{ticker}.csv"
+    if not path.exists():
+        return pd.Series(dtype=float)
+    daily = pd.read_csv(path, index_col=0, parse_dates=True)
+    daily.index = pd.to_datetime(daily.index).normalize()
+    daily = daily[~daily.index.duplicated(keep="last")].sort_index()
+    return daily["close"].astype(float) if "close" in daily.columns else pd.Series(dtype=float)
+
+
+def _daily_returns_on_calendar(close: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
+    """Retornos diários no calendário de dias úteis: forward-fill só do preço, 0% sem negociação."""
+    if close.empty:
+        return pd.Series(0.0, index=calendar)
+    prices = close.reindex(close.index.union(calendar)).ffill().reindex(calendar)
+    return prices.pct_change(fill_method=None).fillna(0.0)
+
+
+def _load_price_returns(tickers: list[str], calendar: pd.DatetimeIndex) -> pd.DataFrame:
+    return pd.DataFrame(
+        {ticker: _daily_returns_on_calendar(_read_daily_close(ticker), calendar) for ticker in tickers},
+        index=calendar,
+    )
+
+
+def _load_benchmark_data(calendar: pd.DatetimeIndex) -> pd.DataFrame:
+    close = _read_daily_close(BENCHMARK_TICKER)
+    if close.empty:
+        return pd.DataFrame(index=calendar, data={"close": float("nan"), "ret_1d": 0.0, "sma200": float("nan")})
+    benchmark = pd.DataFrame(index=calendar)
+    benchmark["close"] = close.reindex(close.index.union(calendar)).ffill().reindex(calendar)
+    benchmark["ret_1d"] = _daily_returns_on_calendar(close, calendar)
+    sma200 = close.rolling(200, min_periods=200).mean()
+    benchmark["sma200"] = sma200.reindex(sma200.index.union(calendar)).ffill().reindex(calendar)
+    vix = _read_daily_close("VIX")
+    benchmark["vix"] = vix.reindex(vix.index.union(calendar)).ffill().reindex(calendar) if not vix.empty else float("nan")
     return benchmark
 
 
@@ -201,6 +224,7 @@ def run_backtest(
     min_sell_score: float = MIN_SELL_SCORE,
     rebalance_cycle_interval: int = REBALANCE_CYCLE_INTERVAL,
     policy_name: str = DEFAULT_POLICY_NAME,
+    score_smoothing_cycles: int = SCORE_SMOOTHING_CYCLES,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -220,6 +244,8 @@ def run_backtest(
         raise ValueError("min_sell_score must be between 0 and 1")
     if rebalance_cycle_interval < 1:
         raise ValueError("rebalance_cycle_interval must be positive")
+    if score_smoothing_cycles not in (1, 2):
+        raise ValueError("score_smoothing_cycles must be 1 or 2")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -230,6 +256,8 @@ def run_backtest(
         raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
 
     df_clean = df.dropna(subset=["score", "ret_1d"]).copy()
+    # Só dias úteis contam como datas de sinal (ver data_quality_weekend_fix.md).
+    df_clean = df_clean[df_clean["date"].dt.dayofweek < 5]
     etf_names = _load_etf_names()
     etf_metadata = _load_etf_metadata()
     if "score_v3" not in df_clean.columns:
@@ -269,26 +297,38 @@ def run_backtest(
         raise ValueError(f"No eligible dates for {track_record_scope}")
     if persist_output and output_path == REPORT_PATH:
         _archive_incomplete_report()
-    benchmark_data = _load_benchmark_data(trading_dates)
+    # Retornos vêm dos preços diários finais num calendário contínuo de dias úteis,
+    # não do ret_1d do histórico de scores (que tinha fins de semana repetidos e falhas).
+    business_days = pd.bdate_range(trading_dates[0], trading_dates[-1])
+    benchmark_data = _load_benchmark_data(business_days)
+    price_returns = _load_price_returns(sorted(df_clean["etf"].unique()), business_days)
     cycles = []
     current_weights: dict[str, float] = {}
     holding_age: dict[str, int] = {}
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
+    previous_cycle_scores: dict[str, float] = {}
+    # Equity curve diária ancorada no capital inicial (dia 0 = data do 1.º sinal),
+    # para que o MaxDD inclua a perda entre o capital inicial e o fim do 1.º ciclo.
+    equity_curve: list[dict] = []
 
     cycle_span = rebalance_every * rebalance_cycle_interval
     for cycle_number, start_index in enumerate(range(0, len(trading_dates) - 1, cycle_span), start=1):
         start_date = trading_dates[start_index]
         end_index = min(start_index + cycle_span + 1, len(trading_dates))
         # The signal is observed at start_date; returns begin on the next date.
-        cycle_dates = trading_dates[start_index + 1:end_index]
+        cycle_dates = list(business_days[(business_days > start_date) & (business_days <= trading_dates[end_index - 1])])
         if not cycle_dates:
             continue
-        ranking_selection = (
-            df_clean[df_clean["date"] == start_date]
-            .sort_values("score_final", ascending=False)
-            .head(max_positions)
-        )
+        day_scores = df_clean[df_clean["date"] == start_date].copy()
+        day_scores["score_raw"] = day_scores["score_final"]
+        if score_smoothing_cycles == 2:
+            # score_suave = média de score_final(t) e score_final(t-1); sem t-1 usa t.
+            day_scores["score_final"] = (
+                day_scores["score_raw"] + day_scores["etf"].map(previous_cycle_scores).fillna(day_scores["score_raw"])
+            ) / 2
+        previous_cycle_scores = day_scores.set_index("etf")["score_raw"].to_dict()
+        ranking_selection = day_scores.sort_values("score_final", ascending=False).head(max_positions)
         selected_holdings = set(ranking_selection["etf"])
         if (
             len(selected_holdings) != max_positions
@@ -300,7 +340,7 @@ def run_backtest(
         current_holdings = {ticker for ticker, weight in current_weights.items() if weight > 0}
         initial_allocation = not current_holdings
         score_by_ticker = ranking_selection.set_index("etf")["score_final"].to_dict()
-        score_lookup = df_clean[df_clean["date"] == start_date].set_index("etf")["score_final"].to_dict()
+        score_lookup = day_scores.set_index("etf")["score_final"].to_dict()
         forced_exits = {
             ticker
             for ticker in current_holdings
@@ -322,9 +362,7 @@ def run_backtest(
         target_holdings = retained_holdings | set(new_candidates[:available_slots])
         if not current_holdings:
             target_holdings = selected_holdings
-        selection = df_clean[
-            (df_clean["date"] == start_date) & df_clean["etf"].isin(target_holdings)
-        ].copy()
+        selection = day_scores[day_scores["etf"].isin(target_holdings)].copy()
         if len(selection) != len(target_holdings) or selection["score_v3"].isna().any():
             continue
 
@@ -368,12 +406,7 @@ def run_backtest(
             else 0.0
         )
         friction_cost_rate = transaction_cost * turnover
-        gross_daily_returns = (
-            df_clean[df_clean["date"].isin(cycle_dates) & df_clean["etf"].isin(active_holdings)]
-            .pivot_table(index="date", columns="etf", values="ret_1d")
-            .reindex(cycle_dates)
-            .reindex(columns=sorted(active_holdings))
-        )
+        gross_daily_returns = price_returns.reindex(index=cycle_dates, columns=sorted(active_holdings))
         active_asset_returns = gross_daily_returns.fillna(0).add(1).prod() - 1
         weighted_daily_returns = gross_daily_returns.fillna(0).mul(pd.Series(active_weights), axis=1).sum(axis=1)
         gross_cycle_return = (1 + weighted_daily_returns).prod() - 1
@@ -388,7 +421,8 @@ def run_backtest(
                 "score": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
                 "score_v3": (round(float(selection.loc[selection["etf"] == ticker, "score_v3"].iloc[0]), 4) if ticker in target_holdings else None),
                 "xgb_proba": (round(float(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]), 4) if ticker in target_holdings and pd.notna(selection.loc[selection["etf"] == ticker, "xgb_proba"].iloc[0]) else None),
-                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
+                "score_final": (round(float(selection.loc[selection["etf"] == ticker, "score_raw"].iloc[0]), 4) if ticker in target_holdings else None),
+                "score_ranking": (round(float(selection.loc[selection["etf"] == ticker, "score_final"].iloc[0]), 4) if ticker in target_holdings else None),
                 "volatility_21": (round(float(volatility[ticker]), 6) if ticker in volatility else None),
                 "target_weight": float(target_weights.get(ticker, 0.0)),
                 "weight": float(active_weights.get(ticker, 0.0)),
@@ -401,6 +435,16 @@ def run_backtest(
             for ticker in sorted(set(target_holdings) | set(active_holdings))
         ]
         benchmark_cycle_return = benchmark_data.loc[cycle_dates, "ret_1d"].fillna(0).add(1).prod() - 1
+        if not equity_curve:
+            equity_curve.append({"date": start_date, "equity": INITIAL_CAPITAL, "point": "initial_capital"})
+        # Custos debitados no início do ciclo, depois composição diária (fecha em portfolio_value).
+        equity_after_cost = portfolio_value_before * (1 - friction_cost_rate)
+        equity_curve.append({"date": start_date, "equity": equity_after_cost, "point": "after_costs"})
+        daily_equity = equity_after_cost * (1 + weighted_daily_returns).cumprod()
+        equity_curve.extend(
+            {"date": date, "equity": float(value), "point": "daily"} for date, value in daily_equity.items()
+        )
+        equity_curve_so_far = pd.Series([point["equity"] for point in equity_curve])
         portfolio_value *= 1 + net_cycle_return
         benchmark_value = INITIAL_CAPITAL if not cycles else cycles[-1]["benchmark_value"]
         benchmark_value *= 1 + benchmark_cycle_return
@@ -412,6 +456,7 @@ def run_backtest(
                 "holdings": ",".join(sorted(active_holdings)) if active_holdings else "CASH",
                 "positions_count": len(active_holdings),
                 "target_holdings": ",".join(sorted(target_holdings)) if target_weights else "CASH",
+                "ranking_top": ",".join(ranking_selection["etf"]),
                 "allocation_details": json.dumps(allocation_details, ensure_ascii=False),
                 "market_regime": market_regime,
                 "regime": market_regime,
@@ -432,6 +477,8 @@ def run_backtest(
                 "risk_free_cycle_return": risk_free_cycle_return,
                 "excess_return": net_cycle_return - risk_free_cycle_return,
                 "portfolio_value": portfolio_value,
+                "drawdown": portfolio_value / equity_curve_so_far.max() - 1,
+                "max_drawdown_to_date": float((equity_curve_so_far / equity_curve_so_far.cummax() - 1).min()),
                 "benchmark_ticker": BENCHMARK_TICKER,
                 "benchmark_cycle_return": benchmark_cycle_return,
                 "benchmark_value": benchmark_value,
@@ -443,6 +490,7 @@ def run_backtest(
                 "min_sell_score": min_sell_score,
                 "rebalance_cycle_interval": rebalance_cycle_interval,
                 "policy_name": policy_name,
+                "score_smoothing_cycles": score_smoothing_cycles,
                 "ensemble_active_from": ensemble_active_from,
                 "ensemble_version": "score_v3_60_xgb_40",
                 "track_record_status": "VALID_ENSEMBLE_60_40" if require_ensemble else (
@@ -470,9 +518,13 @@ def run_backtest(
         raise ValueError("No valid 21-day portfolio cycles could be calculated")
 
     portfolio_perf["cumulative_return"] = portfolio_perf["portfolio_value"] / INITIAL_CAPITAL
-    running_max = portfolio_perf["portfolio_value"].cummax()
-    portfolio_perf["drawdown"] = portfolio_perf["portfolio_value"] / running_max - 1
-    max_drawdown = portfolio_perf["drawdown"].min()
+    # MaxDD sobre a equity curve diária completa, a partir dos €10.000 iniciais.
+    # (Antes era medido só entre valores de fim de ciclo, ignorando o capital inicial.)
+    equity_df = pd.DataFrame(equity_curve)
+    equity_df["drawdown"] = equity_df["equity"] / equity_df["equity"].cummax() - 1
+    max_drawdown = float(equity_df["drawdown"].min())
+    cycle_end_equity = pd.concat([pd.Series([INITIAL_CAPITAL]), portfolio_perf["portfolio_value"]], ignore_index=True)
+    max_drawdown_cycle_end = float((cycle_end_equity / cycle_end_equity.cummax() - 1).min())
     cumulative_return = portfolio_perf["portfolio_value"].iloc[-1] / INITIAL_CAPITAL - 1
     annualization = (252 / rebalance_every) ** 0.5
     cycle_std = portfolio_perf["excess_return"].std(ddof=1)
@@ -501,6 +553,8 @@ def run_backtest(
         "average_cycle_return_net": portfolio_perf["strategy_ret"].mean(),
         "final_portfolio_value": portfolio_perf["portfolio_value"].iloc[-1],
         "max_drawdown": max_drawdown,
+        "max_drawdown_cycle_end": max_drawdown_cycle_end,
+        "max_drawdown_method": "daily_equity_from_initial_capital",
         "cumulative_return": cumulative_return,
         "sharpe_ratio": sharpe_ratio,
         "sortino_ratio": sortino_ratio,
@@ -520,6 +574,7 @@ def run_backtest(
         "min_sell_score": min_sell_score,
         "rebalance_cycle_interval": rebalance_cycle_interval,
         "policy_name": policy_name,
+        "score_smoothing_cycles": score_smoothing_cycles,
         "target_volatility": TARGET_VOLATILITY,
         "fractional_kelly": FRACTIONAL_KELLY,
         "vix_stress_level": VIX_STRESS_LEVEL,
@@ -539,7 +594,7 @@ def run_backtest(
     print(f"Número de rebalanceamentos reais: {real_rebalances}")
     print(f"Retorno médio por ciclo ajustado a custos: {summary['average_cycle_return_net'] * 100:.2f}%")
     print(f"Valor final do portfólio (base 10.000€): {summary['final_portfolio_value']:.2f}€")
-    print(f"Max Drawdown da estratégia: {max_drawdown * 100:.2f}%")
+    print(f"Max Drawdown da estratégia (diário, desde €{INITIAL_CAPITAL:,.0f}): {max_drawdown * 100:.2f}% | só fim de ciclo: {max_drawdown_cycle_end * 100:.2f}%")
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
     print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
@@ -551,6 +606,9 @@ def run_backtest(
     if persist_output:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         portfolio_perf.to_csv(output_path, index=False)
+        equity_path = output_path.with_name(f"{output_path.stem}_equity.csv")
+        equity_df.to_csv(equity_path, index=False)
+        print(f"Equity curve diária gravada em {equity_path}")
         stress_path = output_path.parent / "simulation_stress.csv"
         stress_scenarios.to_csv(stress_path, index=False)
         print(f"\nResultados gravados em {output_path}")

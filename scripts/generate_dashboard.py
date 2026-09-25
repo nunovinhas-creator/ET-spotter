@@ -1761,12 +1761,14 @@ def simulation_chart_section(
 
   summary = simulation_df.iloc[0]
   current = simulation_df.iloc[-1]
+  # Dia 0: capital inicial antes de qualquer ciclo (estratégia e benchmark partem de €10.000).
+  initial_capital = 10000.0
   chart_data = {
-    "labels": simulation_df["cycle_end"].astype(str).tolist(),
+    "labels": [str(simulation_df["date"].iloc[0])] + simulation_df["cycle_end"].astype(str).tolist(),
     "datasets": [
       {
                 "label": "Estratégia com filtro SMA200 (€)",
-        "data": simulation_df["portfolio_value"].round(2).tolist(),
+        "data": [initial_capital] + simulation_df["portfolio_value"].round(2).tolist(),
         "borderColor": "#00D4FF",
         "backgroundColor": "rgba(0, 212, 255, 0.12)",
         "fill": True,
@@ -1777,7 +1779,7 @@ def simulation_chart_section(
       },
       {
         "label": f"{summary.get('benchmark_ticker', 'Benchmark')} (€)",
-        "data": simulation_df.get("benchmark_value", pd.Series(dtype=float)).round(2).tolist(),
+        "data": [initial_capital] + simulation_df.get("benchmark_value", pd.Series(dtype=float)).round(2).tolist(),
         "borderColor": "#FFB800",
         "backgroundColor": "transparent",
         "fill": False,
@@ -1846,11 +1848,12 @@ def simulation_chart_section(
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria.</div>
   <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ranking: {'score_final suavizado (média t, t-1)' if int(summary.get('score_smoothing_cycles', 1)) == 2 else 'score_final cru, sem suavização'} · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
+  {f'<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). Só com valores de fim de ciclo seria {summary["max_drawdown_cycle_end"] * 100:.2f}%.</div>' if "max_drawdown_cycle_end" in summary else ""}
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
-  {metric_card("Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
+  {metric_card("Max Drawdown diário" if "max_drawdown_cycle_end" in summary else "Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
   {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
   {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
   {metric_card("SMA200 atual", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", "#FFB800")}

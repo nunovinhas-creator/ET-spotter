@@ -1,0 +1,47 @@
+name: Refetch Prices
+
+# Re-download forçado do histórico diário de tickers específicos (ex.: ficheiros
+# truncados pelo Yahoo). Corre só manualmente e faz commit apenas de data/daily/.
+on:
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Tickers separados por espaço"
+        required: true
+        default: "AIGA.L PHPT.L"
+
+concurrency:
+  group: et-spotter-data
+  cancel-in-progress: false
+
+jobs:
+  refetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Refetch symbols
+        env:
+          SYMBOLS: ${{ inputs.symbols }}
+        run: python scripts/refetch_symbols.py $SYMBOLS
+      - name: Compute metrics
+        if: always()
+        run: python scripts/compute_metrics.py
+      - name: Commit refreshed prices
+        if: always()
+        env:
+          SYMBOLS: ${{ inputs.symbols }}
+        run: |
+          git config --global user.name "et-spotter-bot"
+          git config --global user.email "bot@et-spotter.local"
+          git add data/daily/
+          git diff --cached --quiet || git commit -m "chore: refetch daily prices ($SYMBOLS)"
+          git push

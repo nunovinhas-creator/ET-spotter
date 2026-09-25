@@ -1,11 +1,15 @@
 # ET-Spotter: políticas de baixa frequência
 
+> **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
+
 **Universo de comparação:** apenas `VALID_ENSEMBLE_60_40`, desde 2026-06-09.  
 **Custos:** 30 bps round-trip.  
 **Look-ahead:** retornos começam no dia seguinte ao sinal.  
 **Limite de seleção:** máximo 8 posições em A; 7 em B/C.
 
 ## Comparação A/B/C
+
+> **Nota (correção de MaxDD):** os MaxDD abaixo foram medidos só em fins de ciclo, sem o capital inicial. Com o cálculo corrigido (equity curve diária desde €10.000, ver `max_drawdown_fix.md`), C fica em −7,72% e B em −7,86%. Ambas continuam ≤ 8%.
 
 | Política | Regras principais | Bruto | Líquido | MaxDD | Turnover médio | Custos | Correlação média | Posições médias |
 |---|---|---:|---:|---:|---:|---:|---:|---:|

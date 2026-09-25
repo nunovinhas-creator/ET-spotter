@@ -1,5 +1,7 @@
 # Persistência do score_final
 
+> **Aviso (dados corrigidos):** os números deste documento usam o histórico anterior à correção de fins de semana e datas desfasadas. Ver `data_quality_weekend_fix.md`. No período VALID_ENSEMBLE_60_40, a Política C passa a +3,99% líquido e MaxDD diário −11,87%.
+
 ## VALID_ENSEMBLE_60_40
 
 Período analisado: 2026-06-09 a 2026-09-24. A Política C produz 3 ciclos e apenas 2 transições entre ciclos, pelo que os números são diagnósticos e não estatisticamente robustos.
