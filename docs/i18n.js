@@ -90,6 +90,12 @@
       'BUY':        i18n.t('signal.buy'),
       'POTENTIAL':  i18n.t('signal.potential')
     };
+    /* notify canvas/JS-rendered widgets (ex: legendas Chart.js) */
+    try {
+      document.dispatchEvent(new CustomEvent('i18n:applied', {
+        detail: { language: i18n.language, t: function (k, o) { return i18n.t(k, o); } }
+      }));
+    } catch (e) {}
     /* re-render ETF table if already on screen */
     if (typeof applyFilters === 'function') {
       try { applyFilters(); } catch (e) {}
