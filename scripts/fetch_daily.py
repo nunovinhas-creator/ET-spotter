@@ -44,8 +44,8 @@ def is_truncated(new: pd.DataFrame, existing: pd.DataFrame) -> bool:
 
 
 def merge_with_existing(new: pd.DataFrame, existing: pd.DataFrame) -> pd.DataFrame:
-    """Mantém as barras antigas e dá prioridade às novas nas datas em comum."""
-    merged = pd.concat([existing[existing.index < new.index.min()], new])
+    """Mantém todas as barras existentes e dá prioridade às novas nas datas em comum."""
+    merged = pd.concat([existing, new])
     return merged[~merged.index.duplicated(keep="last")].sort_index()
 
 

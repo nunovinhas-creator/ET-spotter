@@ -42,6 +42,6 @@ jobs:
         run: |
           git config --global user.name "et-spotter-bot"
           git config --global user.email "bot@et-spotter.local"
-          git add data/daily/
+          git add -u data/daily/  # data/daily está no .gitignore; -u atualiza os ficheiros já versionados
           git diff --cached --quiet || git commit -m "chore: refetch daily prices ($SYMBOLS)"
           git push
