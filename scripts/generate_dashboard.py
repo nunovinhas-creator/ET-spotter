@@ -377,7 +377,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0, portfoli
     <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
     <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
     <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
-    <button class="nav-tab" onclick="switchTab('simulation',this)">Simulação</button>
+    <button class="nav-tab" onclick="switchTab('simulation',this)" data-i18n="nav.simulation">Simulação</button>
     <button class="nav-tab" onclick="switchTab('guides',this)" data-i18n="nav.guides">Guias</button>
   </nav>
 </header>
@@ -1777,6 +1777,18 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 </section>"""
 
 
+def _tr(key: str, text: str, **opts) -> str:
+  """Texto traduzível: <span data-i18n> com o PT como fallback (i18n.js troca para EN).
+
+  `text` é texto simples (é escapado aqui); `opts` alimentam a interpolação {{x}}
+  do i18next via data-i18n-options.
+  """
+  options = (
+    f' data-i18n-options="{html_mod.escape(json.dumps(opts, ensure_ascii=False))}"' if opts else ""
+  )
+  return f'<span data-i18n="{key}"{options}>{html_mod.escape(text)}</span>'
+
+
 def _construction_constraints_line(summary: dict) -> str:
   """Linha com as restrições de construção da carteira (ausente em resultados antigos)."""
   def _present(key: str):
@@ -1789,32 +1801,47 @@ def _construction_constraints_line(summary: dict) -> str:
   early_vol = _present("early_target_volatility")
   if max_per_category is None and vol_filter is None and high_beta_cap is None and early_vol is None:
     return ""
-  parts = [f"máx. {int(max_per_category)} ETFs por categoria" if max_per_category is not None else "sem limite de ETFs por categoria"]
+  parts = [
+    _tr("simulation.cons_max_per_category", f"máx. {int(max_per_category)} ETFs por categoria", n=int(max_per_category))
+    if max_per_category is not None else
+    _tr("simulation.cons_no_category_limit", "sem limite de ETFs por categoria")
+  ]
   if vol_filter == "exclude":
-    parts.append("sem novas entradas com vol_21 no quartil superior do universo")
+    parts.append(_tr("simulation.cons_vol_exclude", "sem novas entradas com vol_21 no quartil superior do universo"))
   elif vol_filter == "halve":
-    parts.append("peso a 50% para vol_21 no quartil superior do universo")
+    parts.append(_tr("simulation.cons_vol_halve", "peso a 50% para vol_21 no quartil superior do universo"))
   if high_beta_cap is not None:
-    parts.append(f"alto beta ≤ {float(high_beta_cap) * 100:.0f}%")
+    pct = f"{float(high_beta_cap) * 100:.0f}"
+    parts.append(_tr("simulation.cons_high_beta", f"alto beta ≤ {pct}%", pct=pct))
   if early_vol is not None:
-    parts.append(f"vol-target {float(early_vol) * 100:.0f}% nos primeiros ciclos")
-  return f'<div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Construção da carteira: {html_mod.escape(" · ".join(parts))}.</div>'
+    pct = f"{float(early_vol) * 100:.0f}"
+    parts.append(_tr("simulation.cons_early_vol", f"vol-target {pct}% nos primeiros ciclos", pct=pct))
+  return (
+    '<div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">'
+    f'{_tr("simulation.cons_prefix", "Construção da carteira:")} {" · ".join(parts)}.</div>'
+  )
 
 
 def _regime_rules_text(summary) -> str:
   """Regras do filtro de regime usadas no resultado (compatível com resultados antigos)."""
   regime_filter = summary.get("regime_filter") if hasattr(summary, "get") else None
   if regime_filter is None or (isinstance(regime_filter, float) and pd.isna(regime_filter)):
-    return f"Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash."
+    stress = f"{summary.get('vix_stress_level', 28):.0f}"
+    return _tr("simulation.regime_rules_default",
+               f"Regime BULL exige VWCE > SMA200 e VIX < {stress}; BEAR/STRESS ficam em cash.", stress=stress)
   if regime_filter == "none":
-    return "Sem filtro de regime (sempre 100% investido)."
+    return _tr("simulation.regime_rules_none", "Sem filtro de regime (sempre 100% investido).")
   if regime_filter == "legacy":
-    return f"Filtro binário: BULL (VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}) investido; resto em cash."
-  neutral = float(summary.get("vix_neutral_level", VIX_NEUTRAL_LEVEL))
-  stress = float(summary.get("vix_stress_level", VIX_STRESS_LEVEL))
-  return (
-    f"Filtro de regime: BULL (VWCE &gt; SMA200, VIX &lt; {neutral:.0f}) 100% · NEUTRAL (VIX {neutral:.0f}–{stress:.0f}) máx. 60% · "
-    f"STRESS (VIX ≥ {stress:.0f}) e BEAR (VWCE &lt; SMA200) 100% cash. Sem VIX usa só a SMA200; mudança de regime força rebalanceamento."
+    stress = f"{summary.get('vix_stress_level', 28):.0f}"
+    return _tr("simulation.regime_rules_legacy",
+               f"Filtro binário: BULL (VWCE > SMA200 e VIX < {stress}) investido; resto em cash.", stress=stress)
+  neutral = f'{float(summary.get("vix_neutral_level", VIX_NEUTRAL_LEVEL)):.0f}'
+  stress = f'{float(summary.get("vix_stress_level", VIX_STRESS_LEVEL)):.0f}'
+  return _tr(
+    "simulation.regime_rules_vix",
+    f"Filtro de regime: BULL (VWCE > SMA200, VIX < {neutral}) 100% · NEUTRAL (VIX {neutral}–{stress}) máx. 60% · "
+    f"STRESS (VIX ≥ {stress}) e BEAR (VWCE < SMA200) 100% cash. Sem VIX usa só a SMA200; mudança de regime força rebalanceamento.",
+    neutral=neutral, stress=stress,
   )
 
 
@@ -1833,6 +1860,12 @@ def _regime_periods(history: pd.DataFrame) -> list[dict]:
       "vix_max": group["vix"].max(),
     })
   return periods
+
+
+def _sessions_label(days: int) -> str:
+  if days == 1:
+    return _tr("simulation.session_one", "1 sessão", n=days)
+  return _tr("simulation.session_many", f"{days} sessões", n=days)
 
 
 def _fmt_vix(value) -> str:
@@ -1880,7 +1913,7 @@ def market_regime_section(status: dict, history: pd.DataFrame) -> str:
     "<tr>"
     f'<td style="padding:6px 8px;color:{REGIME_COLORS.get(period["regime"], "#E8F0FF")};font-weight:700">{html_mod.escape(period["regime"])}</td>'
     f'<td style="padding:6px 8px">{period["start"]:%Y-%m-%d} → {period["end"]:%Y-%m-%d}</td>'
-    f'<td style="padding:6px 8px">{period["days"]} {"sessão" if period["days"] == 1 else "sessões"}</td>'
+    f'<td style="padding:6px 8px">{_sessions_label(int(period["days"]))}</td>'
     f'<td style="padding:6px 8px">{REGIME_EXPOSURE.get(period["regime"], 0) * 100:.0f}%</td>'
     f'<td style="padding:6px 8px">{_fmt_vix(period["vix_max"])}</td>'
     "</tr>"
@@ -1898,22 +1931,24 @@ def market_regime_section(status: dict, history: pd.DataFrame) -> str:
     )
 
   fallback_note = "" if status.get("vix_available") else (
-    '<div style="color:#FFB800;font-size:.68rem;margin-bottom:12px">⚠ VIX indisponível ou desatualizado — o regime está a usar só a SMA200 (fallback).</div>'
+    '<div style="color:#FFB800;font-size:.68rem;margin-bottom:12px">'
+    + _tr("simulation.vix_fallback", "⚠ VIX indisponível ou desatualizado — o regime está a usar só a SMA200 (fallback).")
+    + "</div>"
   )
   return f"""
 <section class="section">
-  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Regime de mercado · filtro VIX + SMA200</span></h2>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text({"regime_filter": "vix_sma200"})} Avaliado na data de construção de cada ciclo da carteira simulada.</div>
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}{_tr("simulation.regime_title", "Regime de mercado · filtro VIX + SMA200")}</h2>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text({"regime_filter": "vix_sma200"})} {_tr("simulation.regime_eval_note", "Avaliado na data de construção de cada ciclo da carteira simulada.")}</div>
   {fallback_note}
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px">
-    {card("Regime atual", html_mod.escape(regime), color)}
-    {card("Exposição máxima", f"{float(status.get('exposure', 0)) * 100:.0f}%", color)}
+    {card(_tr("simulation.r_current", "Regime atual"), html_mod.escape(regime), color)}
+    {card(_tr("simulation.r_max_exposure", "Exposição máxima"), f"{float(status.get('exposure', 0)) * 100:.0f}%", color)}
     {card("VIX", "—" if vix is None else f"{vix:.2f}", "#FFB800")}
     {card("VWCE vs SMA200", f"{status.get('vwce_close', 0):.2f} {'&gt;' if above else '≤'} {status.get('sma200', 0):.2f}", "#00D4FF")}
-    {card("Em vigor desde", html_mod.escape(str(status.get('regime_since', '—'))), "#E8F0FF")}
-    {card("Última leitura", html_mod.escape(str(status.get('date', '—'))), "#7183A6")}
+    {card(_tr("simulation.r_since", "Em vigor desde"), html_mod.escape(str(status.get('regime_since', '—'))), "#E8F0FF")}
+    {card(_tr("simulation.r_last", "Última leitura"), html_mod.escape(str(status.get('date', '—'))), "#7183A6")}
   </div>
-  <div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Histórico de regimes · últimos 12 meses · {distribution}</div>
+  <div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">{_tr("simulation.regime_history", "Histórico de regimes · últimos 12 meses")} · {distribution}</div>
   <div style="display:flex;height:14px;border-radius:2px;overflow:hidden;margin-bottom:12px">{strip}</div>
   <div style="position:relative;height:260px">
     <canvas id="regimeChart"></canvas>
@@ -1941,7 +1976,7 @@ def market_regime_section(status: dict, history: pd.DataFrame) -> str:
   <div style="overflow-x:auto;margin-top:14px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:6px 8px">Regime</th><th style="padding:6px 8px">Período</th><th style="padding:6px 8px">Duração</th><th style="padding:6px 8px">Exposição máx.</th><th style="padding:6px 8px">VIX máx.</th>
+        <th style="padding:6px 8px">Regime</th><th style="padding:6px 8px">{_tr("simulation.th_period", "Período")}</th><th style="padding:6px 8px">{_tr("simulation.th_duration", "Duração")}</th><th style="padding:6px 8px">{_tr("simulation.th_max_exposure", "Exposição máx.")}</th><th style="padding:6px 8px">{_tr("simulation.th_vix_max", "VIX máx.")}</th>
       </tr></thead>
       <tbody>{period_rows}</tbody>
     </table>
@@ -2007,7 +2042,7 @@ def simulation_chart_section(
     "labels": [str(simulation_df["date"].iloc[0])] + simulation_df["cycle_end"].astype(str).tolist(),
     "datasets": [
       {
-                "label": "Estratégia com filtro de regime (€)",
+        "label": "Estratégia com filtro de regime (€)",
         "data": [initial_capital] + simulation_df["portfolio_value"].round(2).tolist(),
         "borderColor": "#00D4FF",
         "backgroundColor": "rgba(0, 212, 255, 0.12)",
@@ -2042,10 +2077,15 @@ def simulation_chart_section(
       xgb_proba = allocation.get("xgb_proba", allocation.get("ml_prob"))
       ml_display = f"{xgb_proba:.3f}" if xgb_proba is not None else "—"
       volatility_display = f"{allocation['volatility_21'] * 100:.2f}%" if allocation.get("volatility_21") is not None else "—"
-      rebalance_display = "Executado" if bool(cycle["rebalance_executed"]) else "Dentro da banda"
+      rebalance_display = (
+        _tr("simulation.executed", "Executado") if bool(cycle["rebalance_executed"])
+        else _tr("simulation.within_band", "Dentro da banda")
+      )
+      cycle_end = str(cycle["cycle_end"])[:10]
+      deviation = f"{float(cycle['max_weight_deviation']) * 100:.1f}"
       allocation_rows.append(
         "<tr>"
-        f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>até {html_mod.escape(str(cycle['cycle_end'])[:10])}</small></td>"
+        f"<td>{html_mod.escape(str(cycle['date'])[:10])}<br><small>{_tr('simulation.until', f'até {cycle_end}', date=cycle_end)}</small></td>"
         f"<td><strong>{html_mod.escape(allocation['ticker'])}</strong><br><small>{html_mod.escape(allocation['name'])}</small></td>"
         f"<td>{score_display}</td>"
         f"<td>{score_v3_display}</td>"
@@ -2056,9 +2096,9 @@ def simulation_chart_section(
         f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
         f"<td>€{float(cycle['friction_cost_eur']):,.2f}</td>"
         f"<td style=\"color:{REGIME_COLORS.get(str(cycle['market_regime']), '#E8F0FF')};font-weight:700\">{html_mod.escape(str(cycle['market_regime']))}"
-        f"<br><small>{'VIX ' + _fmt_vix(cycle.get('vix_level')) if pd.notna(cycle.get('vix_level')) else 'sem VIX'}</small></td>"
+        f"<br><small>{'VIX ' + _fmt_vix(cycle.get('vix_level')) if pd.notna(cycle.get('vix_level')) else _tr('simulation.no_vix', 'sem VIX')}</small></td>"
         f"<td>{float(cycle['exposure']) * 100:.0f}%</td>"
-        f"<td>{rebalance_display}<br><small>desvio {float(cycle['max_weight_deviation']) * 100:.1f}%</small></td>"
+        f"<td>{rebalance_display}<br><small>{_tr('simulation.deviation', f'desvio {deviation}%', pct=deviation)}</small></td>"
         "</tr>"
       )
   allocation_table = "".join(allocation_rows)
@@ -2068,9 +2108,46 @@ def simulation_chart_section(
     f"<td>{html_mod.escape(str(row['window_start']))} → {html_mod.escape(str(row['window_end']))}</td>"
     f"<td>{float(row['benchmark_return']) * 100:.2f}%</td>"
     f"<td>{float(row['estimated_strategy_return']) * 100:.2f}%</td>"
-    f"<td>{html_mod.escape(str(row['stress_level']))}</td>"
+    f"<td>{_tr('simulation.severity_' + str(row['stress_level']).lower(), str(row['stress_level']))}</td>"
     "</tr>"
     for _, row in stress_df.iterrows()
+  )
+
+  risk_free = f"{summary['risk_free_rate_annual'] * 100:.2f}"
+  ensemble_since = str(summary.get("ensemble_active_from", "data não declarada"))
+  ensemble_status = str(summary.get("track_record_summary_status", summary.get("track_record_status", "não validado")))
+  legacy_cycles = int(summary.get("legacy_cycles_excluded", 0))
+  cost_model = str(summary.get("cost_model", "não disponível"))
+  smoothed = int(summary.get("score_smoothing_cycles", 1)) == 2
+  policy_opts = {
+    "policy": str(summary.get("policy_name", "não declarada")),
+    "threshold": f"{summary['rebalance_threshold'] * 100:.1f}",
+    "holding": int(summary.get("min_holding_cycles", 0)),
+    "max_new": str(summary.get("max_new_positions", "sem limite")),
+    "interval": int(summary.get("rebalance_cycle_interval", 1)),
+    "no_rotation": int(summary["cost_saving_cycles"]),
+  }
+  policy_key = "simulation.policy_line_smoothed" if smoothed else "simulation.policy_line_raw"
+  policy_text = (
+    f"Política {policy_opts['policy']} · threshold ≥ {policy_opts['threshold']}% · holding mínimo {policy_opts['holding']} ciclos · "
+    f"máximo {policy_opts['max_new']} novas posições/ciclo · rebalance a cada {policy_opts['interval']} ciclo(s) · ranking: "
+    f"{'score_final suavizado (média t, t-1)' if smoothed else 'score_final cru, sem suavização'} · "
+    f"ciclos sem rotação: {policy_opts['no_rotation']}"
+  )
+  maxdd_note = ""
+  if "max_drawdown_cycle_end" in summary:
+    maxdd_cycle_end = f"{summary['max_drawdown_cycle_end'] * 100:.2f}"
+    maxdd_note = (
+      '<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">'
+      + _tr("simulation.maxdd_note",
+            "Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). "
+            f"Só com valores de fim de ciclo seria {maxdd_cycle_end}%.", v=maxdd_cycle_end)
+      + "</div>"
+    )
+  stress_empty = (
+    '<tr><td colspan="5" style="padding:8px;color:#7183A6">'
+    + _tr("simulation.stress_empty", "Sem dados históricos de stress disponíveis.")
+    + "</td></tr>"
   )
 
   is_official = variant == "official"
@@ -2114,26 +2191,26 @@ def simulation_chart_section(
 <section class="section sim-panel sim-panel-{html_mod.escape(variant)}" style="{section_style}">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px">
     <h2 class="section-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;font-size:{title_size}">{_icon("portfolio")}<span{title_attr}>{html_mod.escape(title)}</span>{badge}</h2>
-    <button id="simulationExport{dom_suffix}" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
+    <button id="simulationExport{dom_suffix}" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem" data-i18n="simulation.export_csv">↓ Exportar transações CSV</button>
   </div>
   {subtitle_html}
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria (soma dos ETFs da categoria; excesso redistribuído, ou cash se todas estiverem no cap).</div>
-  <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text(summary)} Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ranking: {'score_final suavizado (média t, t-1)' if int(summary.get('score_smoothing_cycles', 1)) == 2 else 'score_final cru, sem suavização'} · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_tr("simulation.sharpe_note", f"Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {risk_free}%.", rf=risk_free)}</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_tr("simulation.score_note", "Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria (soma dos ETFs da categoria; excesso redistribuído, ou cash se todas estiverem no cap).")}</div>
+  <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">{_tr("simulation.ensemble_status", f"Ensemble fiável ativo desde {ensemble_since} · estado: {ensemble_status} · ciclos legados excluídos: {legacy_cycles}", since=ensemble_since, status=ensemble_status, legacy=legacy_cycles)}</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text(summary)} {_tr("simulation.costs", f"Custos: {cost_model}.", costs=cost_model)}</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_tr(policy_key, policy_text, **policy_opts)}</div>
   {_construction_constraints_line(summary)}
-  {f'<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). Só com valores de fim de ciclo seria {summary["max_drawdown_cycle_end"] * 100:.2f}%.</div>' if "max_drawdown_cycle_end" in summary else ""}
+  {maxdd_note}
   {reference_warning}
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
-  {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
-  {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
-  {metric_card("Max Drawdown diário" if "max_drawdown_cycle_end" in summary else "Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
+  {metric_card(_tr("simulation.m_final_value", "Valor final"), f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
+  {metric_card(_tr("simulation.m_cum_return", "Rentabilidade acumulada"), f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
+  {metric_card(_tr("simulation.m_maxdd_daily", "Max Drawdown diário") if "max_drawdown_cycle_end" in summary else "Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
   {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
   {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
-  {metric_card("Regime atual · exposição", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", REGIME_COLORS.get(str(current['market_regime']), "#FFB800"))}
-  {metric_card("Alpha Jensen", f"{summary['jensen_alpha_annual'] * 100:+.2f}%", "#FF4466")}
-  {metric_card("Beta VWCE", f"{summary['beta']:.2f}", "#4D9FFF")}
+  {metric_card(_tr("simulation.m_regime_exposure", "Regime atual · exposição"), f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", REGIME_COLORS.get(str(current['market_regime']), "#FFB800"))}
+  {metric_card(_tr("simulation.m_alpha", "Alpha Jensen"), f"{summary['jensen_alpha_annual'] * 100:+.2f}%", "#FF4466")}
+  {metric_card(_tr("simulation.m_beta", "Beta VWCE"), f"{summary['beta']:.2f}", "#4D9FFF")}
   </div>
   <div style="position:relative;height:260px">
     <canvas id="simulationChart{dom_suffix}"></canvas>
@@ -2141,7 +2218,7 @@ def simulation_chart_section(
   <script>
     (function() {{
       const ctx = document.getElementById("simulationChart{dom_suffix}").getContext("2d");
-      new Chart(ctx, {{
+      const chart = new Chart(ctx, {{
         type: "line",
         data: {chart_json},
         options: {{
@@ -2161,25 +2238,33 @@ def simulation_chart_section(
           }}
         }}
       }});
+      // Legenda do gráfico (canvas) não é apanhada pelo data-i18n: traduzir via evento do i18n.js.
+      document.addEventListener("i18n:applied", function(event) {{
+        const label = event.detail.t("simulation.chart_strategy");
+        if (label && label !== "simulation.chart_strategy") {{
+          chart.data.datasets[0].label = label;
+          chart.update("none");
+        }}
+      }});
     }})();
   </script>
   <div style="overflow-x:auto;margin-top:18px">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem">
       <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-        <th style="padding:8px">Rebalanceamento</th><th style="padding:8px">ETF / nome</th><th style="padding:8px">Score final</th><th style="padding:8px">Score v3</th><th style="padding:8px">XGBoost</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">Peso</th><th style="padding:8px">Contributo</th><th style="padding:8px">Turnover</th><th style="padding:8px">Custo fricção</th><th style="padding:8px">Regime</th><th style="padding:8px">Exposição</th><th style="padding:8px">Estado</th>
+        <th style="padding:8px">{_tr("simulation.th_rebalance", "Rebalanceamento")}</th><th style="padding:8px">{_tr("simulation.th_etf", "ETF / nome")}</th><th style="padding:8px">{_tr("simulation.th_final_score", "Score final")}</th><th style="padding:8px">Score v3</th><th style="padding:8px">XGBoost</th><th style="padding:8px">Vol 21d</th><th style="padding:8px">{_tr("simulation.th_weight", "Peso")}</th><th style="padding:8px">{_tr("simulation.th_contribution", "Contributo")}</th><th style="padding:8px">Turnover</th><th style="padding:8px">{_tr("simulation.th_friction", "Custo fricção")}</th><th style="padding:8px">Regime</th><th style="padding:8px">{_tr("simulation.th_exposure", "Exposição")}</th><th style="padding:8px">{_tr("simulation.th_status", "Estado")}</th>
       </tr></thead>
       <tbody>{allocation_table}</tbody>
     </table>
   </div>
   <div style="margin-top:22px">
-    <h3 style="color:#E8F0FF;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Testes de Stress Histórico</h3>
-    <div style="color:#7183A6;font-size:.68rem;margin-bottom:8px">Piores janelas móveis de 21 sessões do VWCE; retorno da estratégia estimado por Alpha/Beta condicionais.</div>
+    <h3 style="color:#E8F0FF;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">{_tr("simulation.stress_title", "Testes de Stress Histórico")}</h3>
+    <div style="color:#7183A6;font-size:.68rem;margin-bottom:8px">{_tr("simulation.stress_note", "Piores janelas móveis de 21 sessões do VWCE; retorno da estratégia estimado por Alpha/Beta condicionais.")}</div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:.74rem">
         <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
-          <th style="padding:8px">Cenário</th><th style="padding:8px">Janela</th><th style="padding:8px">VWCE</th><th style="padding:8px">Estratégia estimada</th><th style="padding:8px">Severidade</th>
+          <th style="padding:8px">{_tr("simulation.th_scenario", "Cenário")}</th><th style="padding:8px">{_tr("simulation.th_window", "Janela")}</th><th style="padding:8px">VWCE</th><th style="padding:8px">{_tr("simulation.th_est_strategy", "Estratégia estimada")}</th><th style="padding:8px">{_tr("simulation.th_severity", "Severidade")}</th>
         </tr></thead>
-        <tbody>{stress_rows or '<tr><td colspan="5" style="padding:8px;color:#7183A6">Sem dados históricos de stress disponíveis.</td></tr>'}</tbody>
+        <tbody>{stress_rows or stress_empty}</tbody>
       </table>
     </div>
   </div>
