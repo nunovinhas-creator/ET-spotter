@@ -206,5 +206,17 @@
     "open_source": "✦ OPEN SOURCE",
     "data_source": "ET-Spotter · dados via yfinance · actualização diária",
     "disclaimer": "Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir."
+  },
+  "simulation": {
+    "official_title": "Track-record oficial · Ensemble fiável",
+    "official_subtitle": "Desde 10/06/2026 · regras atuais (Política C + score suavizado + filtros de risco + regime VIX)",
+    "badge_official": "✓ OFICIAL",
+    "badge_reference": "REFERÊNCIA",
+    "full_title": "Histórico completo (referência)",
+    "full_subtitle": "Inclui ciclos PRE_ENSEMBLE anteriores ao ensemble fiável · não usar para avaliar a estratégia atual",
+    "full_card_warning": "Inclui PRE_ENSEMBLE — resultado não comparável com a estratégia atual",
+    "scope_note": "O track-record oficial usa apenas o período em que o ensemble 60% score v3 + 40% XGBoost e todas as regras de risco estão ativas e auditáveis. O histórico completo inclui ciclos anteriores incompletos e serve apenas de referência.",
+    "pre_ensemble_what": "O que é isto?",
+    "pre_ensemble_tooltip": "PRE_ENSEMBLE = ciclos anteriores a 10/06/2026, antes do ensemble 60% score v3 + 40% XGBoost estar fiável e auditável. Nesses ciclos faltavam campos (score_v3 / xgb_proba) ou as regras atuais ainda não estavam todas ativas. Por isso este histórico não deve ser usado para avaliar a estratégia oficial."
   }
 }

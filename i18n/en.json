@@ -206,5 +206,17 @@
     "open_source": "✦ OPEN SOURCE",
     "data_source": "ET-Spotter · data via yfinance · daily update",
     "disclaimer": "Technical information and backtest results — does not constitute financial advice. Signals identify periods of statistical convergence of multiple factors; they do not predict future prices. Always consult a professional before investing."
+  },
+  "simulation": {
+    "official_title": "Official track record · Reliable ensemble",
+    "official_subtitle": "Since 10/06/2026 · current rules (Policy C + smoothed score + risk filters + VIX regime)",
+    "badge_official": "✓ OFFICIAL",
+    "badge_reference": "REFERENCE",
+    "full_title": "Full history (reference)",
+    "full_subtitle": "Includes PRE_ENSEMBLE cycles before the reliable ensemble · do not use to evaluate the current strategy",
+    "full_card_warning": "Includes PRE_ENSEMBLE — result not comparable with the current strategy",
+    "scope_note": "The official track record only uses the period in which the 60% score v3 + 40% XGBoost ensemble and all risk rules are active and auditable. The full history includes earlier, incomplete cycles and is for reference only.",
+    "pre_ensemble_what": "What is this?",
+    "pre_ensemble_tooltip": "PRE_ENSEMBLE = cycles before 10/06/2026, before the 60% score v3 + 40% XGBoost ensemble was reliable and auditable. Those cycles were missing fields (score_v3 / xgb_proba) or the current rules were not yet all active. This history should therefore not be used to evaluate the official strategy."
   }
 }
