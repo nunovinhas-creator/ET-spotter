@@ -1,5 +1,7 @@
 # Avaliação limpa: Política C/B × score cru/suavizado
 
+> **Atualização 2026-09-25:** a configuração oficial passou a incluir restrições de construção da carteira (máx. 2 ETFs por categoria + exclusão do quartil superior de vol_21). MaxDD −11,87% → −4,11%. Ver `maxdd_constraints_analysis.md`.
+
 **Dados:** `scores_history.csv` corrigido (sem fins de semana, datas de mercado reais; ver `data_quality_weekend_fix.md`). Retornos diários a partir dos preços finais em dias úteis.
 **Período:** VALID_ENSEMBLE_60_40, de 2026-06-10 (1.º sinal com o ensemble ativo) a 2026-09-22 (último preço disponível).
 **Comum a todas:** custos de 30 bps round-trip · threshold 12% · holding mínimo 3 ciclos · máx. 2 novas posições · máx. 7 posições · venda com score < 0,40 · ciclos de 21 dias de negociação.
