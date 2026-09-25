@@ -124,35 +124,41 @@ def _capped_weights(
     metadata: dict[str, dict],
     exposure: float,
 ) -> dict[str, float]:
-    """Normalise weights while respecting a cap for every ETF category."""
+    """Normaliza os pesos respeitando o cap de cada categoria sobre a SOMA dos seus ETFs.
+
+    Water-filling: distribui a exposição proporcionalmente aos pesos brutos; cada categoria
+    cuja soma ultrapasse o cap fica fixa no cap (os seus ETFs reduzidos na mesma proporção)
+    e o excesso é redistribuído pelas restantes categorias. Se todas atingirem o cap, o
+    resto fica em cash.
+    """
     if raw_weights.empty or exposure <= 0:
         return {ticker: 0.0 for ticker in raw_weights.index}
 
-    remaining = raw_weights.astype(float).clip(lower=0).copy()
-    result = pd.Series(0.0, index=remaining.index)
-    open_tickers = set(remaining.index)
+    raw = raw_weights.astype(float).clip(lower=0)
+    category_of = {ticker: metadata.get(ticker, {}).get("category_id", "other") for ticker in raw.index}
+    cap_of = {
+        category_of[ticker]: float(metadata.get(ticker, {}).get("category_cap", DEFAULT_CATEGORY_CAP))
+        for ticker in raw.index
+    }
+    result = pd.Series(0.0, index=raw.index)
+    open_categories = set(category_of.values())
     remaining_exposure = exposure
-    for _ in range(len(remaining) + 1):
-        if not open_tickers or remaining_exposure <= 1e-9:
+    while open_categories and remaining_exposure > 1e-9:
+        open_tickers = [ticker for ticker in raw.index if category_of[ticker] in open_categories]
+        open_total = raw.loc[open_tickers].sum()
+        if open_total <= 0:
             break
-        open_series = remaining.loc[sorted(open_tickers)]
-        allocation = open_series / open_series.sum() * remaining_exposure
-        capped = []
-        for ticker, weight in allocation.items():
-            cap = float(metadata.get(ticker, {}).get("category_cap", DEFAULT_CATEGORY_CAP))
-            category = metadata.get(ticker, {}).get("category_id", "other")
-            category_weight = result.loc[
-                [t for t in result.index if metadata.get(t, {}).get("category_id", "other") == category]
-            ].sum()
-            if weight + category_weight > cap + 1e-9:
-                capped.append((ticker, max(0.0, cap - category_weight)))
-        if not capped:
-            result.loc[sorted(open_tickers)] = allocation
+        allocation = raw.loc[open_tickers] / open_total * remaining_exposure
+        category_totals = allocation.groupby(pd.Series(category_of).loc[open_tickers]).sum()
+        breached = [category for category, total in category_totals.items() if total > cap_of[category] + 1e-9]
+        if not breached:
+            result.loc[open_tickers] = allocation
             break
-        for ticker, weight in capped:
-            result[ticker] = weight
-            remaining_exposure -= weight
-            open_tickers.remove(ticker)
+        for category in breached:
+            members = [ticker for ticker in open_tickers if category_of[ticker] == category]
+            result.loc[members] = allocation.loc[members] * cap_of[category] / category_totals[category]
+            remaining_exposure -= cap_of[category]
+            open_categories.remove(category)
     return result.to_dict()
 
 

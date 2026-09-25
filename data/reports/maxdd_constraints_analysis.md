@@ -11,7 +11,7 @@ O MaxDD de −11,87% vem da 1.ª carteira (CNDX, ECAR, IWFM, IWVL, RBOT, WTAI, X
 
 ## Descobertas no simulador (antes de testar)
 
-1. **O cap de 25% por categoria não é aplicado à soma da categoria.** `_capped_weights` só compara cada ETF isoladamente com o cap. Na 1.ª carteira, os 4 temáticos somam 42,7% e os 2 factor 37,4%. Esta avaliação **não corrige** o bug, para que a comparação com a baseline se mantenha limpa. A correção fica como ponto em aberto (ver abaixo).
+1. **O cap de 25% por categoria não é aplicado à soma da categoria** *(corrigido a 2026-09-25, ver secção final)*. `_capped_weights` só compara cada ETF isoladamente com o cap. Na 1.ª carteira, os 4 temáticos somam 42,7% e os 2 factor 37,4%. Esta avaliação **não corrige** o bug, para que a comparação com a baseline se mantenha limpa. A correção fica como ponto em aberto (ver abaixo).
 2. **`TARGET_VOLATILITY` (12%) e o Kelly fracionário só servem de escala relativa.** Os pesos são sempre normalizados para 100% da exposição, por isso a constante de vol-target anula-se. O Kelly vem de `0,5 + k·(2·hit_rate − 1)`. Sem histórico (hit_rate = 0,5) dá 0,5 para todos os ETFs nos primeiros ciclos. Por isso:
    - **3a (vol-target 10%)** foi implementado como vol-target **real**: a vol ex-ante da carteira é estimada com a covariância dos últimos 63 dias úteis, e a exposição é reduzida para `min(1, 10% / vol)`. O resto fica em cash, a 0%.
    - **3b (Kelly 0,20)** foi testado tal como pedido, mas **não tem efeito prático**. As diferenças (≤ 0,03 p.p.) vêm só do 2.º ciclo.
@@ -114,5 +114,58 @@ Critério: MaxDD tão baixo quanto possível (alvo ≤ 9%) sem destruir o retorn
 - **Amostra mínima:** 2 ciclos. O ganho vem de evitar uma carteira inicial concentrada em temáticos num período em que esses temáticos caíram. Não prova edge, mas o efeito vai na direção esperada e repete-se no histórico completo.
 - **Custo de oportunidade:** em fases de liderança temática forte, o filtro de volatilidade vai deixar ganhos de fora. É uma troca consciente: menos cauda por menos upside.
 - **Âmbito:** as restrições aplicam-se ao simulador (track-record). Os sinais diários, o ranking do dashboard e os alertas não mudam.
-- **Em aberto:** corrigir `_capped_weights` para aplicar o cap de 25% à soma de cada categoria, como o dashboard descreve. Com 1a ativo o impacto é pequeno (na 1.ª carteira escolhida, EUA soma 27%), mas o cap devia fazer o que diz.
+- ~~**Em aberto:** corrigir `_capped_weights`~~. Corrigido, ver secção seguinte.
 - **Reavaliação:** quando houver ≥ 6 ciclos no período VALID_ENSEMBLE_60_40.
+
+## Correção do cap de 25% por categoria (2026-09-25)
+
+### Bug
+
+`_capped_weights` comparava cada ETF **isolado** com o cap. A soma já atribuída à categoria só era calculada com os ETFs fixados em iterações anteriores. Por isso, 4 temáticos com 10–13% cada passavam todos, e a categoria chegava a 42,7% na 1.ª carteira da baseline.
+
+### Correção: redução proporcional (water-filling)
+
+1. A exposição é distribuída proporcionalmente aos pesos brutos (vol-target × força do score × Kelly).
+2. Os pesos são **somados por categoria**. Cada categoria acima do cap (25% por omissão, ou `max_weight` em `config/etfs.json`) fica fixa exatamente no cap. Os seus ETFs são **reduzidos na mesma proporção**, portanto as posições relativas dentro da categoria mantêm-se.
+3. O excesso volta a ser distribuído pelas categorias ainda abertas, repetindo até nenhuma ultrapassar o cap. Se todas estiverem no cap, o resto fica em cash.
+
+**Porquê esta abordagem e não bloquear a entrada:** é a mais simples. É uma única função, não depende da ordem de entrada, não muda a seleção de ETFs (que fica a cargo de "máx. 2 por categoria" e do filtro de vol) e funciona igual na alocação inicial e nos rebalanceamentos. Bloquear a entrada exigiria saber pesos antes de escolher ETFs e cruzar-se-ia com a regra de 2 por categoria.
+
+**Interação com "máx. 2 ETFs por categoria":** as duas regras complementam-se. A seleção garante no máximo 2 ETFs por categoria. Com 7 posições há sempre ≥ 4 categorias, portanto 4 × 25% = 100% pode ser investido. O cap garante depois que nenhuma dessas categorias passa 25% do capital. Sem a regra dos 2, uma carteira com só 3 categorias fica automaticamente com ≥ 25% em cash.
+
+**Drift entre rebalanceamentos:** o cap aplica-se aos pesos-alvo. Sem rebalanceamento (desvio < 12%), os pesos derivam com o mercado. No 2.º ciclo, "Internacional Desenvolvido" está a 25,2%, o que é esperado.
+
+### Resultado oficial (1a + 2a, cap corrigido)
+
+| Métrica | Antes da correção | Depois |
+|---|---:|---:|
+| Retorno líquido | +6,81% | **+6,69%** |
+| MaxDD diário (desde €10.000) | −4,11% | **−4,11%** |
+| Turnover médio | 50,0% | 50,0% |
+| Custos | €30,00 | €30,00 |
+| vs VWCE.DE (+6,78%) | +0,03 p.p. | −0,10 p.p. |
+| 1.ª carteira | CNDX 10%, HMJP 13%, IJPA 12%, IUSA 17%, SUSW 14%, XDWD 18%, XMAW 16% | CNDX 9%, HMJP 13%, IJPA 12%, IUSA 16%, **SUSW 25%**, XDWD 13%, XMAW 12% |
+| Peso por categoria (1.º ciclo) | EUA 27% · Global 34% · Intl 25% · ESG 14% | EUA 25% · Global 25% · Intl 25% · ESG 25% |
+| FULL_HISTORY líquido / MaxDD | +2,00% / −4,83% | +2,18% / −4,95% |
+
+O MaxDD fica igual e o retorno desce 0,12 p.p. O excesso de "Global" (XDWD, XMAW) passa para o SUSW, o único ETF da categoria ESG.
+
+### Variantes recalculadas com o cap corrigido (VALID_ENSEMBLE_60_40)
+
+| Variante | Líquido | MaxDD | Ret/DD | Turnover | Custos | vs VWCE | Investido no 1.º ciclo |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Baseline (C + suavizado) | +4,64% | −8,56% | 0,54 | 37,5% | €22,50 | −2,14 p.p. | 75% |
+| 1a | +6,76% | −8,44% | 0,80 | 50,0% | €30,00 | −0,02 p.p. | 100% |
+| 1b ≤ 35% | +4,64% | −8,10% | 0,57 | 37,5% | €22,50 | −2,14 p.p. | 75% |
+| 2a | +5,49% | −3,23% | 1,70 | 37,5% | €22,50 | −1,30 p.p. | 75% |
+| 2b | +4,64% | −8,56% | 0,54 | 37,5% | €22,50 | −2,14 p.p. | 75% |
+| 3a vol-target 10% | +2,79% | −5,03% | 0,56 | 21,9% | €13,12 | −3,99 p.p. | 44% |
+| 3b Kelly 0,20 | +4,64% | −8,56% | 0,54 | 37,5% | €22,50 | −2,14 p.p. | 75% |
+| **1a + 2a (oficial)** | **+6,69%** | **−4,11%** | 1,63 | 50,0% | €30,00 | −0,10 p.p. | 100% |
+| 1a + 2b | +6,76% | −8,44% | 0,80 | 50,0% | €30,00 | −0,02 p.p. | 100% |
+| 1a + 2a + 3a | +4,68% | −2,86% | 1,64 | 34,8% | €20,88 | −2,10 p.p. | 70% |
+| 1b35 + 2a + 3a | +5,22% | −3,07% | 1,70 | 35,6% | €21,38 | −1,57 p.p. | 71% |
+
+- Com o cap a funcionar, a baseline fica com só 3 categorias (EUA, Temáticos, Factor) e 25% em cash. Por isso o MaxDD dela desce de −11,87% para −8,56%. Parte do "ganho" anterior do cap corrigido é cash parado.
+- 2b e 3b ficam iguais à baseline. Os ETFs de vol alta são todos temáticos, e reduzir o peso de todos os membros de uma categoria que já está no cap não muda nada.
+- **A decisão mantém-se:** 1a + 2a tem o 2.º melhor retorno (a 0,07 p.p. do 1a sozinho) com metade do MaxDD, e fica 100% investido.
