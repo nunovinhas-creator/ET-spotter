@@ -1949,11 +1949,52 @@ def market_regime_section(status: dict, history: pd.DataFrame) -> str:
 </section>"""
 
 
+def _pre_ensemble_info() -> str:
+  """Ícone ⓘ com a explicação de PRE_ENSEMBLE (hover no desktop, toque/foco no mobile)."""
+  return (
+    '<span class="sim-info" tabindex="0" role="button" aria-label="O que é PRE_ENSEMBLE?">'
+    '<span class="sim-info-icon">ⓘ</span>'
+    '<span class="sim-info-link" data-i18n="simulation.pre_ensemble_what">O que é isto?</span>'
+    '<span class="sim-info-pop" role="tooltip" data-i18n="simulation.pre_ensemble_tooltip">'
+    "PRE_ENSEMBLE = ciclos anteriores a 10/06/2026, antes do ensemble 60% score v3 + 40% XGBoost "
+    "estar fiável e auditável. Nesses ciclos faltavam campos (score_v3 / xgb_proba) ou as regras "
+    "atuais ainda não estavam todas ativas. Por isso este histórico não deve ser usado para avaliar "
+    "a estratégia oficial.</span>"
+    "</span>"
+  )
+
+
+def simulation_scope_note_html() -> str:
+  """Nota curta que separa o track-record oficial do histórico completo."""
+  return (
+    '<div style="background:#0A1628;border-left:3px solid #00D4FF;border-radius:4px;padding:10px 14px;'
+    'margin:14px 0;color:#B8C6E0;font-size:.74rem;line-height:1.55">'
+    '<span data-i18n="simulation.scope_note">O track-record oficial usa apenas o período em que o ensemble '
+    "60% score v3 + 40% XGBoost e todas as regras de risco estão ativas e auditáveis. O histórico completo "
+    "inclui ciclos anteriores incompletos e serve apenas de referência.</span>"
+    "</div>"
+  )
+
+
 def simulation_chart_section(
   simulation_df: pd.DataFrame,
   stress_df: pd.DataFrame,
   title: str = "Track-record · Score v3 + XGBoost",
+  variant: str = "official",
+  subtitle: str = "",
+  title_i18n: str = "",
+  subtitle_i18n: str = "",
 ) -> str:
+  """Painel de resultados da simulação.
+
+  variant="official"  → track-record oficial (VALID_ENSEMBLE_60_40): destaque
+                        máximo, borda verde e badge OFICIAL.
+  variant="reference" → histórico completo (inclui PRE_ENSEMBLE): visual
+                        discreto (borda tracejada, opacidade reduzida), badge
+                        REFERÊNCIA, aviso nos cartões de métricas e tooltip ⓘ
+                        a explicar PRE_ENSEMBLE.
+  Só muda apresentação — valores e cálculos vêm intactos do run_simulation.
+  """
   required = {"date", "cycle_end", "portfolio_value", "allocation_details"}
   if simulation_df.empty or not required.issubset(simulation_df.columns):
         return ""
@@ -2032,20 +2073,50 @@ def simulation_chart_section(
     for _, row in stress_df.iterrows()
   )
 
+  is_official = variant == "official"
+  value_size = "1.18rem" if is_official else ".98rem"
+
   def metric_card(label: str, value: str, color: str) -> str:
     return (
       f'<div style="background:#090E1A;border:1px solid #1E2D4D;border-radius:5px;padding:14px 16px">'
-      f'<div style="color:{color};font-size:1.18rem;font-weight:700">{value}</div>'
+      f'<div style="color:{color};font-size:{value_size};font-weight:700">{value}</div>'
       f'<div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-top:4px">{label}</div>'
       "</div>"
     )
 
+  title_attr = f' data-i18n="{title_i18n}"' if title_i18n else ""
+  subtitle_attr = f' data-i18n="{subtitle_i18n}"' if subtitle_i18n else ""
+  if is_official:
+    section_style = "border:1px solid #00FF9D;box-shadow:0 0 0 1px #00FF9D33,0 0 24px #00FF9D1F"
+    badge = ('<span data-i18n="simulation.badge_official" style="background:#00FF9D;color:#04110A;'
+             'padding:3px 9px;border-radius:3px;font-size:.62rem;font-weight:800;letter-spacing:.1em">✓ OFICIAL</span>')
+    title_size = "1.05rem"
+    reference_warning = ""
+  else:
+    section_style = "border:1px dashed #3A4A6B;opacity:.9;background:#070B14"
+    badge = ('<span data-i18n="simulation.badge_reference" style="background:transparent;border:1px solid #7183A6;color:#7183A6;'
+             'padding:2px 8px;border-radius:3px;font-size:.6rem;font-weight:700;letter-spacing:.1em">REFERÊNCIA</span>')
+    title_size = ".86rem"
+    reference_warning = (
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#1A1405;border:1px solid #FFB80055;'
+      'border-radius:4px;padding:7px 10px;margin-bottom:8px;color:#FFB800;font-size:.68rem">'
+      '<span>⚠</span><span data-i18n="simulation.full_card_warning">Inclui PRE_ENSEMBLE — resultado não comparável com a estratégia atual</span>'
+      f'{_pre_ensemble_info()}'
+      '</div>'
+    )
+  subtitle_html = (
+    f'<div{subtitle_attr} style="color:{"#00FF9D" if is_official else "#FFB800"};font-size:.72rem;margin:2px 0 12px">'
+    f'{html_mod.escape(subtitle)}</div>'
+    if subtitle else ""
+  )
+
   return f"""
-<section class="section">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-    <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>{html_mod.escape(title)}</span></h2>
+<section class="section sim-panel sim-panel-{html_mod.escape(variant)}" style="{section_style}">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+    <h2 class="section-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;font-size:{title_size}">{_icon("portfolio")}<span{title_attr}>{html_mod.escape(title)}</span>{badge}</h2>
     <button id="simulationExport{dom_suffix}" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
+  {subtitle_html}
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria (soma dos ETFs da categoria; excesso redistribuído, ou cash se todas estiverem no cap).</div>
   <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
@@ -2053,6 +2124,7 @@ def simulation_chart_section(
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ranking: {'score_final suavizado (média t, t-1)' if int(summary.get('score_smoothing_cycles', 1)) == 2 else 'score_final cru, sem suavização'} · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   {_construction_constraints_line(summary)}
   {f'<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). Só com valores de fim de ciclo seria {summary["max_drawdown_cycle_end"] * 100:.2f}%.</div>' if "max_drawdown_cycle_end" in summary else ""}
+  {reference_warning}
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
   {metric_card("Rentabilidade acumulada", f"{summary['cumulative_return'] * 100:+.2f}%", "#00FF9D")}
@@ -2768,6 +2840,14 @@ footer {
 
 /* i18n: lang-specific content — JS toggles .lang-hidden */
 .lang-hidden { display: none !important; }
+/* Simulação: tooltip PRE_ENSEMBLE (hover desktop, toque/foco mobile) */
+.sim-info { position: relative; display: inline-flex; align-items: center; gap: 4px; cursor: help; color: #00D4FF; outline: none; }
+.sim-info-icon { font-size: .82rem; }
+.sim-info-link { text-decoration: underline dotted; font-size: .66rem; }
+.sim-info-pop { display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 50; width: min(340px, 80vw);
+  background: #0D1525; border: 1px solid #00D4FF; border-radius: 5px; padding: 10px 12px; color: #E8F0FF;
+  font-size: .7rem; line-height: 1.5; box-shadow: 0 6px 20px #000A; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.sim-info:hover .sim-info-pop, .sim-info:focus .sim-info-pop, .sim-info:focus-within .sim-info-pop { display: block; }
 /* CSS fallback for pre-JS load: html starts with lang="pt" */
 html[lang="en"] .lang-pt-only { display: none !important; }
 html[lang="pt"] .lang-en-only { display: none !important; }
@@ -3334,15 +3414,26 @@ async function subscribePush() {{
         # ── Tab: Simulação ───────────────────────────────────────────────────
         '<div id="tab-simulation" style="display:none">',
         market_regime_section(data["regime_status"], data["regime_history"]),
-        simulation_chart_section(
-          data["simulation_df"],
-          data["stress_df"],
-          "Histórico completo · PRE_ENSEMBLE + VALID_ENSEMBLE",
-        ),
+        # Hierarquia (2026-09-25): track-record oficial primeiro e em destaque;
+        # histórico completo depois, discreto e marcado como referência.
         simulation_chart_section(
           data["valid_simulation_df"],
           data["stress_df"],
-          "Track-record fiável · VALID_ENSEMBLE_60_40 desde 2026-06-09",
+          "Track-record oficial · Ensemble fiável",
+          variant="official",
+          subtitle="Desde 10/06/2026 · regras atuais (Política C + score suavizado + filtros de risco + regime VIX)",
+          title_i18n="simulation.official_title",
+          subtitle_i18n="simulation.official_subtitle",
+        ),
+        simulation_scope_note_html(),
+        simulation_chart_section(
+          data["simulation_df"],
+          data["stress_df"],
+          "Histórico completo (referência)",
+          variant="reference",
+          subtitle="Inclui ciclos PRE_ENSEMBLE anteriores ao ensemble fiável · não usar para avaliar a estratégia atual",
+          title_i18n="simulation.full_title",
+          subtitle_i18n="simulation.full_subtitle",
         ),
         '</div>',
 
