@@ -253,7 +253,7 @@ O `score_pct` mede o **percentil histórico** do score nos últimos 252 dias des
 | 🌏 Mercados Emergentes | 8 | EMIM.L · VFEM.L · IEEM.L |
 | 📐 Factor / Smart Beta | 8 | IWMO.L · IWVL.L · IWQU.L |
 | 💡 Temáticos / Inovação | 11 | EQQQ.L · RBOT.L · HEAL.L |
-| 🥇 Commodities | 8 | IGLN.L · PHAU.L · PHAG.L |
+| 🥇 Commodities | 6 | PHAU.L · SGLN.L · PHAG.L |
 | 🏦 Obrigações / Fixed Income | 12 | AGGU.L · IBTS.L · IBTL.L |
 | 🏠 Imobiliário / REITs | 5 | IWDP.L · IPRP.L |
 | 🌱 ESG / Sustentável | 6 | SUSW.L · MVEW.L |
@@ -284,8 +284,8 @@ O `score_pct` mede o **percentil histórico** do score nos últimos 252 dias des
 **Temáticos / Inovação (11)**  
 `EQQQ.L` `RBOT.L` `HEAL.L` `INRG.L` `CYBR.L` `BTEC.L` `DGTL.L` `WTAI.L` `CNDX.L` `XAIX.L` `ECAR.L`
 
-**Commodities (7)**  
-`IGLN.L` `PHAU.L` `PHAG.L` `PHPT.L` `SGLN.L` `CRUD.L` `SXLP.L`
+**Commodities (6)**  
+`PHAU.L` `PHAG.L` `PHPT.L` `SGLN.L` `CRUD.L` `SXLP.L`
 
 **Obrigações / Fixed Income (12)**  
 `AGGU.L` `IBTS.L` `IBTL.L` `IBTM.L` `IEAG.L` `IGLO.L` `IGLT.L` `IHYG.L` `LQDE.L` `SLXX.L` `IEMB.L` `VGOV.L`
