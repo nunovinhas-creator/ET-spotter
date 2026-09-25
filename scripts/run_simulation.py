@@ -4,6 +4,9 @@ from pathlib import Path
 import pandas as pd
 
 
+# CONFIGURAÇÃO OFICIAL CONGELADA desde 2026-09-25 (ver CLAUDE.md): Política C + score suavizado
+# + máx. 2 ETFs/categoria + exclusão do quartil superior de vol_21 + cap de 25% por categoria.
+# Não alterar sem instrução explícita e nova avaliação documentada em data/reports/.
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.003
@@ -24,6 +27,23 @@ DEFAULT_POLICY_NAME = "C"
 # 1 = score_final cru; 2 = média de score_final(t) e score_final(t-1) do ciclo anterior.
 # Oficial desde 2026-09-24: Política C + score suavizado (ver policy_evaluation_clean.md).
 SCORE_SMOOTHING_CYCLES = 2
+# Restrições de construção da carteira (None = desligada).
+# Oficial desde 2026-09-25: máx. 2 ETFs por categoria + excluir da entrada o quartil
+# superior de vol_21 do universo (ver maxdd_constraints_analysis.md).
+MAX_ETFS_PER_CATEGORY: int | None = 2
+HIGH_BETA_CAP: float | None = None
+# Categorias/tickers de alto beta: temáticos (tecnologia, robótica, IA, energia limpa,
+# veículos elétricos, biotech, cibersegurança) + Nasdaq-100 e sector tecnológico dos EUA.
+HIGH_BETA_CATEGORIES = {"thematic"}
+HIGH_BETA_TICKERS = {"CNDX.L", "XNAS.L", "IUIT.L"}
+# "exclude" = não entra se vol_21 estiver no quartil superior do universo; "halve" = peso × 0,5.
+VOL_FILTER_MODE: str | None = "exclude"
+VOL_FILTER_QUANTILE = 0.75
+# Vol-target real da carteira (reduz a exposição, resto em cash) nos primeiros N ciclos.
+EARLY_TARGET_VOLATILITY: float | None = None
+EARLY_FRACTIONAL_KELLY: float | None = None
+EARLY_SIZING_CYCLES = 2
+VOL_TARGET_LOOKBACK_DAYS = 63
 ENSEMBLE_V3_WEIGHT = 0.6
 ENSEMBLE_XGB_WEIGHT = 0.4
 REPORT_PATH = Path("data/reports/simulation_results.csv")
@@ -107,36 +127,70 @@ def _capped_weights(
     metadata: dict[str, dict],
     exposure: float,
 ) -> dict[str, float]:
-    """Normalise weights while respecting a cap for every ETF category."""
+    """Normaliza os pesos respeitando o cap de cada categoria sobre a SOMA dos seus ETFs.
+
+    Water-filling: distribui a exposição proporcionalmente aos pesos brutos; cada categoria
+    cuja soma ultrapasse o cap fica fixa no cap (os seus ETFs reduzidos na mesma proporção)
+    e o excesso é redistribuído pelas restantes categorias. Se todas atingirem o cap, o
+    resto fica em cash.
+    """
     if raw_weights.empty or exposure <= 0:
         return {ticker: 0.0 for ticker in raw_weights.index}
 
-    remaining = raw_weights.astype(float).clip(lower=0).copy()
-    result = pd.Series(0.0, index=remaining.index)
-    open_tickers = set(remaining.index)
+    raw = raw_weights.astype(float).clip(lower=0)
+    category_of = {ticker: metadata.get(ticker, {}).get("category_id", "other") for ticker in raw.index}
+    cap_of = {
+        category_of[ticker]: float(metadata.get(ticker, {}).get("category_cap", DEFAULT_CATEGORY_CAP))
+        for ticker in raw.index
+    }
+    result = pd.Series(0.0, index=raw.index)
+    open_categories = set(category_of.values())
     remaining_exposure = exposure
-    for _ in range(len(remaining) + 1):
-        if not open_tickers or remaining_exposure <= 1e-9:
+    while open_categories and remaining_exposure > 1e-9:
+        open_tickers = [ticker for ticker in raw.index if category_of[ticker] in open_categories]
+        open_total = raw.loc[open_tickers].sum()
+        if open_total <= 0:
             break
-        open_series = remaining.loc[sorted(open_tickers)]
-        allocation = open_series / open_series.sum() * remaining_exposure
-        capped = []
-        for ticker, weight in allocation.items():
-            cap = float(metadata.get(ticker, {}).get("category_cap", DEFAULT_CATEGORY_CAP))
-            category = metadata.get(ticker, {}).get("category_id", "other")
-            category_weight = result.loc[
-                [t for t in result.index if metadata.get(t, {}).get("category_id", "other") == category]
-            ].sum()
-            if weight + category_weight > cap + 1e-9:
-                capped.append((ticker, max(0.0, cap - category_weight)))
-        if not capped:
-            result.loc[sorted(open_tickers)] = allocation
+        allocation = raw.loc[open_tickers] / open_total * remaining_exposure
+        category_totals = allocation.groupby(pd.Series(category_of).loc[open_tickers]).sum()
+        breached = [category for category, total in category_totals.items() if total > cap_of[category] + 1e-9]
+        if not breached:
+            result.loc[open_tickers] = allocation
             break
-        for ticker, weight in capped:
-            result[ticker] = weight
-            remaining_exposure -= weight
-            open_tickers.remove(ticker)
+        for category in breached:
+            members = [ticker for ticker in open_tickers if category_of[ticker] == category]
+            result.loc[members] = allocation.loc[members] * cap_of[category] / category_totals[category]
+            remaining_exposure -= cap_of[category]
+            open_categories.remove(category)
     return result.to_dict()
+
+
+def _apply_group_cap(weights: dict[str, float], members: set[str], cap: float) -> dict[str, float]:
+    """Limita o peso total de um grupo; o excesso vai para os restantes ETFs (ou cash se não houver)."""
+    result = dict(weights)
+    group_weight = sum(weight for ticker, weight in result.items() if ticker in members)
+    if group_weight <= cap + 1e-9:
+        return result
+    excess = group_weight - cap
+    for ticker in members.intersection(result):
+        result[ticker] *= cap / group_weight
+    others_weight = sum(weight for ticker, weight in result.items() if ticker not in members)
+    if others_weight > 0:
+        for ticker in [ticker for ticker in result if ticker not in members]:
+            result[ticker] += excess * result[ticker] / others_weight
+    return result
+
+
+def _portfolio_volatility(weights: dict[str, float], end_date: pd.Timestamp, lookback: int) -> float:
+    """Volatilidade anualizada ex-ante com a matriz de covariância dos últimos `lookback` dias úteis."""
+    tickers = [ticker for ticker, weight in weights.items() if weight > 0]
+    if not tickers:
+        return 0.0
+    calendar = pd.bdate_range(end=end_date, periods=lookback + 1)
+    returns = _load_price_returns(tickers, calendar).iloc[1:]
+    weight_vector = pd.Series(weights).reindex(tickers)
+    variance = float(weight_vector @ returns.cov() @ weight_vector) * 252
+    return max(variance, 0.0) ** 0.5
 
 
 def _archive_incomplete_report() -> None:
@@ -225,6 +279,12 @@ def run_backtest(
     rebalance_cycle_interval: int = REBALANCE_CYCLE_INTERVAL,
     policy_name: str = DEFAULT_POLICY_NAME,
     score_smoothing_cycles: int = SCORE_SMOOTHING_CYCLES,
+    max_etfs_per_category: int | None = MAX_ETFS_PER_CATEGORY,
+    high_beta_cap: float | None = HIGH_BETA_CAP,
+    vol_filter_mode: str | None = VOL_FILTER_MODE,
+    early_target_volatility: float | None = EARLY_TARGET_VOLATILITY,
+    early_fractional_kelly: float | None = EARLY_FRACTIONAL_KELLY,
+    early_sizing_cycles: int = EARLY_SIZING_CYCLES,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -246,6 +306,10 @@ def run_backtest(
         raise ValueError("rebalance_cycle_interval must be positive")
     if score_smoothing_cycles not in (1, 2):
         raise ValueError("score_smoothing_cycles must be 1 or 2")
+    if vol_filter_mode not in (None, "exclude", "halve"):
+        raise ValueError("vol_filter_mode must be None, 'exclude' or 'halve'")
+    if max_etfs_per_category is not None and max_etfs_per_category < 1:
+        raise ValueError("max_etfs_per_category must be positive when provided")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -328,7 +392,22 @@ def run_backtest(
                 day_scores["score_raw"] + day_scores["etf"].map(previous_cycle_scores).fillna(day_scores["score_raw"])
             ) / 2
         previous_cycle_scores = day_scores.set_index("etf")["score_raw"].to_dict()
-        ranking_selection = day_scores.sort_values("score_final", ascending=False).head(max_positions)
+        # Filtro de volatilidade: quartil superior de vol_21 do universo na data do ranking.
+        vol_threshold = day_scores["vol_21"].abs().quantile(VOL_FILTER_QUANTILE)
+        high_vol_tickers = set(day_scores.loc[day_scores["vol_21"].abs() > vol_threshold, "etf"]) if vol_filter_mode else set()
+        category_of = {ticker: etf_metadata.get(ticker, {}).get("category_id", "other") for ticker in day_scores["etf"]}
+        ranked = day_scores.sort_values("score_final", ascending=False)
+        if vol_filter_mode == "exclude":
+            ranked = ranked[~ranked["etf"].isin(high_vol_tickers)]
+        if max_etfs_per_category is not None:
+            category_counts: dict[str, int] = {}
+            keep = []
+            for ticker in ranked["etf"]:
+                category = category_of.get(ticker, "other")
+                keep.append(category_counts.get(category, 0) < max_etfs_per_category)
+                category_counts[category] = category_counts.get(category, 0) + keep[-1]
+            ranked = ranked[keep]
+        ranking_selection = ranked.head(max_positions)
         selected_holdings = set(ranking_selection["etf"])
         if (
             len(selected_holdings) != max_positions
@@ -357,6 +436,17 @@ def run_backtest(
             retained_holdings = set(sorted(retained_holdings, key=lambda ticker: score_lookup.get(ticker, 0), reverse=True)[:max_positions])
         available_slots = max(0, max_positions - len(retained_holdings))
         new_candidates = [ticker for ticker in ranking_selection["etf"] if ticker not in current_holdings]
+        if max_etfs_per_category is not None and current_holdings:
+            held_counts: dict[str, int] = {}
+            for ticker in retained_holdings:
+                held_counts[category_of.get(ticker, "other")] = held_counts.get(category_of.get(ticker, "other"), 0) + 1
+            allowed_candidates = []
+            for ticker in new_candidates:
+                category = category_of.get(ticker, "other")
+                if held_counts.get(category, 0) < max_etfs_per_category:
+                    allowed_candidates.append(ticker)
+                    held_counts[category] = held_counts.get(category, 0) + 1
+            new_candidates = allowed_candidates
         if max_new_positions is not None and current_holdings:
             new_candidates = new_candidates[:max_new_positions]
         target_holdings = retained_holdings | set(new_candidates[:available_slots])
@@ -383,15 +473,30 @@ def run_backtest(
         volatility = volatility.replace([float("inf"), float("-inf")], float("nan"))
         volatility = volatility.fillna(volatility.median()).fillna(1.0)
         score_strength = (selection.set_index("etf")["score_final"] / selection["score_final"].max()).clip(0.5, 1.0)
+        early_cycle = len(cycles) < early_sizing_cycles
+        fractional_kelly = early_fractional_kelly if early_cycle and early_fractional_kelly is not None else FRACTIONAL_KELLY
         kelly_multiplier = {}
         for ticker in target_holdings:
             history = asset_returns_history.get(ticker, [])
             hit_rate = sum(value > 0 for value in history) / len(history) if history else 0.5
-            kelly_fraction = FRACTIONAL_KELLY * max(0.0, 2 * hit_rate - 1)
+            kelly_fraction = fractional_kelly * max(0.0, 2 * hit_rate - 1)
             kelly_multiplier[ticker] = 0.5 + kelly_fraction
         raw_weights = (TARGET_VOLATILITY / volatility) * score_strength
         raw_weights = raw_weights * pd.Series(kelly_multiplier)
+        if vol_filter_mode == "halve":
+            raw_weights = raw_weights * pd.Series({ticker: 0.5 if ticker in high_vol_tickers else 1.0 for ticker in raw_weights.index})
         target_weights = _capped_weights(raw_weights, etf_metadata, exposure)
+        if high_beta_cap is not None:
+            high_beta_members = {
+                ticker for ticker in target_weights
+                if ticker in HIGH_BETA_TICKERS or category_of.get(ticker) in HIGH_BETA_CATEGORIES
+            }
+            target_weights = _apply_group_cap(target_weights, high_beta_members, high_beta_cap)
+        estimated_portfolio_volatility = _portfolio_volatility(target_weights, start_date, VOL_TARGET_LOOKBACK_DAYS)
+        vol_target_scale = 1.0
+        if early_cycle and early_target_volatility is not None and estimated_portfolio_volatility > 0:
+            vol_target_scale = min(1.0, early_target_volatility / estimated_portfolio_volatility)
+            target_weights = {ticker: weight * vol_target_scale for ticker, weight in target_weights.items()}
         weight_keys = set(current_weights) | set(target_weights)
         max_weight_deviation = max(
             (abs(current_weights.get(ticker, 0.0) - target_weights.get(ticker, 0.0)) for ticker in weight_keys),
@@ -400,8 +505,13 @@ def run_backtest(
         rebalance_executed = not current_weights or max_weight_deviation >= rebalance_threshold
         active_weights = target_weights if rebalance_executed else current_weights.copy()
         active_holdings = {ticker for ticker, weight in active_weights.items() if weight > 0}
+        # Cash conta como posição: passar de 100% cash para 60% investido é 60% de turnover.
+        current_cash = max(0.0, 1 - sum(current_weights.values()))
+        target_cash = max(0.0, 1 - sum(target_weights.values()))
         turnover = (
-            1 - sum(min(current_weights.get(ticker, 0.0), target_weights.get(ticker, 0.0)) for ticker in weight_keys)
+            1
+            - sum(min(current_weights.get(ticker, 0.0), target_weights.get(ticker, 0.0)) for ticker in weight_keys)
+            - min(current_cash, target_cash)
             if rebalance_executed
             else 0.0
         )
@@ -464,6 +574,10 @@ def run_backtest(
                 "benchmark_sma200": benchmark_sma200,
                 "vix_level": vix_level,
                 "exposure": exposure,
+                "invested_weight": float(sum(active_weights.values())),
+                "estimated_portfolio_volatility": estimated_portfolio_volatility,
+                "vol_target_scale": vol_target_scale,
+                "high_vol_threshold": float(vol_threshold),
                 "max_weight_deviation": max_weight_deviation,
                 "rebalance_threshold": rebalance_threshold,
                 "rebalance_executed": rebalance_executed,
@@ -577,6 +691,12 @@ def run_backtest(
         "score_smoothing_cycles": score_smoothing_cycles,
         "target_volatility": TARGET_VOLATILITY,
         "fractional_kelly": FRACTIONAL_KELLY,
+        "max_etfs_per_category": max_etfs_per_category,
+        "high_beta_cap": high_beta_cap,
+        "vol_filter_mode": vol_filter_mode,
+        "early_target_volatility": early_target_volatility,
+        "early_fractional_kelly": early_fractional_kelly,
+        "early_sizing_cycles": early_sizing_cycles,
         "vix_stress_level": VIX_STRESS_LEVEL,
         "ensemble_score_weight_v3": 0.6,
         "ensemble_score_weight_xgb": 0.4,
@@ -600,6 +720,12 @@ def run_backtest(
     print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
     print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
     print(f"Ponderação: alvo de volatilidade {TARGET_VOLATILITY * 100:.0f}% + Kelly fracionário {FRACTIONAL_KELLY:.2f} + caps por categoria")
+    print(
+        f"Construção: máx. {max_etfs_per_category or 'sem limite'} ETFs/categoria · "
+        f"cap alto beta {f'{high_beta_cap * 100:.0f}%' if high_beta_cap is not None else 'desligado'} · "
+        f"filtro vol_21 top {100 - VOL_FILTER_QUANTILE * 100:.0f}%: {vol_filter_mode or 'desligado'} · "
+        f"vol-target inicial {f'{early_target_volatility * 100:.0f}%' if early_target_volatility is not None else 'desligado'}"
+    )
     print(f"Regime: BULL exige VWCE > SMA200 e VIX < {VIX_STRESS_LEVEL:.0f}; BEAR/STRESS ficam em cash")
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
 

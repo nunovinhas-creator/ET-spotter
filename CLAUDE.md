@@ -103,3 +103,26 @@ Quatro subagentes especializados em `ci `.claude/agents/`. Nunca os modificas se
 
 `.github/workflows/update_readme.yml` dispara em push quando `data/reports/scores_latest.csv`, `data/reports/backtest_status.json` ou `config/etfs.json` mudam. Corre `scripts/generate_readme.py` que regenera as secções dinâmicas do README (top ETFs, regime, data de actualização e universo de ETFs gerado a partir do config) delimitadas por marcadores `<!-- ET-SPOTTER:TAG:START/END -->`. Não edites à mão a secção do universo: altera o `config/etfs.json`. Faz commit automático com `[skip ci]`.
 
+
+## Configuração oficial do simulador — CONGELADA desde 2026-09-25
+
+A configuração do `scripts/run_simulation.py` está **congelada**. Não alteres
+nenhum destes valores sem instrução explícita do utilizador e sem uma nova
+avaliação documentada em `data/reports/`:
+
+| Parâmetro | Valor |
+|---|---|
+| Política | C (`DEFAULT_POLICY_NAME = "C"`): rebalance a cada 2 ciclos, holding mínimo 3 ciclos, máx. 2 novas posições, venda com score < 0,40, threshold 12% |
+| Ranking | score suavizado (`SCORE_SMOOTHING_CYCLES = 2`) sobre ensemble 60% score v3 + 40% XGBoost |
+| Posições | `MAX_POSITIONS = 7` |
+| Máx. ETFs por categoria | `MAX_ETFS_PER_CATEGORY = 2` |
+| Filtro de volatilidade | `VOL_FILTER_MODE = "exclude"`: sem novas entradas com vol_21 acima do percentil 75 do universo |
+| Cap por categoria | 25% da **soma** dos ETFs da categoria (`_capped_weights`, redução proporcional) |
+| Desligadas (implementadas) | `HIGH_BETA_CAP`, `EARLY_TARGET_VOLATILITY`, `EARLY_FRACTIONAL_KELLY` = `None` |
+| Custos | 30 bps round-trip |
+
+Resultados de referência (VALID_ENSEMBLE_60_40, 2026-06-10 a 2026-09-23):
+**+6,69% líquido, MaxDD diário −4,11%**, turnover médio 50%, custos €30.
+Os números vão mudar com dados novos; as regras não. Ver
+`data/reports/maxdd_constraints_analysis.md` e `policy_evaluation_clean.md`.
+Reavaliar só quando houver ≥ 6 ciclos no período VALID_ENSEMBLE_60_40.

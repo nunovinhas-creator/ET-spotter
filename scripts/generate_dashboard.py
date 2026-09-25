@@ -1750,6 +1750,30 @@ def history_chart_section(hist_df: pd.DataFrame, scores_df: pd.DataFrame) -> str
 </section>"""
 
 
+def _construction_constraints_line(summary: dict) -> str:
+  """Linha com as restrições de construção da carteira (ausente em resultados antigos)."""
+  def _present(key: str):
+    value = summary.get(key)
+    return None if value is None or pd.isna(value) or value == "" else value
+
+  max_per_category = _present("max_etfs_per_category")
+  vol_filter = _present("vol_filter_mode")
+  high_beta_cap = _present("high_beta_cap")
+  early_vol = _present("early_target_volatility")
+  if max_per_category is None and vol_filter is None and high_beta_cap is None and early_vol is None:
+    return ""
+  parts = [f"máx. {int(max_per_category)} ETFs por categoria" if max_per_category is not None else "sem limite de ETFs por categoria"]
+  if vol_filter == "exclude":
+    parts.append("sem novas entradas com vol_21 no quartil superior do universo")
+  elif vol_filter == "halve":
+    parts.append("peso a 50% para vol_21 no quartil superior do universo")
+  if high_beta_cap is not None:
+    parts.append(f"alto beta ≤ {float(high_beta_cap) * 100:.0f}%")
+  if early_vol is not None:
+    parts.append(f"vol-target {float(early_vol) * 100:.0f}% nos primeiros ciclos")
+  return f'<div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Construção da carteira: {html_mod.escape(" · ".join(parts))}.</div>'
+
+
 def simulation_chart_section(
   simulation_df: pd.DataFrame,
   stress_df: pd.DataFrame,
@@ -1845,10 +1869,11 @@ def simulation_chart_section(
     <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria.</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria (soma dos ETFs da categoria; excesso redistribuído, ou cash se todas estiverem no cap).</div>
   <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ranking: {'score_final suavizado (média t, t-1)' if int(summary.get('score_smoothing_cycles', 1)) == 2 else 'score_final cru, sem suavização'} · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
+  {_construction_constraints_line(summary)}
   {f'<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). Só com valores de fim de ciclo seria {summary["max_drawdown_cycle_end"] * 100:.2f}%.</div>' if "max_drawdown_cycle_end" in summary else ""}
   <div style="display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:8px;margin-bottom:16px">
   {metric_card("Valor final", f"€{summary['final_portfolio_value']:,.2f}", "#00D4FF")}
