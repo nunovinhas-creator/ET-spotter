@@ -1,6 +1,6 @@
 """
 Recolhe 2 anos de dados diários OHLCV para todos os símbolos via yfinance.
-Guarda em data/daily/SYMBOL.csv. Um download completo sobrescreve o ficheiro;
+Guarda em data/daily/SYMBOL.csv (e o VIX em data/daily/VIX.csv, ver market_regime.py). Um download completo sobrescreve o ficheiro;
 um download truncado (o Yahoo por vezes devolve só a última barra) é repetido
 individualmente e, se continuar curto, é fundido com o histórico existente em vez
 de o apagar.
@@ -18,6 +18,7 @@ import yfinance as yf
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_all_symbols
 from paths import DATA_DAILY
+from market_regime import update_vix_file
 
 # Limiar para detectar movimento suspeito num único dia (possível split não ajustado)
 SPLIT_THRESHOLD = 0.40
@@ -206,6 +207,9 @@ def main():
         df.to_csv(DATA_DAILY / f"{symbol}.csv")
         print(f"[OK] {symbol} ({len(df)} registos)")
         ok_count += 1
+
+    # VIX para o filtro de regime — falha não é fatal (o regime cai para SMA200 apenas)
+    update_vix_file()
 
     # Log estruturado de falhas
     if failed:

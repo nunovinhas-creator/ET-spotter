@@ -3,9 +3,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from market_regime import REGIME_EXPOSURE, VIX_NEUTRAL_LEVEL, VIX_STRESS_LEVEL, align_vix, classify_regime, load_vix, regime_exposure
+
 
 # CONFIGURAÇÃO OFICIAL CONGELADA desde 2026-09-25 (ver CLAUDE.md): Política C + score suavizado
-# + máx. 2 ETFs/categoria + exclusão do quartil superior de vol_21 + cap de 25% por categoria.
+# + máx. 2 ETFs/categoria + exclusão do quartil superior de vol_21 + cap de 25% por categoria
+# + filtro de regime VIX + SMA200 (desde 2026-09-25, ver market_regime_filter.md).
 # Não alterar sem instrução explícita e nova avaliação documentada em data/reports/.
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
@@ -17,7 +20,10 @@ STRESS_SCENARIO_COUNT = 5
 MAX_POSITIONS = 7
 TARGET_VOLATILITY = 0.12
 FRACTIONAL_KELLY = 0.25
-VIX_STRESS_LEVEL = 28.0
+# Filtro de regime (ver market_regime.py e market_regime_filter.md), aplicado na construção:
+# "vix_sma200" = BULL 100% / NEUTRAL 60% / STRESS e BEAR cash (oficial desde 2026-09-25);
+# "legacy" = binário anterior (BULL 100%, resto cash); "none" = sempre 100% (só para comparação).
+REGIME_FILTER = "vix_sma200"
 DEFAULT_CATEGORY_CAP = 0.25
 MIN_HOLDING_CYCLES = 3
 MAX_NEW_POSITIONS = 2
@@ -117,8 +123,7 @@ def _load_benchmark_data(calendar: pd.DatetimeIndex) -> pd.DataFrame:
     benchmark["ret_1d"] = _daily_returns_on_calendar(close, calendar)
     sma200 = close.rolling(200, min_periods=200).mean()
     benchmark["sma200"] = sma200.reindex(sma200.index.union(calendar)).ffill().reindex(calendar)
-    vix = _read_daily_close("VIX")
-    benchmark["vix"] = vix.reindex(vix.index.union(calendar)).ffill().reindex(calendar) if not vix.empty else float("nan")
+    benchmark["vix"] = align_vix(load_vix(), calendar)
     return benchmark
 
 
@@ -285,6 +290,7 @@ def run_backtest(
     early_target_volatility: float | None = EARLY_TARGET_VOLATILITY,
     early_fractional_kelly: float | None = EARLY_FRACTIONAL_KELLY,
     early_sizing_cycles: int = EARLY_SIZING_CYCLES,
+    regime_filter: str = REGIME_FILTER,
 ) -> pd.DataFrame:
     if transaction_cost < 0:
         raise ValueError("transaction_cost must be non-negative")
@@ -310,6 +316,8 @@ def run_backtest(
         raise ValueError("vol_filter_mode must be None, 'exclude' or 'halve'")
     if max_etfs_per_category is not None and max_etfs_per_category < 1:
         raise ValueError("max_etfs_per_category must be positive when provided")
+    if regime_filter not in ("vix_sma200", "legacy", "none"):
+        raise ValueError("regime_filter must be 'vix_sma200', 'legacy' or 'none'")
 
     df = pd.read_csv(_history_path())
     df["date"] = pd.to_datetime(df["date"])
@@ -372,6 +380,7 @@ def run_backtest(
     asset_returns_history: dict[str, list[float]] = {}
     portfolio_value = INITIAL_CAPITAL
     previous_cycle_scores: dict[str, float] = {}
+    previous_exposure: float | None = None
     # Equity curve diária ancorada no capital inicial (dia 0 = data do 1.º sinal),
     # para que o MaxDD inclua a perda entre o capital inicial e o fim do 1.º ciclo.
     equity_curve: list[dict] = []
@@ -460,15 +469,15 @@ def run_backtest(
         benchmark_close = benchmark_row["close"]
         benchmark_sma200 = benchmark_row["sma200"]
         vix_level = benchmark_row.get("vix", float("nan"))
-        if pd.isna(benchmark_sma200) or pd.isna(benchmark_close):
-            market_regime = "UNKNOWN"
-        elif not pd.isna(vix_level) and vix_level >= VIX_STRESS_LEVEL:
-            market_regime = "STRESS"
-        elif benchmark_close > benchmark_sma200:
-            market_regime = "BULL"
+        # Sem VIX (ou VIX obsoleto) classify_regime usa só a SMA200.
+        market_regime = classify_regime(benchmark_close, benchmark_sma200, vix_level)
+        if regime_filter == "vix_sma200":
+            exposure = regime_exposure(market_regime)
+        elif regime_filter == "legacy":
+            # Binário anterior: investido se VWCE > SMA200 e VIX < 28 (BULL ou NEUTRAL).
+            exposure = 1.0 if market_regime in ("BULL", "NEUTRAL") else 0.0
         else:
-            market_regime = "BEAR"
-        exposure = 1.0 if market_regime == "BULL" else 0.0
+            exposure = 1.0
         volatility = selection.set_index("etf")["vol_21"].abs().replace(0, float("nan"))
         volatility = volatility.replace([float("inf"), float("-inf")], float("nan"))
         volatility = volatility.fillna(volatility.median()).fillna(1.0)
@@ -502,7 +511,13 @@ def run_backtest(
             (abs(current_weights.get(ticker, 0.0) - target_weights.get(ticker, 0.0)) for ticker in weight_keys),
             default=1.0,
         )
-        rebalance_executed = not current_weights or max_weight_deviation >= rebalance_threshold
+        # Mudança da exposição do regime (ou carteira acima do teto) obriga a rebalancear,
+        # mesmo que nenhum peso individual se desvie mais do que o threshold.
+        regime_forced_rebalance = bool(current_weights) and (
+            (previous_exposure is not None and exposure != previous_exposure)
+            or sum(current_weights.values()) > exposure + 1e-6
+        )
+        rebalance_executed = not current_weights or max_weight_deviation >= rebalance_threshold or regime_forced_rebalance
         active_weights = target_weights if rebalance_executed else current_weights.copy()
         active_holdings = {ticker for ticker, weight in active_weights.items() if weight > 0}
         # Cash conta como posição: passar de 100% cash para 60% investido é 60% de turnover.
@@ -573,7 +588,10 @@ def run_backtest(
                 "benchmark_close": benchmark_close,
                 "benchmark_sma200": benchmark_sma200,
                 "vix_level": vix_level,
+                "vix_available": bool(pd.notna(vix_level)),
+                "regime_filter": regime_filter,
                 "exposure": exposure,
+                "regime_forced_rebalance": regime_forced_rebalance,
                 "invested_weight": float(sum(active_weights.values())),
                 "estimated_portfolio_volatility": estimated_portfolio_volatility,
                 "vol_target_scale": vol_target_scale,
@@ -620,6 +638,7 @@ def run_backtest(
             for ticker, value in end_asset_values.items()
             if value > 0
         }
+        previous_exposure = exposure
         holding_age = {
             ticker: holding_age.get(ticker, 0) + 1
             for ticker in current_weights
@@ -677,9 +696,15 @@ def run_backtest(
         "transaction_cost_per_round": transaction_cost,
         "risk_free_rate_annual": risk_free_rate_annual,
         "bull_cycles": int((portfolio_perf["market_regime"] == "BULL").sum()),
+        "neutral_cycles": int((portfolio_perf["market_regime"] == "NEUTRAL").sum()),
         "bear_cycles": int((portfolio_perf["market_regime"].isin(["BEAR", "STRESS"])).sum()),
         "stress_cycles": int((portfolio_perf["market_regime"] == "STRESS").sum()),
         "average_exposure": portfolio_perf["exposure"].mean(),
+        "average_invested_weight": portfolio_perf["invested_weight"].mean(),
+        "regime_filter": regime_filter,
+        "vix_neutral_level": VIX_NEUTRAL_LEVEL,
+        "regime_exposure_rules": json.dumps(REGIME_EXPOSURE),
+        "vix_available_cycles": int(portfolio_perf["vix_available"].sum()),
         "rebalance_threshold": rebalance_threshold,
         "cost_saving_cycles": cost_saving_cycles,
         "max_positions": max_positions,
@@ -718,7 +743,11 @@ def run_backtest(
     print(f"Rentabilidade acumulada: {cumulative_return * 100:.2f}%")
     print(f"Sharpe / Sortino: {sharpe_ratio:.2f} / {sortino_ratio:.2f}")
     print(f"Alpha de Jensen anualizado / Beta: {jensen_alpha_annual * 100:.2f}% / {beta:.2f}")
-    print(f"Filtro SMA200: {summary['bull_cycles']} Bull / {summary['bear_cycles']} Bear | exposição média: {summary['average_exposure'] * 100:.1f}%")
+    print(
+        f"Regime ({regime_filter}): {summary['bull_cycles']} BULL / {summary['neutral_cycles']} NEUTRAL / "
+        f"{summary['bear_cycles']} BEAR+STRESS | exposição máx. média {summary['average_exposure'] * 100:.1f}% · "
+        f"investido médio {summary['average_invested_weight'] * 100:.1f}% · VIX disponível em {summary['vix_available_cycles']}/{len(portfolio_perf)} ciclos"
+    )
     print(f"Ponderação: alvo de volatilidade {TARGET_VOLATILITY * 100:.0f}% + Kelly fracionário {FRACTIONAL_KELLY:.2f} + caps por categoria")
     print(
         f"Construção: máx. {max_etfs_per_category or 'sem limite'} ETFs/categoria · "
@@ -726,7 +755,10 @@ def run_backtest(
         f"filtro vol_21 top {100 - VOL_FILTER_QUANTILE * 100:.0f}%: {vol_filter_mode or 'desligado'} · "
         f"vol-target inicial {f'{early_target_volatility * 100:.0f}%' if early_target_volatility is not None else 'desligado'}"
     )
-    print(f"Regime: BULL exige VWCE > SMA200 e VIX < {VIX_STRESS_LEVEL:.0f}; BEAR/STRESS ficam em cash")
+    print(
+        f"Regime: BULL = VWCE > SMA200 e VIX < {VIX_NEUTRAL_LEVEL:.0f} (100%) · NEUTRAL = VIX {VIX_NEUTRAL_LEVEL:.0f}–{VIX_STRESS_LEVEL:.0f} (máx. 60%) · "
+        f"STRESS = VIX ≥ {VIX_STRESS_LEVEL:.0f} e BEAR = VWCE < SMA200 (cash)"
+    )
     print(f"Threshold de rebalanceamento: {rebalance_threshold * 100:.1f}% | {cost_saving_cycles} ciclos sem rotação")
 
     if persist_output:

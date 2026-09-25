@@ -3,15 +3,21 @@
 O optimizador usa uma aproximação robusta de risk parity: inverso da
 volatilidade marginal da matriz de covariância, ajustado pela view do score.
 Mantém no máximo 10 ETFs, exige AUM mínimo e limita cada categoria a 25%.
+A exposição total segue o filtro de regime (market_regime.py): BULL 100%,
+NEUTRAL 60% (resto em CASH), STRESS/BEAR 100% CASH.
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).parent))
+from market_regime import current_regime
 
 ROOT = Path(__file__).parent.parent
 SCORES_PATH = ROOT / "data" / "reports" / "scores_latest.csv"
@@ -21,7 +27,6 @@ BENCHMARK = "VWCE.DE"
 MAX_POSITIONS = 10
 MIN_AUM_BN = 0.2
 CATEGORY_CAP = 0.25
-VIX_STRESS_LEVEL = 28.0
 
 
 def _config() -> dict:
@@ -52,23 +57,10 @@ def _prices(tickers: list[str]) -> pd.DataFrame:
     return pd.DataFrame(frames).sort_index().pct_change(fill_method=None).tail(126)
 
 
-def _regime() -> tuple[str, float | None]:
-    path = DAILY_PATH / f"{BENCHMARK}.csv"
-    if not path.exists():
-        return "UNKNOWN", None
-    benchmark = pd.read_csv(path, index_col=0, parse_dates=True)
-    close = benchmark["close"].dropna()
-    if len(close) < 200:
-        return "UNKNOWN", None
-    vix_path = DAILY_PATH / "VIX.csv"
-    vix = None
-    if vix_path.exists():
-        vix_frame = pd.read_csv(vix_path, index_col=0, parse_dates=True)
-        if not vix_frame.empty:
-            vix = float(vix_frame["close"].iloc[-1])
-    if close.iloc[-1] <= close.rolling(200).mean().iloc[-1] or (vix is not None and vix >= VIX_STRESS_LEVEL):
-        return "STRESS", vix
-    return "BULL", vix
+def _regime() -> tuple[str, float | None, float]:
+    """Regime atual, VIX e exposição máxima (VWCE vs SMA200 + VIX; sem VIX só SMA200)."""
+    status = current_regime()
+    return status["regime"], status.get("vix"), float(status.get("exposure", 0.0))
 
 
 def _cap_categories(weights: pd.Series, categories: pd.Series) -> pd.Series:
@@ -106,8 +98,8 @@ def build_target_weights() -> pd.DataFrame:
     scores["name"] = scores["etf"].map(lambda ticker: metadata.get(ticker, {}).get("name", ticker))
     scores["aum_bn"] = scores["etf"].map(lambda ticker: metadata.get(ticker, {}).get("aum_bn", 0.0))
     candidates = scores[scores["aum_bn"] >= MIN_AUM_BN].nlargest(MAX_POSITIONS, "final_score").copy()
-    regime, vix = _regime()
-    if candidates.empty or regime != "BULL":
+    regime, vix, exposure = _regime()
+    if candidates.empty or exposure <= 0:
         return pd.DataFrame([{"date": pd.Timestamp.now().date().isoformat(), "ticker": "CASH", "weight": 1.0, "regime": regime, "vix": vix}])
 
     returns = _prices(candidates["etf"].tolist()).reindex(columns=candidates["etf"].tolist())
@@ -117,13 +109,18 @@ def build_target_weights() -> pd.DataFrame:
     score_view = candidates.set_index("etf")["final_score"].clip(lower=0.01)
     raw_weights = pd.Series(1 / marginal_risk, index=covariance.index) * (score_view / score_view.mean()).clip(0.5, 1.5)
     weights = _cap_categories(raw_weights / raw_weights.sum(), candidates.set_index("etf")["category"])
+    weights = weights * exposure
     output = candidates[candidates["etf"].isin(weights.index)].copy()
     output["weight"] = output["etf"].map(weights).fillna(0.0)
     output["date"] = pd.Timestamp.now().date().isoformat()
     output["regime"] = regime
     output["vix"] = vix
     output["volatility_126d"] = output["etf"].map(returns.std())
-    return output[["date", "etf", "name", "category", "aum_bn", "score_v3", "ml_prob", "final_score", "volatility_126d", "weight", "regime", "vix"]].rename(columns={"etf": "ticker"})
+    output = output[["date", "etf", "name", "category", "aum_bn", "score_v3", "ml_prob", "final_score", "volatility_126d", "weight", "regime", "vix"]].rename(columns={"etf": "ticker"})
+    cash = 1.0 - float(output["weight"].sum())
+    if cash > 1e-6:
+        output = pd.concat([output, pd.DataFrame([{"date": output["date"].iloc[0], "ticker": "CASH", "weight": cash, "regime": regime, "vix": vix}])], ignore_index=True)
+    return output
 
 
 def main() -> None:

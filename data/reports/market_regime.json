@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-23",
+  "regime": "BULL",
+  "exposure": 1.0,
+  "vwce_close": 170.04,
+  "sma200": 156.2512,
+  "vix": 14.21,
+  "vix_available": true,
+  "mode": "VIX + SMA200",
+  "regime_since": "2026-06-11",
+  "vix_neutral_level": 22.0,
+  "vix_stress_level": 28.0,
+  "exposure_rules": {
+    "BULL": 1.0,
+    "NEUTRAL": 0.6,
+    "STRESS": 0.0,
+    "BEAR": 0.0,
+    "UNKNOWN": 0.0
+  }
+}
