@@ -1,7 +1,7 @@
 """
 refetch_symbols.py — força o re-download completo do histórico diário de tickers.
 
-Uso: python scripts/refetch_symbols.py AIGA.L PHPT.L [--period 2y]
+Uso: python scripts/refetch_symbols.py PHPT.L SGLN.L [--period 2y]
 
 Descarrega cada ticker individualmente (sem batch), funde com o histórico
 existente se o Yahoo ainda devolver uma série curta, e valida o resultado:
