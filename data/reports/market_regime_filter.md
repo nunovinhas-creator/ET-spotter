@@ -70,4 +70,4 @@ Em 12 meses: 88% dos dias BULL, 11% NEUTRAL, 1% STRESS, 0% BEAR. O VWCE está ac
 
 1. **Cadência:** com a Política C o regime só é lido de 42 em 42 sessões. Um crash a meio do ciclo só é apanhado na construção seguinte. Uma verificação diária ou semanal do regime, que só reduza a exposição e nunca abra posições, daria mais proteção. Muda o simulador e precisa de decisão explícita.
 2. **Sensibilidade ao limiar:** um único fecho do VIX perto de 22 decide 40% da exposição de um ciclo inteiro. Pode valer a pena testar histerese (ex.: entrar em NEUTRAL com VIX ≥ 22 e voltar a BULL só com VIX < 20) ou usar a média de 5 dias do VIX.
-3. **Amostra:** reavaliar quando houver ≥ 6 ciclos no período VALID_ENSEMBLE_60_40, como já está previsto para o resto da configuração.
+3. **Amostra:** a configuração está congelada em modo acumulação. Reavaliar só com ≥ 6–8 ciclos VALID_ENSEMBLE_60_40 completos (6 por volta de 2027-05-28, 8 por volta de 2027-09-23). Os pontos 1 e 2 ficam em espera até lá.

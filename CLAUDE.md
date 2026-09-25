@@ -104,7 +104,7 @@ Quatro subagentes especializados em `ci `.claude/agents/`. Nunca os modificas se
 `.github/workflows/update_readme.yml` dispara em push quando `data/reports/scores_latest.csv`, `data/reports/backtest_status.json` ou `config/etfs.json` mudam. Corre `scripts/generate_readme.py` que regenera as secções dinâmicas do README (top ETFs, regime, data de actualização e universo de ETFs gerado a partir do config) delimitadas por marcadores `<!-- ET-SPOTTER:TAG:START/END -->`. Não edites à mão a secção do universo: altera o `config/etfs.json`. Faz commit automático com `[skip ci]`.
 
 
-## Configuração oficial do simulador — CONGELADA desde 2026-09-25
+## Configuração oficial do simulador — CONGELADA desde 2026-09-25 (inclui filtro de regime VIX)
 
 A configuração do `scripts/run_simulation.py` está **congelada**. Não alteres
 nenhum destes valores sem instrução explícita do utilizador e sem uma nova
@@ -130,4 +130,16 @@ Os números vão mudar com dados novos; as regras não. Ver
 
 O VIX é gravado em `data/daily/VIX.csv` pelo `fetch_daily.py` (yfinance `^VIX` → CBOE → espelho
 GitHub `datasets/finance-vix`); se falhar, o regime cai para SMA200 apenas, sem erro.
-Reavaliar só quando houver ≥ 6 ciclos no período VALID_ENSEMBLE_60_40.
+### Modo acumulação — sem otimização até ≥ 6–8 ciclos reais
+
+Decisão do utilizador (2026-09-25): a configuração acima é a oficial e o sistema
+fica a correr para acumular ciclos reais. **Não otimizar** — nada de afinar
+limiares, testar variantes novas ou mudar parâmetros — enquanto o período
+VALID_ENSEMBLE_60_40 não tiver **pelo menos 6 ciclos completos (idealmente 8)**.
+Cada ciclo da Política C dura 42 sessões, por isso 6 ciclos chegam por volta de
+**2027-05-28** e 8 por volta de **2027-09-23**. À data do congelamento havia 2.
+
+Continua permitido: correções de bugs de dados e de cálculo que não mudem as regras,
+manutenção dos workflows e alterações ao dashboard. Ideias de otimização (cadência
+diária do regime, histerese do VIX, etc.) ficam registadas em
+`data/reports/market_regime_filter.md` e só são avaliadas depois disso.
