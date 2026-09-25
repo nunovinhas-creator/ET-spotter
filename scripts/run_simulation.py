@@ -10,6 +10,7 @@ from market_regime import REGIME_EXPOSURE, VIX_NEUTRAL_LEVEL, VIX_STRESS_LEVEL, 
 # + máx. 2 ETFs/categoria + exclusão do quartil superior de vol_21 + cap de 25% por categoria
 # + filtro de regime VIX + SMA200 (desde 2026-09-25, ver market_regime_filter.md).
 # Não alterar sem instrução explícita e nova avaliação documentada em data/reports/.
+# Modo acumulação: sem otimização até haver ≥ 6–8 ciclos VALID_ENSEMBLE_60_40 completos.
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.003
