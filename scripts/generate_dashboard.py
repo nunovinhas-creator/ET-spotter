@@ -18,6 +18,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from utils import load_config, get_category_map, build_buy_signals, category_summary, compute_advisor_score, build_advisor_candidates, _pct, _etf_row_raw, get_etf_metadata, level_display
 from paths import DATA_DAILY, REPORTS, SCORES_HIST, PORTFOLIO
+from market_regime import REGIME_COLORS, REGIME_EXPOSURE, VIX_NEUTRAL_LEVEL, VIX_STRESS_LEVEL, write_reports as write_regime_reports
 from constants import (
     CONVICTION_STRONG_BUY_SCORE, CONVICTION_STRONG_BUY_SIGNALS,
     CONVICTION_BUY_SCORE,        CONVICTION_BUY_SIGNALS,
@@ -75,6 +76,9 @@ def load_data(cfg: dict) -> dict:
     legacy_df = pd.read_csv(legacy_path) if legacy_path.exists() else pd.DataFrame()
     stress_path = REPORTS / "simulation_stress.csv"
     stress_df = pd.read_csv(stress_path) if stress_path.exists() else pd.DataFrame()
+
+    # regime de mercado da carteira (VWCE vs SMA200 + VIX)
+    regime_status, regime_history = write_regime_reports()
 
     # delta_score: day-over-day change per ETF from history
     delta_map: dict[str, float] = {}
@@ -140,6 +144,8 @@ def load_data(cfg: dict) -> dict:
         "valid_simulation_df": valid_simulation_df,
         "legacy_simulation_df": legacy_df,
         "stress_df":     stress_df,
+        "regime_status": regime_status,
+        "regime_history": regime_history,
         "cmap":          cmap,
         "spy_close":     spy_close,
         "spy_sma200":    spy_sma200,
@@ -304,7 +310,26 @@ def brand_banner_section_html() -> str:
 
 # ── Sections ──────────────────────────────────────────────────────────────────
 
-def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
+def _portfolio_regime_badge(status: dict) -> str:
+    """Badge do regime da carteira simulada (VWCE vs SMA200 + VIX) e respetiva exposição."""
+    regime = str(status.get("regime", "UNKNOWN"))
+    if regime == "UNKNOWN":
+        return ""
+    color = REGIME_COLORS.get(regime, "#7183A6")
+    vix = status.get("vix")
+    tip = (
+        f"Regime da carteira: VWCE {status.get('vwce_close', '—')} vs SMA200 {status.get('sma200', '—')} · "
+        f"VIX {vix if vix is not None else 'indisponível'} · exposição máx. {float(status.get('exposure', 0)) * 100:.0f}% · "
+        f"{status.get('mode', '')}"
+    )
+    return (
+        f'<span title="{html_mod.escape(tip)}" style="background:{color}22;color:{color};border:1px solid {color}66;'
+        f'padding:2px 8px;border-radius:2px;font-size:11px;font-weight:bold;cursor:help">'
+        f'CARTEIRA {html_mod.escape(regime)} · {float(status.get("exposure", 0)) * 100:.0f}%</span>'
+    )
+
+
+def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0, portfolio_regime: dict | None = None) -> str:
     regime_color = "var(--green)" if spy_regime == "BULL" else ("var(--red)" if spy_regime == "BEAR" else "var(--muted)")
     spy_price = f"{spy_close:.2f}" if spy_close else "—"
     sma_price = f"{spy_sma200:.2f}" if spy_sma200 else "—"
@@ -319,6 +344,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
         f'style="background:{regime_color};color:#000;padding:2px 8px;'
         f'border-radius:2px;font-size:11px;font-weight:bold;cursor:help">{spy_regime}</span>'
     )
+    portfolio_badge = _portfolio_regime_badge(portfolio_regime or {})
     return f"""
 <div class="top-accent"></div>
 <header>
@@ -330,6 +356,7 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0) -> str:
     <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
         {regime_badge}
+        {portfolio_badge}
         <div style="display:flex;align-items:center;border:1px solid #1E2D4D;border-radius:3px;overflow:hidden;font-size:0.68rem;font-family:inherit;letter-spacing:0.08em">
           <button id="lang-pt" onclick="window.setLanguage&&window.setLanguage('pt')"
             style="background:transparent;border:none;border-right:1px solid #1E2D4D;
@@ -1774,6 +1801,154 @@ def _construction_constraints_line(summary: dict) -> str:
   return f'<div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Construção da carteira: {html_mod.escape(" · ".join(parts))}.</div>'
 
 
+def _regime_rules_text(summary) -> str:
+  """Regras do filtro de regime usadas no resultado (compatível com resultados antigos)."""
+  regime_filter = summary.get("regime_filter") if hasattr(summary, "get") else None
+  if regime_filter is None or (isinstance(regime_filter, float) and pd.isna(regime_filter)):
+    return f"Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash."
+  if regime_filter == "none":
+    return "Sem filtro de regime (sempre 100% investido)."
+  if regime_filter == "legacy":
+    return f"Filtro binário: BULL (VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}) investido; resto em cash."
+  neutral = float(summary.get("vix_neutral_level", VIX_NEUTRAL_LEVEL))
+  stress = float(summary.get("vix_stress_level", VIX_STRESS_LEVEL))
+  return (
+    f"Filtro de regime: BULL (VWCE &gt; SMA200, VIX &lt; {neutral:.0f}) 100% · NEUTRAL (VIX {neutral:.0f}–{stress:.0f}) máx. 60% · "
+    f"STRESS (VIX ≥ {stress:.0f}) e BEAR (VWCE &lt; SMA200) 100% cash. Sem VIX usa só a SMA200; mudança de regime força rebalanceamento."
+  )
+
+
+def _regime_periods(history: pd.DataFrame) -> list[dict]:
+  """Agrupa o histórico diário em períodos contínuos do mesmo regime."""
+  if history.empty:
+    return []
+  block = history["regime"].ne(history["regime"].shift()).cumsum()
+  periods = []
+  for _, group in history.groupby(block):
+    periods.append({
+      "regime": group["regime"].iloc[0],
+      "start": group.index[0],
+      "end": group.index[-1],
+      "days": len(group),
+      "vix_max": group["vix"].max(),
+    })
+  return periods
+
+
+def _fmt_vix(value) -> str:
+  return "—" if value is None or pd.isna(value) else f"{float(value):.1f}"
+
+
+def market_regime_section(status: dict, history: pd.DataFrame) -> str:
+  """Regime atual da carteira + histórico diário (VWCE vs SMA200, VIX) e períodos de regime."""
+  if not status or history is None or history.empty:
+    return ""
+  regime = str(status.get("regime", "UNKNOWN"))
+  color = REGIME_COLORS.get(regime, "#7183A6")
+  recent = history[history.index >= history.index.max() - pd.DateOffset(years=1)]
+  labels = [date.strftime("%Y-%m-%d") for date in recent.index]
+  point_colors = [REGIME_COLORS.get(value, "#7183A6") for value in recent["regime"]]
+
+  def _series(column: str) -> list:
+    return [None if pd.isna(value) else round(float(value), 2) for value in recent[column]]
+
+  chart_data = {
+    "labels": labels,
+    "datasets": [
+      {"label": "VWCE", "data": _series("vwce_close"), "borderColor": "#00D4FF", "borderWidth": 1.6,
+       "pointRadius": 0, "tension": 0.15, "yAxisID": "y"},
+      {"label": "SMA200", "data": _series("sma200"), "borderColor": "#E8F0FF", "borderWidth": 1.2,
+       "borderDash": [5, 4], "pointRadius": 0, "tension": 0.15, "yAxisID": "y"},
+      {"label": "VIX", "data": _series("vix"), "borderColor": "#FFB800", "borderWidth": 1.2,
+       "pointRadius": 0, "tension": 0.1, "yAxisID": "vix"},
+      {"label": f"VIX {VIX_NEUTRAL_LEVEL:.0f} (NEUTRAL)", "data": [VIX_NEUTRAL_LEVEL] * len(labels), "borderColor": "#FFB80088",
+       "borderDash": [2, 3], "borderWidth": 1, "pointRadius": 0, "yAxisID": "vix"},
+      {"label": f"VIX {VIX_STRESS_LEVEL:.0f} (STRESS)", "data": [VIX_STRESS_LEVEL] * len(labels), "borderColor": "#FF880099",
+       "borderDash": [2, 3], "borderWidth": 1, "pointRadius": 0, "yAxisID": "vix"},
+    ],
+  }
+  strip = "".join(
+    f'<div title="{label} · {html_mod.escape(value)}" style="flex:1;background:{point_color}"></div>'
+    for label, value, point_color in zip(labels, recent["regime"], point_colors)
+  )
+  counts = recent["regime"].value_counts()
+  distribution = " · ".join(
+    f'<span style="color:{REGIME_COLORS[name]};font-weight:700">{name}</span> {counts.get(name, 0) / len(recent) * 100:.0f}%'
+    for name in ("BULL", "NEUTRAL", "STRESS", "BEAR") if name in REGIME_COLORS
+  )
+  period_rows = "".join(
+    "<tr>"
+    f'<td style="padding:6px 8px;color:{REGIME_COLORS.get(period["regime"], "#E8F0FF")};font-weight:700">{html_mod.escape(period["regime"])}</td>'
+    f'<td style="padding:6px 8px">{period["start"]:%Y-%m-%d} → {period["end"]:%Y-%m-%d}</td>'
+    f'<td style="padding:6px 8px">{period["days"]} {"sessão" if period["days"] == 1 else "sessões"}</td>'
+    f'<td style="padding:6px 8px">{REGIME_EXPOSURE.get(period["regime"], 0) * 100:.0f}%</td>'
+    f'<td style="padding:6px 8px">{_fmt_vix(period["vix_max"])}</td>'
+    "</tr>"
+    for period in reversed(_regime_periods(recent)[-12:])
+  )
+  vix = status.get("vix")
+  above = status.get("vwce_close") is not None and status.get("sma200") is not None and status["vwce_close"] > status["sma200"]
+
+  def card(label: str, value: str, value_color: str) -> str:
+    return (
+      f'<div style="background:#090E1A;border:1px solid #1E2D4D;border-radius:5px;padding:14px 16px">'
+      f'<div style="color:{value_color};font-size:1.18rem;font-weight:700">{value}</div>'
+      f'<div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-top:4px">{label}</div>'
+      "</div>"
+    )
+
+  fallback_note = "" if status.get("vix_available") else (
+    '<div style="color:#FFB800;font-size:.68rem;margin-bottom:12px">⚠ VIX indisponível ou desatualizado — o regime está a usar só a SMA200 (fallback).</div>'
+  )
+  return f"""
+<section class="section">
+  <h2 class="section-title" style="display:flex;align-items:center">{_icon("portfolio")}<span>Regime de mercado · filtro VIX + SMA200</span></h2>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text({"regime_filter": "vix_sma200"})} Avaliado na data de construção de cada ciclo da carteira simulada.</div>
+  {fallback_note}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px">
+    {card("Regime atual", html_mod.escape(regime), color)}
+    {card("Exposição máxima", f"{float(status.get('exposure', 0)) * 100:.0f}%", color)}
+    {card("VIX", "—" if vix is None else f"{vix:.2f}", "#FFB800")}
+    {card("VWCE vs SMA200", f"{status.get('vwce_close', 0):.2f} {'&gt;' if above else '≤'} {status.get('sma200', 0):.2f}", "#00D4FF")}
+    {card("Em vigor desde", html_mod.escape(str(status.get('regime_since', '—'))), "#E8F0FF")}
+    {card("Última leitura", html_mod.escape(str(status.get('date', '—'))), "#7183A6")}
+  </div>
+  <div style="color:#7183A6;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Histórico de regimes · últimos 12 meses · {distribution}</div>
+  <div style="display:flex;height:14px;border-radius:2px;overflow:hidden;margin-bottom:12px">{strip}</div>
+  <div style="position:relative;height:260px">
+    <canvas id="regimeChart"></canvas>
+  </div>
+  <script>
+    (function() {{
+      const ctx = document.getElementById("regimeChart").getContext("2d");
+      new Chart(ctx, {{
+        type: "line",
+        data: {json.dumps(chart_data, ensure_ascii=False)},
+        options: {{
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {{ mode: "index", intersect: false }},
+          scales: {{
+            x: {{ ticks: {{ color:"oklch(63% 0.024 82)", maxTicksLimit:8, font:{{size:10}} }}, grid: {{ color:"oklch(15% 0.008 95)" }} }},
+            y: {{ position:"left", ticks: {{ color:"oklch(63% 0.024 82)", font:{{size:10}} }}, grid: {{ color:"oklch(15% 0.008 95)" }} }},
+            vix: {{ position:"right", ticks: {{ color:"#FFB800", font:{{size:10}} }}, grid: {{ display:false }} }}
+          }},
+          plugins: {{ legend: {{ labels: {{ color:"oklch(81% 0.03 82)", font:{{size:11}} }} }} }}
+        }}
+      }});
+    }})();
+  </script>
+  <div style="overflow-x:auto;margin-top:14px">
+    <table style="width:100%;border-collapse:collapse;font-size:.74rem">
+      <thead><tr style="color:#7183A6;text-align:left;border-bottom:1px solid #1E2D4D">
+        <th style="padding:6px 8px">Regime</th><th style="padding:6px 8px">Período</th><th style="padding:6px 8px">Duração</th><th style="padding:6px 8px">Exposição máx.</th><th style="padding:6px 8px">VIX máx.</th>
+      </tr></thead>
+      <tbody>{period_rows}</tbody>
+    </table>
+  </div>
+</section>"""
+
+
 def simulation_chart_section(
   simulation_df: pd.DataFrame,
   stress_df: pd.DataFrame,
@@ -1791,7 +1966,7 @@ def simulation_chart_section(
     "labels": [str(simulation_df["date"].iloc[0])] + simulation_df["cycle_end"].astype(str).tolist(),
     "datasets": [
       {
-                "label": "Estratégia com filtro SMA200 (€)",
+                "label": "Estratégia com filtro de regime (€)",
         "data": [initial_capital] + simulation_df["portfolio_value"].round(2).tolist(),
         "borderColor": "#00D4FF",
         "backgroundColor": "rgba(0, 212, 255, 0.12)",
@@ -1815,6 +1990,8 @@ def simulation_chart_section(
     ],
   }
   chart_json = json.dumps(chart_data, ensure_ascii=False)
+  # A secção aparece duas vezes (histórico completo + VALID): ids únicos por secção.
+  dom_suffix = re.sub(r"[^A-Za-z0-9]", "", str(summary.get("track_record_scope", "")))
   export_csv_json = json.dumps(simulation_df.to_csv(index=False), ensure_ascii=False)
   allocation_rows = []
   for _, cycle in simulation_df.iterrows():
@@ -1837,7 +2014,8 @@ def simulation_chart_section(
         f"<td>{allocation['contribution'] * 100:+.2f}%</td>"
         f"<td>{float(cycle['turnover']) * 100:.1f}%</td>"
         f"<td>€{float(cycle['friction_cost_eur']):,.2f}</td>"
-        f"<td>{html_mod.escape(str(cycle['market_regime']))}</td>"
+        f"<td style=\"color:{REGIME_COLORS.get(str(cycle['market_regime']), '#E8F0FF')};font-weight:700\">{html_mod.escape(str(cycle['market_regime']))}"
+        f"<br><small>{'VIX ' + _fmt_vix(cycle.get('vix_level')) if pd.notna(cycle.get('vix_level')) else 'sem VIX'}</small></td>"
         f"<td>{float(cycle['exposure']) * 100:.0f}%</td>"
         f"<td>{rebalance_display}<br><small>desvio {float(cycle['max_weight_deviation']) * 100:.1f}%</small></td>"
         "</tr>"
@@ -1866,12 +2044,12 @@ def simulation_chart_section(
 <section class="section">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
     <h2 class="section-title" style="display:flex;align-items:center;margin:0">{_icon("portfolio")}<span>{html_mod.escape(title)}</span></h2>
-    <button id="simulationExport" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
+    <button id="simulationExport{dom_suffix}" type="button" style="background:#0D1525;border:1px solid #00D4FF;color:#00D4FF;border-radius:3px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.7rem">↓ Exportar transações CSV</button>
   </div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Sharpe e Sortino calculados sobre retornos excedentes à taxa livre de risco anual de {summary['risk_free_rate_annual'] * 100:.2f}%.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Score final = 60% score v3 + 40% probabilidade XGBoost. Sizing: alvo de volatilidade, Kelly fracionário e cap de 25% por categoria (soma dos ETFs da categoria; excesso redistribuído, ou cash se todas estiverem no cap).</div>
   <div style="color:#00FF9D;font-size:.68rem;margin-bottom:12px">Ensemble fiável ativo desde {html_mod.escape(str(summary.get('ensemble_active_from', 'data não declarada')))} · estado: {html_mod.escape(str(summary.get('track_record_summary_status', summary.get('track_record_status', 'não validado'))))} · ciclos legados excluídos: {int(summary.get('legacy_cycles_excluded', 0))}</div>
-  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Regime BULL exige VWCE &gt; SMA200 e VIX &lt; {summary.get('vix_stress_level', 28):.0f}; BEAR/STRESS ficam em cash. Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
+  <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">{_regime_rules_text(summary)} Custos: {html_mod.escape(str(summary.get('cost_model', 'não disponível')))}.</div>
   <div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Política {html_mod.escape(str(summary.get('policy_name', 'não declarada')))} · threshold ≥ {summary['rebalance_threshold'] * 100:.1f}% · holding mínimo {int(summary.get('min_holding_cycles', 0))} ciclos · máximo {summary.get('max_new_positions', 'sem limite')} novas posições/ciclo · rebalance a cada {int(summary.get('rebalance_cycle_interval', 1))} ciclo(s) · ranking: {'score_final suavizado (média t, t-1)' if int(summary.get('score_smoothing_cycles', 1)) == 2 else 'score_final cru, sem suavização'} · ciclos sem rotação: {int(summary['cost_saving_cycles'])}</div>
   {_construction_constraints_line(summary)}
   {f'<div style="color:#7183A6;font-size:.68rem;margin-bottom:12px">Max Drawdown medido na equity curve diária desde o capital inicial de €10.000 (inclui o 1.º ciclo). Só com valores de fim de ciclo seria {summary["max_drawdown_cycle_end"] * 100:.2f}%.</div>' if "max_drawdown_cycle_end" in summary else ""}
@@ -1881,16 +2059,16 @@ def simulation_chart_section(
   {metric_card("Max Drawdown diário" if "max_drawdown_cycle_end" in summary else "Max Drawdown", f"{summary['max_drawdown'] * 100:.2f}%", "#FF4466")}
   {metric_card("Sharpe", f"{summary['sharpe_ratio']:.2f}", "#FFB800")}
   {metric_card("Sortino", f"{summary['sortino_ratio']:.2f}", "#7C83FD")}
-  {metric_card("SMA200 atual", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", "#FFB800")}
+  {metric_card("Regime atual · exposição", f"{current['market_regime']} · {current['exposure'] * 100:.0f}%", REGIME_COLORS.get(str(current['market_regime']), "#FFB800"))}
   {metric_card("Alpha Jensen", f"{summary['jensen_alpha_annual'] * 100:+.2f}%", "#FF4466")}
   {metric_card("Beta VWCE", f"{summary['beta']:.2f}", "#4D9FFF")}
   </div>
   <div style="position:relative;height:260px">
-    <canvas id="simulationChart"></canvas>
+    <canvas id="simulationChart{dom_suffix}"></canvas>
   </div>
   <script>
     (function() {{
-      const ctx = document.getElementById("simulationChart").getContext("2d");
+      const ctx = document.getElementById("simulationChart{dom_suffix}").getContext("2d");
       new Chart(ctx, {{
         type: "line",
         data: {chart_json},
@@ -1936,7 +2114,7 @@ def simulation_chart_section(
   <script>
     (function() {{
       const csv = {export_csv_json};
-      document.getElementById("simulationExport").addEventListener("click", function() {{
+      document.getElementById("simulationExport{dom_suffix}").addEventListener("click", function() {{
         const blob = new Blob([csv], {{ type: "text/csv;charset=utf-8;" }});
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -3030,9 +3208,15 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def generate_dashboard(cfg: dict) -> None:
-    from run_simulation import run_backtest
+    from run_simulation import VALID_REPORT_PATH, run_backtest
 
     run_backtest()
+    run_backtest(
+        start_date="2026-06-09",
+        require_ensemble=True,
+        output_path=VALID_REPORT_PATH,
+        track_record_scope="VALID_ENSEMBLE_60_40",
+    )
     data = load_data(cfg)
     if not data:
         print("[SKIP] Sem dados para o dashboard.")
@@ -3108,7 +3292,8 @@ async function subscribePush() {{
 
     sections = [
         ticker_html(signals_all, data["spy_regime"], avg_score, n_etfs_today),
-        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today),
+        header_html(data["spy_close"], data["spy_sma200"], data["spy_regime"], ts, n_etfs=n_etfs_today,
+                    portfolio_regime=data["regime_status"]),
         '<div class="main">',
 
         # ── Tab: Overview ─────────────────────────────────────────────────────
@@ -3148,6 +3333,7 @@ async function subscribePush() {{
 
         # ── Tab: Simulação ───────────────────────────────────────────────────
         '<div id="tab-simulation" style="display:none">',
+        market_regime_section(data["regime_status"], data["regime_history"]),
         simulation_chart_section(
           data["simulation_df"],
           data["stress_df"],

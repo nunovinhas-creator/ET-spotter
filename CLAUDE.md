@@ -118,11 +118,16 @@ avaliação documentada em `data/reports/`:
 | Máx. ETFs por categoria | `MAX_ETFS_PER_CATEGORY = 2` |
 | Filtro de volatilidade | `VOL_FILTER_MODE = "exclude"`: sem novas entradas com vol_21 acima do percentil 75 do universo |
 | Cap por categoria | 25% da **soma** dos ETFs da categoria (`_capped_weights`, redução proporcional) |
+| Filtro de regime (desde 2026-09-25) | `REGIME_FILTER = "vix_sma200"` (`scripts/market_regime.py`): BULL (VWCE > SMA200, VIX < 22) 100% · NEUTRAL (VIX 22–28) máx. 60% · STRESS (VIX ≥ 28) e BEAR (VWCE ≤ SMA200) 100% cash · sem VIX só SMA200 · mudança de exposição força rebalance |
 | Desligadas (implementadas) | `HIGH_BETA_CAP`, `EARLY_TARGET_VOLATILITY`, `EARLY_FRACTIONAL_KELLY` = `None` |
 | Custos | 30 bps round-trip |
 
 Resultados de referência (VALID_ENSEMBLE_60_40, 2026-06-10 a 2026-09-23):
-**+6,69% líquido, MaxDD diário −4,11%**, turnover médio 50%, custos €30.
+**+4,79% líquido, MaxDD diário −2,46%**, exposição média 80%, turnover médio 49,5%, custos €30
+(sem filtro de regime: +6,69% / −4,11% / 100%; o 1.º ciclo arrancou num dia NEUTRAL com VIX 22,2).
 Os números vão mudar com dados novos; as regras não. Ver
-`data/reports/maxdd_constraints_analysis.md` e `policy_evaluation_clean.md`.
+`data/reports/market_regime_filter.md`, `maxdd_constraints_analysis.md` e `policy_evaluation_clean.md`.
+
+O VIX é gravado em `data/daily/VIX.csv` pelo `fetch_daily.py` (yfinance `^VIX` → CBOE → espelho
+GitHub `datasets/finance-vix`); se falhar, o regime cai para SMA200 apenas, sem erro.
 Reavaliar só quando houver ≥ 6 ciclos no período VALID_ENSEMBLE_60_40.
