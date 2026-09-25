@@ -124,8 +124,8 @@
       "color": "#ffb300",
       "etfs": [
         { "ticker": "IGLN.L",  "name": "Ouro Físico (iShares ETC)",                  "ter": 0.12, "aum_bn": 1.6,  "replica": "fisica", "esg": false, "isin": "IE00B8BTKG10" },
-        { "ticker": "PHAU.L",  "name": "Ouro Físico (WisdomTree ETC)",               "ter": 0.12, "aum_bn": 3.1,  "replica": "fisica", "esg": false, "isin": "IE00B579F325" },
-        { "ticker": "SGLN.L",  "name": "Ouro Físico (Invesco ETC)",                  "ter": 0.12, "aum_bn": 1.0,  "replica": "fisica", "esg": false, "isin": "IE00B579F325" },
+        { "ticker": "PHAU.L",  "name": "Ouro Físico (WisdomTree ETC)",               "ter": 0.12, "aum_bn": 3.1,  "replica": "fisica", "esg": false, "isin": "JE00B1VS3770" },
+        { "ticker": "SGLN.L",  "name": "Ouro Físico (iShares ETC)",                  "ter": 0.12, "aum_bn": 1.0,  "replica": "fisica", "esg": false, "isin": "IE00B4ND3602" },
         { "ticker": "PHAG.L",  "name": "Prata Física (WisdomTree ETC)",              "ter": 0.19, "aum_bn": 0.8,  "replica": "fisica", "esg": false, "isin": "IE00B4LSS636" },
         { "ticker": "PHPT.L",  "name": "Platina Física (WisdomTree ETC)",            "ter": 0.19, "aum_bn": 0.2,  "replica": "fisica", "esg": false, "isin": "IE00B4LPPM29" },
         { "ticker": "EXXY.L",  "name": "Commodities Diversificadas (iShares UCITS)", "ter": 0.19, "aum_bn": 1.2,  "replica": "sintetica", "esg": false, "isin": "IE00B3YCGJ38" },
