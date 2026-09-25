@@ -4,6 +4,9 @@ from pathlib import Path
 import pandas as pd
 
 
+# CONFIGURAÇÃO OFICIAL CONGELADA desde 2026-09-25 (ver CLAUDE.md): Política C + score suavizado
+# + máx. 2 ETFs/categoria + exclusão do quartil superior de vol_21 + cap de 25% por categoria.
+# Não alterar sem instrução explícita e nova avaliação documentada em data/reports/.
 INITIAL_CAPITAL = 10000.0
 REBALANCE_EVERY_TRADING_DAYS = 21
 TRANSACTION_COST_PER_ROUND = 0.003
