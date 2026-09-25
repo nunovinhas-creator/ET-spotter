@@ -5,13 +5,18 @@ Secções geridas (delimitadas por marcadores HTML):
   <!-- ET-SPOTTER:TOP-ETFS:START --> ... <!-- ET-SPOTTER:TOP-ETFS:END -->
   <!-- ET-SPOTTER:REGIME:START -->   ... <!-- ET-SPOTTER:REGIME:END -->
   <!-- ET-SPOTTER:UPDATED:START -->  ... <!-- ET-SPOTTER:UPDATED:END -->
+  <!-- ET-SPOTTER:UNIVERSE:START --> ... <!-- ET-SPOTTER:UNIVERSE:END -->
 
-Corre via .github/workflows/update_readme.yml em push de scores_latest.csv
-ou backtest_status.json. Nunca toca no resto do README.
+A secção UNIVERSE é gerada a partir de config/etfs.json, e o número de ETFs
+citado noutras frases do README é sincronizado com ela.
+
+Corre via .github/workflows/update_readme.yml em push de scores_latest.csv,
+backtest_status.json ou config/etfs.json. Nunca toca no resto do README.
 """
 
 import json
 import csv
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +24,21 @@ ROOT = Path(__file__).parent.parent
 SCORES_CSV     = ROOT / "data/reports/scores_latest.csv"
 BACKTEST_JSON  = ROOT / "data/reports/backtest_status.json"
 README         = ROOT / "README.md"
+CONFIG_JSON    = ROOT / "config/etfs.json"
+
+CATEGORY_EMOJI = {
+    "us_broad":       "🇺🇸",
+    "global_world":   "🌍",
+    "us_sectors":     "🏭",
+    "intl_developed": "🌐",
+    "emerging":       "🌏",
+    "factor":         "📐",
+    "thematic":       "💡",
+    "commodities":    "🥇",
+    "obrigacoes":     "🏦",
+    "reits":          "🏠",
+    "esg":            "🌱",
+}
 
 SIGNAL_LABELS = {
     "RADAR_MAXIMO": "RADAR MÁXIMO",
@@ -121,6 +141,43 @@ def build_updated_section() -> str:
     return f"_Última actualização automática: **{now}**_"
 
 
+def load_categories() -> list[dict]:
+    with open(CONFIG_JSON, encoding="utf-8") as f:
+        return json.load(f)["categories"]
+
+
+def universe_size(categories: list[dict]) -> int:
+    return sum(len(cat["etfs"]) for cat in categories)
+
+
+def build_universe_section(categories: list[dict]) -> str:
+    lines = [
+        f"**{universe_size(categories)} ETFs UCITS em {len(categories)} categorias** "
+        "· gerado automaticamente a partir de `config/etfs.json`",
+        "",
+        "| Categoria | ETFs | Exemplos |",
+        "|-----------|:----:|----------|",
+    ]
+    for cat in categories:
+        emoji = CATEGORY_EMOJI.get(cat["id"], "📁")
+        examples = " · ".join(e["ticker"] for e in cat["etfs"][:3])
+        lines.append(f"| {emoji} {cat['name']} | {len(cat['etfs'])} | {examples} |")
+    lines += ["", "<details>", "<summary><b>📋 Ver todos os tickers por categoria</b></summary>", "", "<br>", ""]
+    for cat in categories:
+        tickers = " ".join(f"`{e['ticker']}`" for e in cat["etfs"])
+        lines += [f"**{cat['name']} ({len(cat['etfs'])})**  ", tickers, ""]
+    lines.append("</details>")
+    return "\n".join(lines)
+
+
+def sync_universe_counts(content: str, size: int) -> str:
+    """Actualiza o número de ETFs citado fora da secção UNIVERSE."""
+    content = re.sub(r"\d+(?=\+ETFs\+UCITS)", str(size), content)  # animação no topo
+    content = re.sub(r"todos os \d+ ETFs", f"todos os {size} ETFs", content)
+    content = re.sub(r"# \d+ ETFs, (\d+) categorias", lambda m: f"# {size} ETFs, {m.group(1)} categorias", content)  # árvore de ficheiros
+    return content
+
+
 def replace_section(content: str, tag: str, new_body: str) -> str:
     start_marker = f"<!-- ET-SPOTTER:{tag}:START -->"
     end_marker   = f"<!-- ET-SPOTTER:{tag}:END -->"
@@ -148,6 +205,10 @@ def main() -> None:
     content = replace_section(content, "TOP-ETFS", build_top_etfs_section(rows))
     content = replace_section(content, "REGIME",   build_regime_section(rows))
     content = replace_section(content, "UPDATED",  build_updated_section())
+
+    categories = load_categories()
+    content = replace_section(content, "UNIVERSE", build_universe_section(categories))
+    content = sync_universe_counts(content, universe_size(categories))
 
     README.write_text(content, encoding="utf-8")
     print(f"README actualizado — {len(rows)} ETFs processados")

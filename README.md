@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&weight=500&duration=3000&pause=1000&color=7C83FD&center=true&vCenter=true&repeat=true&width=700&height=40&lines=Email+diario+as+22h+%E2%80%94+zero+custos+de+infra-estrutura;97+ETFs+UCITS+analisados+automaticamente;Score+academico%3A+Jegadeesh+%2B+Ang+%2B+Kakushadze;Open+source+%C2%B7+GitHub+Actions+%C2%B7+sem+servidores" alt="Typing animation">
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&weight=500&duration=3000&pause=1000&color=7C83FD&center=true&vCenter=true&repeat=true&width=700&height=40&lines=Email+diario+as+22h+%E2%80%94+zero+custos+de+infra-estrutura;95+ETFs+UCITS+analisados+automaticamente;Score+academico%3A+Jegadeesh+%2B+Ang+%2B+Kakushadze;Open+source+%C2%B7+GitHub+Actions+%C2%B7+sem+servidores" alt="Typing animation">
 
 <br>
 
@@ -37,7 +37,7 @@
 - [⚡ Quick Start — 4 passos](#-quick-start--4-passos-3-minutos)
 - [🔬 Como funciona](#-como-funciona)
 - [🧮 Score v3 — Metodologia](#-score-v3--metodologia)
-- [🗂️ Universo ETF](#️-universo--97-etfs-ucits-em-11-categorias)
+- [🗂️ Universo ETF](#️-universo-etf)
 - [🏛️ Base Académica](#️-base-académica)
 - [🗺️ Roadmap](#️-roadmap)
 - [⭐ Contribuir e Partilhar](#-contribuir-e-partilhar)
@@ -63,7 +63,7 @@ Todos os dias às 22h, após o fecho dos mercados, um relatório com os ETFs mel
 
 ### 📊 Dashboard Live
 
-Scores em tempo real para todos os 97 ETFs: sub-barras de momentum · tendência · risco · alpha, filtros por categoria e histórico de scores.
+Scores em tempo real para todos os 95 ETFs: sub-barras de momentum · tendência · risco · alpha, filtros por categoria e histórico de scores.
 
 **[→ Abrir Dashboard](https://nunovinhas-creator.github.io/ET-spotter)**
 
@@ -242,21 +242,24 @@ O `score_pct` mede o **percentil histórico** do score nos últimos 252 dias des
 
 ---
 
-## 🗂️ Universo — 97 ETFs UCITS em 11 categorias
+## 🗂️ Universo ETF
+
+<!-- ET-SPOTTER:UNIVERSE:START -->
+**95 ETFs UCITS em 11 categorias** · gerado automaticamente a partir de `config/etfs.json`
 
 | Categoria | ETFs | Exemplos |
 |-----------|:----:|----------|
 | 🇺🇸 EUA – Mercado Largo | 8 | CSPX.L · VUAA.L · VUSA.L |
-| 🌍 Global / MSCI World | 10 | IWDA.L · HMWO.L · SWRD.L |
-| 🏭 EUA – Sectores UCITS | 11 | IUHC.L · IUFS.L · IUIT.L |
-| 🌐 Internacional Desenvolvido | 10 | VEUR.L · VERX.L · HMCA.L |
-| 🌏 Mercados Emergentes | 8 | EMIM.L · VFEM.L · IEEM.L |
+| 🌍 Global / MSCI World | 10 | IWDA.L · VWCE.DE · VWRP.L |
+| 🏭 EUA – Sectores UCITS | 11 | IUIT.L · IUHC.L · IUFS.L |
+| 🌐 Internacional Desenvolvido | 10 | SMEA.L · VEUR.L · VERX.L |
+| 🌏 Mercados Emergentes | 8 | EIMI.L · VFEM.L · XMEM.DE |
 | 📐 Factor / Smart Beta | 8 | IWMO.L · IWVL.L · IWQU.L |
-| 💡 Temáticos / Inovação | 11 | EQQQ.L · RBOT.L · HEAL.L |
+| 💡 Temáticos / Inovação | 11 | XDWT.DE · RBOT.L · WTAI.L |
 | 🥇 Commodities | 6 | PHAU.L · SGLN.L · PHAG.L |
-| 🏦 Obrigações / Fixed Income | 12 | AGGU.L · IBTS.L · IBTL.L |
-| 🏠 Imobiliário / REITs | 5 | IWDP.L · IPRP.L |
-| 🌱 ESG / Sustentável | 6 | SUSW.L · MVEW.L |
+| 🏦 Obrigações / Fixed Income | 12 | IGLT.L · IBTL.L · IBTM.L |
+| 🏠 Imobiliário / REITs | 5 | IWDP.L · IPRP.L · REIT.L |
+| 🌱 ESG / Sustentável | 6 | SUSW.L · MVEW.L · SUEZ.L |
 
 <details>
 <summary><b>📋 Ver todos os tickers por categoria</b></summary>
@@ -264,39 +267,40 @@ O `score_pct` mede o **percentil histórico** do score nos últimos 252 dias des
 <br>
 
 **EUA – Mercado Largo (8)**  
-`CSPX.L` `VUAA.L` `VUSA.L` `IUSA.L` `XDEQ.L` `SPXS.L` `XDWD.DE` `VWCE.DE`
+`CSPX.L` `VUAA.L` `VUSA.L` `IUSA.L` `CNDX.L` `XNAS.L` `SPXS.L` `IUSS.L`
 
 **Global / MSCI World (10)**  
-`IWDA.L` `HMWO.L` `SWRD.L` `XMAW.L` `VWRL.L` `VWRP.L` `IWFM.L` `MVOL.L` `WSML.L` `XDWT.DE`
+`IWDA.L` `VWCE.DE` `VWRP.L` `VWRL.L` `SWRD.L` `XDWD.DE` `FWRA.L` `HMWO.L` `WSML.L` `XMAW.L`
 
 **EUA – Sectores UCITS (11)**  
-`IUHC.L` `IUFS.L` `IUIT.L` `IUCS.L` `IUCD.L` `IUES.L` `IUCM.L` `IUMS.L` `IUIS.L` `IUUS.L` `FWRA.L`
+`IUIT.L` `IUHC.L` `IUFS.L` `IUES.L` `IUCD.L` `IUCS.L` `IUIS.L` `IUUS.L` `IUMS.L` `IUCM.L` `IURE.L`
 
 **Internacional Desenvolvido (10)**  
-`VEUR.L` `VERX.L` `HMCA.L` `SMEA.L` `HMJP.L` `IJPA.L` `IIND.L` `XAUS.L` `CUKX.L` `VUKE.L`
+`SMEA.L` `VEUR.L` `VERX.L` `IJPA.L` `HMJP.L` `CUKX.L` `VUKE.L` `HMCA.L` `XAUS.L` `IAPD.L`
 
 **Mercados Emergentes (8)**  
-`EMIM.L` `VFEM.L` `IEEM.L` `EIMI.L` `XMEM.DE` `HMEF.L` `SEMB.L` `XNAS.L`
+`EIMI.L` `VFEM.L` `XMEM.DE` `IEEM.L` `ICHN.L` `IIND.L` `IBZL.L` `CSEM.L`
 
 **Factor / Smart Beta (8)**  
-`IWMO.L` `IWVL.L` `IWQU.L` `IWSZ.L` `IQSA.L` `IBZL.L` `IDTP.L` `GLRE.L`
+`IWMO.L` `IWVL.L` `IWQU.L` `MVOL.L` `IWFM.L` `IWSZ.L` `XDEQ.L` `WDIV.L`
 
 **Temáticos / Inovação (11)**  
-`EQQQ.L` `RBOT.L` `HEAL.L` `INRG.L` `CYBR.L` `BTEC.L` `DGTL.L` `WTAI.L` `CNDX.L` `XAIX.L` `ECAR.L`
+`XDWT.DE` `RBOT.L` `WTAI.L` `DGTL.L` `ECAR.L` `BTEC.L` `INRG.L` `BNXG.L` `CYBR.L` `HEAL.L` `XAIX.L`
 
 **Commodities (6)**  
-`PHAU.L` `PHAG.L` `PHPT.L` `SGLN.L` `CRUD.L` `SXLP.L`
+`PHAU.L` `SGLN.L` `PHAG.L` `PHPT.L` `EXXY.L` `CRUD.L`
 
 **Obrigações / Fixed Income (12)**  
-`AGGU.L` `IBTS.L` `IBTL.L` `IBTM.L` `IEAG.L` `IGLO.L` `IGLT.L` `IHYG.L` `LQDE.L` `SLXX.L` `IEMB.L` `VGOV.L`
+`IGLT.L` `IBTL.L` `IBTM.L` `IBTS.L` `LQDE.L` `IHYG.L` `SEMB.L` `SLXX.L` `IDTP.L` `IEAG.L` `IGLO.L` `VGOV.L`
 
 **Imobiliário / REITs (5)**  
-`IWDP.L` `IPRP.L` `IAPD.L` `XREA.L` `GLRE.L`
+`IWDP.L` `IPRP.L` `REIT.L` `XREA.L` `GLRE.L`
 
 **ESG / Sustentável (6)**  
-`SUSW.L` `MVEW.L` `SUWS.L` `MSEW.L` `MVOL.L` `IUUS.L`
+`SUSW.L` `MVEW.L` `SUEZ.L` `SUWU.L` `SUEE.L` `PABD.L`
 
 </details>
+<!-- ET-SPOTTER:UNIVERSE:END -->
 
 Qualquer ticker disponível no **Yahoo Finance** pode ser adicionado em `config/etfs.json`.
 
@@ -445,7 +449,7 @@ Actualmente, a subscrição externa está em roadmap. Por agora, o fork é o cam
 ```
 ET-spotter/
 ├── config/
-│   └── etfs.json                  # 97 ETFs, 11 categorias, parâmetros e pesos
+│   └── etfs.json                  # 95 ETFs, 11 categorias, parâmetros e pesos
 ├── data/
 │   ├── daily/                     # métricas diárias por ETF (CSV, um por ticker)
 │   └── reports/                   # scores_latest.csv · scores_history.csv

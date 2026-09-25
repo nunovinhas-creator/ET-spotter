@@ -5,6 +5,7 @@ on:
     paths:
       - 'data/reports/scores_latest.csv'
       - 'data/reports/backtest_status.json'
+      - 'config/etfs.json'
 
 jobs:
   update-readme:

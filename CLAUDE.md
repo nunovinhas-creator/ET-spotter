@@ -101,5 +101,5 @@ Quatro subagentes especializados em `ci `.claude/agents/`. Nunca os modificas se
 
 ## Workflow update_readme
 
-`.github/workflows/update_readme.yml` dispara em push quando `data/reports/scores_latest.csv` ou `data/reports/backtest_status.json` mudam. Corre `scripts/generate_readme.py` que regenera as secções dinâmicas do README (top ETFs, regime, data de actualização) delimitadas por marcadores `<!-- ET-SPOTTER:TAG:START/END -->`. Faz commit automático com `[skip ci]`.
+`.github/workflows/update_readme.yml` dispara em push quando `data/reports/scores_latest.csv`, `data/reports/backtest_status.json` ou `config/etfs.json` mudam. Corre `scripts/generate_readme.py` que regenera as secções dinâmicas do README (top ETFs, regime, data de actualização e universo de ETFs gerado a partir do config) delimitadas por marcadores `<!-- ET-SPOTTER:TAG:START/END -->`. Não edites à mão a secção do universo: altera o `config/etfs.json`. Faz commit automático com `[skip ci]`.
 
