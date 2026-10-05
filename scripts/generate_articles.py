@@ -181,6 +181,12 @@ def _footer() -> str:
     <p>© ET-Spotter · <a href="{SITE_URL}/">et-spotter.com</a> · Dados via yfinance · Actualizado diariamente</p>
     <p style="margin-top:6px">Informação técnica e educacional. Não constitui aconselhamento financeiro.
     Consulta sempre um profissional antes de investir.</p>
+    <div style="text-align:center">
+      <div style="display:inline-block;margin:18px auto 0;padding:12px 28px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,0.03);font-size:0.70rem;line-height:1.9;letter-spacing:0.04em;color:var(--muted);text-align:center">
+        <div>© {datetime.now().year} ET-Spotter</div>
+        <div>An <strong style="font-weight:600">NV Labs</strong> project</div>
+      </div>
+    </div>
   </div>
 </footer>"""
 
