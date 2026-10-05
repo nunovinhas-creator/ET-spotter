@@ -308,6 +308,19 @@ def brand_banner_section_html() -> str:
 </div>"""
 
 
+def nv_labs_credit_html(year: int | None = None) -> str:
+    """Crédito "An NV Labs project" — mesmo bloco usado no rodapé do Tens Direito."""
+    year = year or datetime.now().year
+    return (
+        f'<div class="nv-credit" style="display:inline-block;margin:18px auto 0;padding:12px 28px;'
+        f'border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,0.03);'
+        f'font-size:0.70rem;line-height:1.9;letter-spacing:0.04em;color:var(--muted);text-align:center">'
+        f'<div>© {year} ET-Spotter</div>'
+        f'<div>An <strong style="color:var(--text);font-weight:600">NV Labs</strong> project</div>'
+        f'</div>'
+    )
+
+
 # ── Sections ──────────────────────────────────────────────────────────────────
 
 def _portfolio_regime_badge(status: dict) -> str:
@@ -3360,6 +3373,7 @@ def generate_daily_article(data: dict, signals_all: list[dict], avg_score: float
   <div class="container">
     <p>© ET-Spotter · <a href="{site}/">ET-Spotter</a> · Dados via yfinance · Actualizado diariamente às 22h</p>
     <p style="margin-top:6px">Base académica: Jegadeesh &amp; Titman (1993) · Faber (2007) · Antonacci (2014) · Ang et al. (2006) · Kakushadze (2015)</p>
+    <div style="text-align:center">{nv_labs_credit_html()}</div>
   </div>
 </footer>
 </body>
@@ -3549,6 +3563,7 @@ async function subscribePush() {{
         f'<span class="acad-badge" title="Risk-adjusted return">Sharpe</span>'
         f'</div>'
         f'<span data-i18n="footer.disclaimer" style="font-size:0.68rem;opacity:0.75;line-height:1.6">⚠️ Informação técnica e resultados de backtest — não constitui aconselhamento financeiro. Os sinais identificam períodos de convergência estatística de múltiplos factores; não predizem preços futuros. Consulta sempre um profissional antes de investir.</span>'
+        f'<div>{nv_labs_credit_html()}</div>'
         f'</div>'
         f'{push_btn}</footer>',
     ]
