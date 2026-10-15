@@ -1,5 +1,4 @@
 date,vwce_close,sma200,vix,regime,exposure,vix_available
-2025-07-30,135.7,130.6762,15.48,BULL,1.0,True
 2025-07-31,135.9,130.7103,16.72,BULL,1.0,True
 2025-08-01,132.04,130.7274,20.38,BULL,1.0,True
 2025-08-04,133.44,130.751,17.52,BULL,1.0,True
@@ -314,3 +313,4 @@ date,vwce_close,sma200,vix,regime,exposure,vix_available
 2026-10-09,172.86,157.8752,14.84,BULL,1.0,True
 2026-10-12,173.48,158.0191,15.21,BULL,1.0,True
 2026-10-13,172.6,158.1572,15.27,BULL,1.0,True
+2026-10-14,172.48,158.2925,16.87,BULL,1.0,True
