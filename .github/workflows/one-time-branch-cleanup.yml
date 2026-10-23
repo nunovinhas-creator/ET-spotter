@@ -1,0 +1,55 @@
+name: One-time verified stale branch cleanup
+
+on:
+  push:
+    branches:
+      - audit/historical-backtest-20261023
+    paths:
+      - .github/workflows/one-time-branch-cleanup.yml
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Remove only merged legacy PR branches with pinned heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Each entry: branch|merged PR|expected commit.
+          records=(
+            "ccr-9f1ded4d-dbjl7a|15|0a62f77d6ccc4f3f012800236edd93d116df306f"
+            "claude/exciting-meitner-78oon1|14|76f8cca3f27740ae4bf99c04e5f221fbbc006a36"
+            "claude/market-regime-filter-vix-w1fp9i|12|c6b87b3d3e645229e502fc571ed81b0b29b2e1eb"
+            "claude/maxdd-constraints-testing-pcfx5e|10|56390bd67733a2fada35ba77180fd829f486c9a4"
+            "claude/score-final-smoothing-e21c1o|9|4727922210f92c5e5bbada2247afdd1fba361a7f"
+          )
+          echo "Preflight: validating every legacy branch before deletion"
+          for rec in "${records[@]}"; do
+            IFS='|' read -r ref pr sha <<< "$rec"
+            head="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$ref" --jq '.object.sha')"
+            merged="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq '.merged_at')"
+            prhead="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq '.head.ref')"
+            ahead="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$ref" --jq '.ahead_by')"
+            if [[ "$head" != "$sha" || "$merged" == "null" || "$prhead" != "$ref" ]]; then
+              echo "::error::Unexpected state of $ref; aborting without deleting any branch"
+              exit 1
+            fi
+            if [[ "$ahead" != "0" && ! ( "$ref" == "ccr-9f1ded4d-dbjl7a" && "$ahead" == "1" ) ]]; then
+              echo "::error::Unmerged commits on $ref; abort"
+              exit 1
+            fi
+            echo "Verified $ref: PR #$pr merged, head unchanged, ahead $ahead"
+          done
+          for rec in "${records[@]}"; do
+            IFS='|' read -r ref pr sha <<< "$rec"
+            echo "Deleting already merged PR #$pr branch $ref"
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$ref"
+          done
+          echo "Deleted 5 merged legacy branches. Kept main, gh-pages and audit PR branch."
