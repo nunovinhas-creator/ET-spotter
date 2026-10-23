@@ -96,3 +96,28 @@ Não promover o replay V3 para estratégia oficial nem interpretar melhoria
 de risco como vantagem: o Sharpe e o CAGR foram inferiores ao VWCE,
 incluindo 2022. O workflow histórico completo requer agora disparo
 manual explícito, para não repetir downloads em cada commit/PR.
+
+## Execução FX EUR + XGBoost walk-forward (23-10-2026)
+
+Fonte reproduzível: https://github.com/nunovinhas-creator/ET-spotter/actions/runs/39970694406
+
+1. Universo: 97 símbolos pedidos; 82 descarregados; 75 convertidos na base EUR.
+   Quatro símbolos (SMEA.L, SPXS.L, XAUS.L, XDEQ.L) foram excluídos por
+   variações diárias superiores a 50% ou mudança potencial de unidade/split.
+   Dois apresentaram preços de abertura inválidos.
+2. Score V3 sem XGB (2020-07-03 → 2026-10-23): retorno acumulado +49,01%,
+   CAGR +6,46%, máximo drawdown -19,57%, Sharpe 0,37.
+3. VWCE em datas equivalentes: retorno +130,82%, CAGR +14,03%,
+   máximo drawdown -22,43%, Sharpe 0,79. Em 2022: V3 -13,75%,
+   VWCE -13,12%.
+4. Custos modelados: 15bps por lado + 10bps por lado em ativos não-EUR;
+   total estimado EUR 3.100,23. Este valor é altamente dependente dos
+   pressupostos de custos, preço e turnover.
+5. XGB walk-forward com labels fwd21 purgados: 28 folds, 124 573
+   previsões para 74 ETFs; ROC-AUC 0,529, accuracy 58,33% (baseline
+   histórico 60,00%), Brier 0,24179 (baseline 0,24073: melhor).
+   AUC do baseline temporal é 0,453; usar também accuracy/Brier e
+   comparações pré-registadas. Rótulos sobrepostos não representam ROI.
+6. **Não demonstra alpha robusto:** não é a carteira operacional
+   ensemble 60/40, não resolve sobrevivência/delistings nem garante
+   custos executáveis em mercado real.
