@@ -386,17 +386,18 @@ def header_html(spy_close, spy_sma200, spy_regime, ts, n_etfs: int = 0, portfoli
       </div>
     </div>
   </div>
-  <nav class="nav-tab-bar" style="border-top:1px solid #1E2D4D22;margin-top:10px;padding-top:2px;max-width:1400px;margin-left:auto;margin-right:auto">
+  <nav class="nav-tab-bar" style="flex-wrap:wrap;row-gap:4px;border-top:1px solid #1E2D4D22;margin-top:10px;padding-top:2px;max-width:1400px;margin-left:auto;margin-right:auto">
     <button class="nav-tab active" onclick="switchTab('overview',this)" data-i18n="nav.overview">Overview</button>
     <button class="nav-tab" onclick="switchTab('signals',this)" data-i18n="nav.signals">Scores &amp; Alertas</button>
     <button class="nav-tab" onclick="switchTab('reports',this)" data-i18n="nav.reports">Relatórios</button>
     <button class="nav-tab" onclick="switchTab('simulation',this)" data-i18n="nav.simulation">Simulação</button>
+    <button class="nav-tab" onclick="switchTab('research',this)" data-i18n="nav.research">Estratégia histórica</button>
     <button class="nav-tab" onclick="switchTab('guides',this)" data-i18n="nav.guides">Guias</button>
   </nav>
 </header>
 <script>
 function switchTab(tab, btn) {{
-  ['overview','signals','reports','simulation','guides'].forEach(function(t) {{
+  ['overview','signals','reports','simulation','research','guides'].forEach(function(t) {{
     var el = document.getElementById('tab-'+t);
     if (el) el.style.display = t === tab ? '' : 'none';
   }});
@@ -3534,6 +3535,11 @@ async function subscribePush() {{
           title_i18n="simulation.full_title",
           subtitle_i18n="simulation.full_subtitle",
         ),
+        '</div>',
+
+        # ── Tab: Estratégia histórica (não confundir com Simulação oficial) ───
+        '<div id="tab-research" style="display:none">',
+        (Path(__file__).parent.parent / "docs" / "research-panel.html").read_text(encoding="utf-8"),
         '</div>',
 
         # ── Tab: Guias ────────────────────────────────────────────────────────
