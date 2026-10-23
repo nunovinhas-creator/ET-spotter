@@ -36,6 +36,27 @@ class FXTests(unittest.TestCase):
         gbp = research_fx.to_eur(self.bars, "GBP", rate)
         self.assertAlmostEqual(gbp["open"].iloc[0], 125)
 
+    def test_adjusted_eur_ohlc_remains_coherent(self):
+        euro = research_fx.to_eur(self.bars, "USD", self.fx)
+        self.assertTrue((euro["high"] >= euro[["open", "close"]].max(axis=1)).all())
+        self.assertTrue((euro["low"] <= euro[["open", "close"]].min(axis=1)).all())
+
+    def test_100x_unit_flip_is_excluded_not_a_profit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            frames = self.bars.copy()
+            frames.loc[frames.index[-1], ["open", "high", "low", "close"]] *= 100
+            frames.to_csv(folder/"CSPX.L.csv", index_label="Date")
+            self.fx.to_csv(folder/"EURUSD=X.csv", index_label="Date")
+            (folder/"currencies.json").write_text(json.dumps({
+                "provider": "yfinance_quote_metadata",
+                "quotes": {"CSPX.L": {"currency": "USD"}}}), encoding="utf-8")
+            converted, audit = research_fx.convert_folder(folder, ["CSPX.L"],
+                                                            fail_on_unknown=False)
+            self.assertNotIn("CSPX.L", converted)
+            self.assertIn("possible_currency_unit_or_split_error",
+                          audit["excluded"]["CSPX.L"])
+
     def test_missing_early_fx_fails(self):
         with self.assertRaises(ValueError):
             research_fx.to_eur(self.bars, "USD", self.fx.iloc[1:])
