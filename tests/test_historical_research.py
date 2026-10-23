@@ -29,12 +29,13 @@ class HistoricalResearchTests(unittest.TestCase):
         self.assertEqual(len(hr.snapshot_at(idx[251], {"A": df})), 0)
 
     def test_next_open_and_one_way_transaction_cost(self):
-        idx = pd.bdate_range("2022-01-03", periods=60)
+        idx = pd.bdate_range("2021-01-04", periods=280)
+        entry_start = 210
         with tempfile.TemporaryDirectory() as d:
             folder = Path(d)
             base = np.full(len(idx), 100.0)
             asset = base.copy()
-            asset[2:] = 200.0  # salto APÓS compra na abertura do dia 1
+            asset[entry_start+2:] = 200.0  # salto APÓS compra na abertura da 2.ª sessão
             for ticker, opens in (("SPY", base), ("VWCE.DE", base), ("A", asset)):
                 pd.DataFrame({"Date": idx, "open": opens, "high": opens,
                               "low": opens, "close": opens, "volume": 100}).to_csv(
@@ -44,7 +45,8 @@ class HistoricalResearchTests(unittest.TestCase):
                  patch.object(hr, "construct_weights",
                               return_value=({"A": 1.0}, {"status": "selected"})), \
                  patch.object(hr, "classify_regime", return_value="BULL"):
-                curve, result = hr.backtest(folder, "2022-01-01", "2022-04-30", 15.0)
+                curve, result = hr.backtest(folder, str(idx[entry_start].date()),
+                                            str(idx[-1].date()), 15.0)
             self.assertEqual(curve.iloc[0]["equity"], 10000.0)
             self.assertAlmostEqual(curve.iloc[1]["cost"], 15.0)
             self.assertAlmostEqual(curve.iloc[1]["equity"], 9985.0)
