@@ -46,7 +46,7 @@ class HistoricalResearchTests(unittest.TestCase):
                               return_value=({"A": 1.0}, {"status": "selected"})), \
                  patch.object(hr, "classify_regime", return_value="BULL"):
                 curve, result = hr.backtest(folder, str(idx[entry_start].date()),
-                                            str(idx[-1].date()), 15.0)
+                                            str(idx[-1].date()), 15.0, fx_mode="legacy")
             self.assertEqual(curve.iloc[0]["equity"], 10000.0)
             self.assertAlmostEqual(curve.iloc[1]["cost"], 15.0)
             self.assertAlmostEqual(curve.iloc[1]["equity"], 9985.0)
