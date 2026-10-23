@@ -33,6 +33,7 @@ jobs:
             scripts
             tests
             config
+            docs
             requirements.txt
       - uses: actions/setup-python@v5
         with:
