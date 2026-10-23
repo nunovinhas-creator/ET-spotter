@@ -76,7 +76,7 @@ jobs:
           retention-days: 14
 
   historical:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'audit/historical-backtest-20261023'
+    if: github.event_name == 'workflow_dispatch'
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 55
