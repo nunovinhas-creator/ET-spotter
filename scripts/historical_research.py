@@ -285,6 +285,22 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
     # impacto do custo inicial nas observações seguintes da curva de NAV.
     evaluation.loc[first_decision_day, "equity"] += first_decision_cost
     summary = calculate_metrics(evaluation["equity"], evaluation["vwce_equity"])
+    # Anos civis com retornos calculados pela composição das alterações diárias,
+    # preservando as passagens de 31/12 para a sessão seguinte.
+    day_returns = evaluation[["equity", "vwce_equity"]].pct_change().fillna(0.0)
+    annual = {}
+    for year, group in day_returns.groupby(day_returns.index.year):
+        dates_year = evaluation.loc[group.index]
+        annual[str(year)] = {
+            "sessions": int(len(group)),
+            "first_session": group.index[0].strftime("%Y-%m-%d"),
+            "last_session": group.index[-1].strftime("%Y-%m-%d"),
+            "strategy_return": float((1 + group["equity"]).prod() - 1),
+            "vwce_return": float((1 + group["vwce_equity"]).prod() - 1),
+            "strategy_max_drawdown_in_year": float((dates_year["equity"] / dates_year["equity"].cummax() - 1).min()),
+            "vwce_max_drawdown_in_year": float((dates_year["vwce_equity"] / dates_year["vwce_equity"].cummax() - 1).min()),
+        }
+    summary["annual_breakdown"] = annual
     summary.update({"status": "RETROSPECTIVE_V3_ONLY_NOT_OUT_OF_SAMPLE",
                     "model": "score_v3_1_no_xgboost",
                     "rebalance_days": REBALANCE, "rebalance_count": rebalance_count,
