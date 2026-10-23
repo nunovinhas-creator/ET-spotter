@@ -93,11 +93,21 @@ def to_eur(raw: pd.DataFrame, currency: str, fx: pd.DataFrame | None = None) -> 
     if native != "EUR":
         if fx is None or fx.empty:
             raise ValueError(f"Falta série EUR{native}=X")
-    for column in ("open", "high", "low", "close"):
-        if column not in data:
-            continue
-        quote = 1.0 if native == "EUR" else _asof_quote_fx(fx, data.index, column if column in fx else "close")
-        data[column] = data[column].astype(float) * scale / quote
+    # Valor de abertura FX na abertura da sessão; fecho FX no fecho.
+    # Para high/low construir limites conservadores de FX open/close para
+    # preservar high >= open/close >= low, sem usar FX de dias futuros.
+    q_open = 1.0 if native == "EUR" else _asof_quote_fx(fx, data.index, "open")
+    q_close = 1.0 if native == "EUR" else _asof_quote_fx(fx, data.index, "close")
+    q_min = np.minimum(q_open, q_close)
+    q_max = np.maximum(q_open, q_close)
+    data["open"] = data["open"].astype(float) * scale / q_open
+    data["close"] = data["close"].astype(float) * scale / q_close
+    if "high" in data:
+        data["high"] = np.maximum.reduce([data["high"].astype(float) * scale / q_min,
+                                           data["open"], data["close"]])
+    if "low" in data:
+        data["low"] = np.minimum.reduce([data["low"].astype(float) * scale / q_max,
+                                         data["open"], data["close"]])
     if data[["open", "close"]].isna().any().any() or (data[["open", "close"]] <= 0).any().any():
         raise ValueError("Preço EUR não finito ou inválido")
     return data
@@ -124,8 +134,16 @@ def convert_folder(root: Path, tickers: list[str], *, fail_on_unknown: bool = Tr
             pair = pair_symbol(raw_curr)
             if pair and pair not in fx_cache:
                 fx_cache[pair] = load_daily(root, pair)
-            converted[ticker] = to_eur(load_daily(root, ticker), raw_curr,
-                                       fx_cache.get(pair))
+            euro = to_eur(load_daily(root, ticker), raw_curr, fx_cache.get(pair))
+            # Guarda dura: saltos >50% num só dia em ETFs ajustados são muito
+            # suspeitos (alternância GBP/GBp, splits mal ajustados, erros de feed).
+            # Excluir toda a série; nunca deixar que um 100x dispare o CAGR.
+            extreme = euro["close"].pct_change(fill_method=None).dropna()
+            bad = extreme[extreme.abs() > .50]
+            if not bad.empty:
+                d = bad.index[0].strftime("%Y-%m-%d")
+                raise ValueError(f"possible_currency_unit_or_split_error:{d}:return={bad.iloc[0]:+.1%}")
+            converted[ticker] = euro
             quotes[ticker] = {"original_currency": raw_curr, "base_currency": native,
                               "unit_scale": scale, "fx_pair": pair}
         except (ValueError, KeyError, FileNotFoundError) as exc:
