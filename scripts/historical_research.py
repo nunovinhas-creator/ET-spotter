@@ -210,6 +210,8 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
     prior_scores: dict[str, float] = {}
     book = []
     rebalance_count, cost_total = 0, 0.0
+    first_decision_day = None
+    first_decision_cost = 0.0
     # Fecho de D-1 -> ordem executada na abertura de D.
     for i, day in enumerate(dates):
         if day not in bench.index or not np.isfinite(bench.loc[day, "open"]):
@@ -234,6 +236,8 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
             signal_day = dates[i-1]
             proposed, detail = construct_weights(signal_day, metrics, metadata, prior_scores,
                                                  held, hold_cycles)
+            if detail.get("status") == "selected" and first_decision_day is None:
+                first_decision_day = day
             vix_series = raw.get("VIX")
             vix = None
             if vix_series is not None:
@@ -258,6 +262,8 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
                 cost = nav * traded * (side_bps/10000)
                 nav -= cost
                 cost_total += cost
+                if day == first_decision_day:
+                    first_decision_cost = cost
                 shares = {t: nav*w/price_now[t] for t, w in target.items() if w > 1e-8}
                 cash = nav * (1-sum(target.values()))
                 rebalance_count += 1
@@ -269,12 +275,22 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
                      "cost": cost, "cash": cash, "event": event,
                      "positions": json.dumps(shares)})
     equity = pd.DataFrame(book).set_index("date")
-    summary = calculate_metrics(equity["equity"], equity["vwce_equity"])
+    if first_decision_day is None:
+        raise ValueError("Nenhum sinal V3 elegível; não produzir comparação enganadora com cash de warm-up")
+    evaluation = equity.loc[first_decision_day:].copy()
+    # O capital de abertura é o valor ANTES da primeira execução: inclui o
+    # impacto do custo inicial nas observações seguintes da curva de NAV.
+    evaluation.loc[first_decision_day, "equity"] += first_decision_cost
+    summary = calculate_metrics(evaluation["equity"], evaluation["vwce_equity"])
     summary.update({"status": "RETROSPECTIVE_V3_ONLY_NOT_OUT_OF_SAMPLE",
                     "model": "score_v3_1_no_xgboost",
                     "rebalance_days": REBALANCE, "rebalance_count": rebalance_count,
+                    "warmup_sessions_excluded": int((equity.index < first_decision_day).sum()),
+                    "first_executable_decision": first_decision_day.strftime("%Y-%m-%d"),
+                    "invested_sessions": int((evaluation["cash"] < evaluation["equity"] - 0.01).sum()),
                     "cost_side_bps": side_bps, "cost_eur": cost_total,
-                    "start": equity.index.min().strftime("%Y-%m-%d"),
+                    "start": evaluation.index.min().strftime("%Y-%m-%d"),
+                    "loaded_data_from": equity.index.min().strftime("%Y-%m-%d"),
                     "end": equity.index.max().strftime("%Y-%m-%d"),
                     "limitations": [
                         "Universo actual de ETFs: enviesamento de sobrevivência possível",
