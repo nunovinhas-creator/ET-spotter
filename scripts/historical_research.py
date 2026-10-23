@@ -21,6 +21,7 @@ from compute_metrics import compute_metrics
 from compute_score import compute_scores
 from market_regime import classify_regime, regime_exposure
 from run_simulation import _capped_weights, _load_etf_metadata
+from research_fx import convert_folder, normalize_currency
 
 INITIAL = 10000.0
 REBALANCE = 42
@@ -66,8 +67,46 @@ def download_prices(destination: Path, start: str) -> dict:
             except Exception as exc:
                 failures.append(ticker)
                 print(f"[WARN] {ticker}: {exc}", file=sys.stderr)
+    # Fonte de moeda: metadados específicos da cotação Yahoo (NUNCA sufixo .L).
+    quotes = {}
+    required_pairs = set()
+    for symbol in saved:
+        if symbol == "^VIX":
+            continue
+        try:
+            ticker = yf.Ticker(symbol)
+            meta = ticker.get_history_metadata() or {}
+            currency = meta.get("currency")
+            if not currency:
+                currency = ticker.fast_info.currency
+            native, scale = normalize_currency(currency)
+            quotes[symbol] = {"currency": currency, "normalized": native,
+                              "unit_scale": scale, "source": "yfinance_quote_metadata"}
+            if native != "EUR":
+                required_pairs.add(f"EUR{native}=X")
+        except Exception as exc:
+            print(f"[WARN] {symbol}: moeda desconhecida: {exc}", file=sys.stderr)
+            quotes[symbol] = {"currency": None, "error": str(exc)}
+    (destination / "currencies.json").write_text(json.dumps({
+        "provider": "yfinance_quote_metadata", "quotes": quotes}, indent=2),
+        encoding="utf-8")
+    fx_missing = []
+    for pair in sorted(required_pairs):
+        try:
+            fx_data = yf.Ticker(pair).history(start=start, interval="1d", auto_adjust=True)
+            if fx_data.empty:
+                raise ValueError("sem cotações")
+            fx_data = fx_data.rename(columns=str.lower)
+            fx_data.index = pd.to_datetime(fx_data.index).tz_localize(None).normalize()
+            fx_data[[c for c in ("open", "high", "low", "close") if c in fx_data]].to_csv(
+                destination / f"{pair}.csv", index_label="Date")
+        except Exception as exc:
+            print(f"[WARN] {pair}: FX histórico indisponível: {exc}", file=sys.stderr)
+            fx_missing.append(pair)
     return {"requested": len(symbols), "saved": len(saved), "failed": failures,
-            "start": start, "provider": "Yahoo via yfinance (auto_adjust=True)"}
+            "start": start, "provider": "Yahoo via yfinance (auto_adjust=True)",
+            "quote_metadata_identified": sum(bool(x.get("currency")) for x in quotes.values()),
+            "required_fx_pairs": sorted(required_pairs), "missing_fx_pairs": fx_missing}
 
 
 def read_ohlc(path: Path) -> pd.DataFrame:
@@ -179,9 +218,12 @@ def construct_weights(day: pd.Timestamp, metrics: dict[str, pd.DataFrame],
                      "positions": names, "high_vol_cutoff": float(vol_cutoff)}
 
 
-def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[pd.DataFrame, dict]:
-    if side_bps < 0:
+def backtest(price_root: Path, start: str, end: str, side_bps: float,
+             fx_mode: str = "strict", fx_fee_side_bps: float = 0.0) -> tuple[pd.DataFrame, dict]:
+    if side_bps < 0 or fx_fee_side_bps < 0:
         raise ValueError("Custos negativos")
+    if fx_mode not in ("strict", "legacy"):
+        raise ValueError("fx_mode inválido")
     metadata = _load_etf_metadata()
     raw: dict[str, pd.DataFrame] = {}
     for ticker in sorted(set(metadata) | {"VWCE.DE", "SPY", "VIX"}):
@@ -191,6 +233,22 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
                 raw[ticker] = read_ohlc(path)
             except ValueError as exc:
                 print(f"[WARN] {exc}")
+    fx_audit = {"currency_basis": "UNNORMALIZED_LEGACY", "warning": "FX não aplicado"}
+    foreign = set()
+    if fx_mode == "strict":
+        # VIX é um índice adimensional (não um ativo cotado em USD/GBP).
+        # Preservá-lo original para que o filtro de risco VIX+SMA200 continue
+        # ativo também na execução com moedas corrigidas.
+        vix_index = raw.pop("VIX", None)
+        raw, fx_audit = convert_folder(price_root, list(raw), fail_on_unknown=False)
+        if vix_index is not None:
+            raw["VIX"] = vix_index
+        # A análise não pode continuar se o benchmark ou SPY não puderem ser
+        # convertidos. A exclusão dos outros símbolos é registada no relatório.
+        if not {"VWCE.DE", "SPY"}.issubset(raw):
+            raise ValueError("Não é possível verificar VWCE e SPY na base EUR")
+        foreign = {sym for sym, q in fx_audit["quotes"].items()
+                   if q["base_currency"] != "EUR"}
     if not {"VWCE.DE", "SPY"}.issubset(raw):
         raise ValueError("VWCE.DE e SPY obrigatórios")
     bench = raw["VWCE.DE"]
@@ -262,7 +320,9 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
                     raise ValueError(f"Sem abertura executável: {missing_open}")
                 traded = sum(abs(target.get(t, 0)-actual.get(t, 0))
                              for t in set(actual) | set(target))
-                cost = nav * traded * (side_bps/10000)
+                fx_notional = sum(abs(target.get(t, 0)-actual.get(t, 0))
+                                  for t in set(actual) | set(target) if t in foreign)
+                cost = nav * (traded * side_bps + fx_notional * fx_fee_side_bps) / 10000
                 nav -= cost
                 cost_total += cost
                 if day == first_decision_day:
@@ -301,7 +361,9 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
             "vwce_max_drawdown_in_year": float((dates_year["vwce_equity"] / dates_year["vwce_equity"].cummax() - 1).min()),
         }
     summary["annual_breakdown"] = annual
-    summary.update({"status": "RETROSPECTIVE_V3_ONLY_NOT_OUT_OF_SAMPLE",
+    summary.update({"fx_mode": fx_mode, "fx_audit": fx_audit,
+                    "fx_fee_side_bps": fx_fee_side_bps,
+                    "status": "RETROSPECTIVE_V3_ONLY_NOT_OUT_OF_SAMPLE",
                     "model": "score_v3_1_no_xgboost",
                     "rebalance_days": REBALANCE, "rebalance_count": rebalance_count,
                     "warmup_sessions_excluded": int((equity.index < first_decision_day).sum()),
@@ -313,7 +375,7 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
                     "end": equity.index.max().strftime("%Y-%m-%d"),
                     "limitations": [
                         "Universo actual de ETFs: enviesamento de sobrevivência possível",
-                        "Cotações de mercados/moedas diferentes sem conversão cambial: NÃO EXECUTÁVEL",
+                        ("Conversão FX EUR auditada; amostra incompleta se houver exclusões" if fx_mode == "strict" else "SEM conversão cambial: NÃO EXECUTÁVEL"),
                         "Política histórica aproximada: não equivale ao ensemble oficial 60/40",
                         "Parâmetros selecionados em 2026: passado NÃO é amostra intocada",
                         "VWCE só comparado onde existe histórico; sem proxy não se cobre toda a queda de 2020",
@@ -330,12 +392,17 @@ def main():
     parser.add_argument("--download-from", default=None,
                         help="Descarrega histórico desde data YYYY-MM-DD, isolado de produção")
     parser.add_argument("--cost-side-bps", type=float, default=COST_SIDE_BPS)
+    parser.add_argument("--fx-mode", choices=("strict", "legacy"), default="strict",
+                        help="strict requer moedas verificadas e FX histórico; legacy apenas diagnóstico")
+    parser.add_argument("--fx-fee-side-bps", type=float, default=10.0,
+                        help="Custo adicional por notional negociado não-EUR, por lado")
     parser.add_argument("--output", type=Path, default=Path("research_results"))
     args = parser.parse_args()
     if args.download_from:
         report = download_prices(args.prices_dir, args.download_from)
         print(json.dumps(report, ensure_ascii=False))
-    equity, report = backtest(args.prices_dir, args.start, args.end, args.cost_side_bps)
+    equity, report = backtest(args.prices_dir, args.start, args.end,
+                              args.cost_side_bps, args.fx_mode, args.fx_fee_side_bps)
     args.output.mkdir(parents=True, exist_ok=True)
     equity.to_csv(args.output/"equity_v3_research.csv")
     (args.output/"audit_v3_research.json").write_text(
