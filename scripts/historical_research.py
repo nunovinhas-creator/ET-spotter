@@ -236,8 +236,6 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
             signal_day = dates[i-1]
             proposed, detail = construct_weights(signal_day, metrics, metadata, prior_scores,
                                                  held, hold_cycles)
-            if detail.get("status") == "selected" and first_decision_day is None:
-                first_decision_day = day
             vix_series = raw.get("VIX")
             vix = None
             if vix_series is not None:
@@ -247,6 +245,11 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float) -> tuple[p
             bclose = float(bench.loc[signal_day, "close"])
             sma = float(bench.loc[signal_day, "sma200"])
             regime = classify_regime(bclose, sma, vix)
+            # Só iniciar o teste quando a regra SMA200 podia de facto ser calculada.
+            # Antes desse ponto, ficar em cash é falta de histórico e não uma decisão.
+            if (first_decision_day is None and detail.get("status") == "selected"
+                    and np.isfinite(sma) and regime != "UNKNOWN"):
+                first_decision_day = day
             exposure = regime_exposure(regime)
             target = {t: w * exposure for t, w in proposed.items()}
             actual = {t: qty*price_now[t]/nav for t, qty in shares.items()}
