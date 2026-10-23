@@ -57,3 +57,42 @@ Qualquer falha de dados é sinalizada; não se inventam retornos.
 4. Parâmetros fixados ANTES do holdout; testar em janela realmente intocada.
 5. Stress de custos, FX, slippage, spreads e qualidade de dados.
 6. Só então comparar alfa robusto, ROI, Sharpe, Sortino e drawdowns com VWCE.
+
+
+## Primeira execução plurianual observada (run 39964452566)
+
+Execução GitHub Actions: https://github.com/nunovinhas-creator/ET-spotter/actions/runs/39964452566
+Artefacto histórico: https://github.com/nunovinhas-creator/ET-spotter/actions/runs/39964452566/artifacts/12506157645
+
+- 97 símbolos pedidos, 82 séries descarregadas e 15 falhas/insuficiências;
+  HMCA.L e IIND.L foram ainda rejeitados por dados de abertura inválidos.
+- Primeira decisão elegível: 2020-07-03, depois de 127 sessões de aquecimento
+  (VWCE SMA200); a grande queda pandémica de fevereiro/março 2020 NÃO foi testada.
+- Última data: 2026-10-23; 1606 retornos diários, 39 rebalanceamentos.
+- Score V3 sem XGB: retorno total +36,84%, CAGR +5,04%,
+  MaxDD -21,20%, Sharpe 0,24.
+- VWCE nas datas coincidentes: retorno total +130,82%, CAGR +14,03%,
+  MaxDD -22,43%, Sharpe 0,79.
+- Custos do modelo aproximado: EUR 284,67 sobre capital inicial EUR 10 000
+  com 15 bps por lado transacionado; não incluem conversão FX.
+- 2022: score V3 -17,15% contra VWCE -13,12%.
+- Em todos os anos analisados (2020 parcial a 2026 parcial) o VWCE ganhou
+  em retorno. Resultados EXPLORATÓRIOS, não equivalentes a desempenho
+  investível nem a validação fora da amostra da política 60/40.
+
+### Defeito metodológico adicional da avaliação XGB existente
+
+Em scripts/train_model.py, o target de cada observação utiliza preço em t+21.
+O split treino < 2026-01-01 / teste >= 2026-01-01 não aplica purga:
+alguns rótulos de treino de dezembro de 2025 usam preços de janeiro de
+2026, já dentro do período de teste. Portanto, a divisão temporal nominal
+NÃO é uma separação rigorosamente sem fuga de rótulos. Corrigir com embargo
+de pelo menos 21 sessões e treino walk-forward antes de qualquer conclusão
+de validação IA. Não se alterou o modelo nem se publicou novos sinais.
+
+### Recomendação após esta execução
+
+Não promover o replay V3 para estratégia oficial nem interpretar melhoria
+de risco como vantagem: o Sharpe e o CAGR foram inferiores ao VWCE,
+incluindo 2022. O workflow histórico completo requer agora disparo
+manual explícito, para não repetir downloads em cada commit/PR.
