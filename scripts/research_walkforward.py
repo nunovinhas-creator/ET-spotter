@@ -67,7 +67,7 @@ def split_with_label_purge(frame: pd.DataFrame, start: pd.Timestamp,
     """Cada rótulo de treino tem de estar resolvido ANTES de start."""
     train = frame[(frame["date"] < start) & (frame["label_end"] < start)].copy()
     test = frame[(frame["date"] >= start) & (frame["date"] < end)].copy()
-    if not train.empty and not (train["label_end"] < test["date"].min()).all() and not test.empty:
+    if not train.empty and not test.empty and not (train["label_end"] < test["date"].min()).all():
         raise AssertionError("Rótulos de treino invadem a janela OOS")
     return train, test
 
