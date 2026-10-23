@@ -236,7 +236,13 @@ def backtest(price_root: Path, start: str, end: str, side_bps: float,
     fx_audit = {"currency_basis": "UNNORMALIZED_LEGACY", "warning": "FX não aplicado"}
     foreign = set()
     if fx_mode == "strict":
+        # VIX é um índice adimensional (não um ativo cotado em USD/GBP).
+        # Preservá-lo original para que o filtro de risco VIX+SMA200 continue
+        # ativo também na execução com moedas corrigidas.
+        vix_index = raw.pop("VIX", None)
         raw, fx_audit = convert_folder(price_root, list(raw), fail_on_unknown=False)
+        if vix_index is not None:
+            raw["VIX"] = vix_index
         # A análise não pode continuar se o benchmark ou SPY não puderem ser
         # convertidos. A exclusão dos outros símbolos é registada no relatório.
         if not {"VWCE.DE", "SPY"}.issubset(raw):
