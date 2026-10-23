@@ -78,7 +78,7 @@ jobs:
           retention-days: 14
 
   historical:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'feat/research-dashboard-fx-walkforward-20261023'
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 55
