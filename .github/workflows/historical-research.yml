@@ -4,7 +4,14 @@ on:
   pull_request:
     paths:
       - "scripts/historical_research.py"
+      - "scripts/research_fx.py"
+      - "scripts/research_walkforward.py"
+      - "scripts/generate_dashboard.py"
       - "tests/test_historical_research.py"
+      - "tests/test_research_fx_walkforward_ui.py"
+      - "docs/index.html"
+      - "docs/research-panel.html"
+      - "docs/i18n/**"
       - ".github/workflows/historical-research.yml"
   workflow_dispatch:
     inputs:
