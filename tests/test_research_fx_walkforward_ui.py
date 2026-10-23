@@ -101,7 +101,7 @@ class UserInterfaceTests(unittest.TestCase):
         html = (root / "docs/index.html").read_text(encoding="utf-8")
         py = (root / "scripts/generate_dashboard.py").read_text(encoding="utf-8")
         for value in ("switchTab('research',this)", 'id="tab-research"',
-                      "EXPERIMENTAL", "39964452566"):
+                      "EXPERIMENTAL", "39970694406"):
             self.assertIn(value, html)
         self.assertIn("research-panel.html", py)
         self.assertIn("['overview','signals','reports','simulation','research','guides']", py)
